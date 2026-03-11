@@ -7,34 +7,46 @@ import Link from "next/link";
 
 export default function Navbar({ session }: { session: Session | null }) {
   return (
-    <nav className="bg-white shadow-md py-4 border-b border-gray-200">
-      {" "}
-      <div className="container mx-auto flex justify-between items-center px-6 lg:px-8">
-        <Link href={"/"} className="flex items-center">
-          <Image src={"/logo.png"} alt="logo" width={50} height={50} />
-          <span className="text-2xl font-bold text-gray-800">
-            Travel Planner
-          </span>
+    <nav className="sticky top-0 z-50 border-b border-white/60 bg-white/70 py-4 shadow-sm shadow-sky-100/30 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="rounded-2xl bg-slate-950 p-2 shadow-lg shadow-sky-200/40">
+            <Image src="/logo.png" alt="logo" width={32} height={32} />
+          </div>
+          <div>
+            <span className="block text-lg font-semibold tracking-tight text-slate-950">
+              Travel Planner
+            </span>
+            <span className="block text-xs uppercase tracking-[0.22em] text-slate-500">
+              Build trips beautifully
+            </span>
+          </div>
         </Link>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
+          <Link
+            href="/ai-trip-planner"
+            className="rounded-full bg-sky-50 px-4 py-2 text-sm font-medium text-sky-900 transition hover:bg-sky-100"
+          >
+            AI Trip Planner
+          </Link>
           {session ? (
             <>
               <Link
-                href={"/trips"}
-                className="text-slate-900 hover:text-sky-500"
+                href="/trips"
+                className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-sky-600"
               >
                 My Trips
               </Link>
               <Link
-                href={"/globe"}
-                className="text-slate-900 hover:text-sky-500"
+                href="/globe"
+                className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-sky-600"
               >
                 Globe
               </Link>
 
               <button
-                className="flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white p-2 rounded-sm cursor-pointer"
+                className="flex items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
                 onClick={logout}
               >
                 Sign Out
@@ -42,12 +54,12 @@ export default function Navbar({ session }: { session: Session | null }) {
             </>
           ) : (
             <button
-              className="flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white p-2 rounded-sm cursor-pointer"
+              className="flex items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
               onClick={login}
             >
               Sign In
               <svg
-                className="w-6 h-6 ml-2"
+                className="ml-2 h-5 w-5"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"

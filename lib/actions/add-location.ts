@@ -5,16 +5,30 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
 async function geocodeAddress(address: string) {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY!;
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(
       address
-    )}&key=${apiKey}`
+    )}`,
+    {
+      headers: {
+        "User-Agent": "travel-planner-app/1.0",
+      },
+      cache: "no-store",
+    }
   );
 
-  const data = await response.json();
-  const { lat, lng } = data.results[0].geometry.location;
-  return { lat, lng };
+  if (!response.ok) {
+    throw new Error("Unable to geocode address.");
+  }
+
+  const data: Array<{ lat: string; lon: string }> = await response.json();
+  const result = data[0];
+
+  if (!result) {
+    throw new Error("Address not found.");
+  }
+
+  return { lat: Number(result.lat), lng: Number(result.lon) };
 }
 
 export async function addLocation(formData: FormData, tripId: string) {
