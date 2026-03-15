@@ -26,21 +26,21 @@ function SortableItem({ item }: { item: Location }) {
       {...attributes}
       {...listeners}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className="flex items-center justify-between rounded-[1.75rem] border border-white/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+      className="flex items-center justify-between rounded-[20px] border border-white/8 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] transition hover:border-white/12 hover:bg-white/[0.05]"
     >
       <div className="flex items-center gap-4">
-        <div className="rounded-2xl bg-slate-100 p-3 text-slate-500">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3 text-[#8B9BB4]">
           <GripVertical className="size-5" />
         </div>
         <div>
-          <h4 className="font-medium text-slate-900">{item.locationTitle}</h4>
-          <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-            <MapPin className="size-4" />
+          <h4 className="font-medium text-white">{item.locationTitle}</h4>
+          <p className="mt-1 flex items-center gap-2 text-sm text-[#8B9BB4]">
+            <MapPin className="size-4 text-[#00C2FF]" />
             {`Latitude: ${item.lat}, Longitude: ${item.lng}`}
           </p>
         </div>
       </div>
-      <div className="rounded-full bg-sky-50 px-4 py-2 text-sm font-medium text-sky-800">
+      <div className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/10 px-4 py-2 text-sm font-medium text-[#9FE7FF]">
         Stop {item.order + 1}
       </div>
     </div>
@@ -86,19 +86,19 @@ export default function SortableItinerary({
         items={localLocation.map((loc) => loc.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="rounded-[2rem] bg-slate-50 p-4">
-          <div className="mb-4 flex items-center gap-3 rounded-[1.5rem] bg-slate-950 px-5 py-4 text-white">
-            <Route className="size-5 text-sky-200" />
+        <div className="rounded-[24px] border border-white/8 bg-[#0A0E1A] p-4">
+          <div className="mb-4 flex items-center gap-3 rounded-[18px] border border-white/8 bg-[#161820] px-5 py-4 text-white">
+            <Route className="size-5 text-[#00C2FF]" />
             <div>
               <p className="text-sm font-medium">Drag to reorder your stops</p>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-[#8B9BB4]">
                 Adjust the route to match how you want the trip to unfold.
               </p>
             </div>
           </div>
           <div className="space-y-4">
-            {localLocation.map((item, key) => (
-              <SortableItem key={key} item={item} />
+            {localLocation.map((item) => (
+              <SortableItem key={item.id} item={item} />
             ))}
           </div>
         </div>

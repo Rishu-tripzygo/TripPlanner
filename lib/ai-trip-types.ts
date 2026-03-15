@@ -36,6 +36,7 @@ export const interestOptions = [
 ] as const;
 
 export interface AITripPlannerRequest {
+  tripId?: string;
   destination: string;
   purpose: string;
   days: number;

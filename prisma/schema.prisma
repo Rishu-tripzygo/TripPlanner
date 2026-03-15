@@ -20,9 +20,12 @@ model User {
   email         String          @unique
   emailVerified DateTime?
   image         String?
+  themePreference ThemePreference @default(SYSTEM)
   accounts      Account[]
   sessions      Session[]
   trips         Trip[]
+  chatMessages  ChatMessage[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,6 +82,11 @@ model Trip {
   userId String
 
   locations Location[]
+  budget Budget?
+  expenses Expense[]
+  packingList PackingList?
+  itineraryVersions ItineraryVersion[]
+  chatMessages ChatMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,4 +101,121 @@ model Location {
   tripId String
   order Int @default(0)
   createdAt DateTime @default(now())
+}
+
+model Budget {
+  id           String   @id @default(cuid())
+  trip         Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId       String   @unique
+  totalBudget  Float
+  currency     String   @default("INR")
+  accommodation Float   @default(0)
+  food         Float    @default(0)
+  transport    Float    @default(0)
+  activities   Float    @default(0)
+  misc         Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  name      String
+  amount    Float
+  category  ExpenseCategory
+  expenseDate DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId, expenseDate])
+}
+
+model WeatherCache {
+  id          String   @id @default(cuid())
+  destination String
+  date        DateTime
+  data        Json
+  cachedAt    DateTime @default(now())
+
+  @@unique([destination, date])
+}
+
+model PackingList {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String   @unique
+  template  String?
+  items     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ItineraryVersion {
+  id             String   @id @default(cuid())
+  trip           Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId         String
+  versionNumber  Int
+  sourceProvider String
+  sourcePrompt   String?
+  title          String?
+  itineraryData  Json
+  isActive       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  chatMessages   ChatMessage[]
+
+  @@unique([tripId, versionNumber])
+  @@index([tripId, isActive])
+}
+
+model ChatMessage {
+  id                 String            @id @default(cuid())
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  trip               Trip?             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId             String?
+  itineraryVersion   ItineraryVersion? @relation(fields: [itineraryVersionId], references: [id], onDelete: Cascade)
+  itineraryVersionId String?
+  role               ChatRole
+  content            String
+  createdAt          DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@index([tripId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  tripId    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum ExpenseCategory {
+  ACCOMMODATION
+  FOOD
+  TRANSPORT
+  ACTIVITIES
+  MISC
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
 }

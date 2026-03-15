@@ -1,12 +1,12 @@
 @import "tailwindcss";
 @import "uploadthing/tw/v4";
-@source "../node_modules/@uploadthing/react/dist"; /** <-- depends on your project structure */
+@source "../node_modules/@uploadthing/react/dist";
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -26,59 +26,97 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #08090e;
+  --foreground: #f0f2f7;
+  --card: #0f1117;
+  --card-foreground: #f0f2f7;
+  --primary: #1b3a6b;
+  --primary-foreground: #f0f2f7;
+  --secondary: #161820;
+  --secondary-foreground: #f0f2f7;
+  --muted: #11151f;
+  --muted-foreground: #8b9bb4;
+  --accent: #00c2ff;
+  --accent-foreground: #08090e;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: rgba(0, 194, 255, 0.42);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(circle at top left, rgba(14, 165, 233, 0.06), transparent 22%),
-      radial-gradient(circle at top right, rgba(16, 185, 129, 0.06), transparent 18%);
     min-height: 100vh;
+    background-image:
+      radial-gradient(circle at top left, rgba(27, 58, 107, 0.36), transparent 24%),
+      radial-gradient(circle at top right, rgba(0, 194, 255, 0.12), transparent 20%),
+      linear-gradient(180deg, #08090e 0%, #0b0f18 48%, #08090e 100%);
   }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply outline-none;
+  }
+
   ::selection {
-    background: rgba(14, 165, 233, 0.18);
+    background: rgba(0, 194, 255, 0.24);
+    color: #f0f2f7;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(27, 58, 107, 0.7), rgba(0, 194, 255, 0.7));
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(27, 58, 107, 0.95), rgba(0, 194, 255, 0.95));
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .surface-1 {
+    background: #0f1117;
+  }
+
+  .surface-2 {
+    background: #161820;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .app-shell {
+    @apply mx-auto w-full max-w-[1280px];
+  }
+
+  .section-label {
+    @apply text-[12px] font-medium uppercase tracking-[0.36em] text-[#00C2FF];
   }
 }

@@ -1,35 +1,50 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import AITypingEffect from "@/components/ai-typing-effect";
+import GlassWidget from "@/components/ui/glass-widget";
+import SkeletonCard from "@/components/ui/skeleton-card";
+import StatusBadge from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AITripPlannerRequest,
-  AITripPlannerResponse,
   hotelCategoryOptions,
   interestOptions,
   travelStyleOptions,
   tripPurposeOptions,
 } from "@/lib/ai-trip-types";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  ItineraryVersionRecord,
+  PersistedItinerary,
+} from "@/lib/phase-one-types";
+import { cn } from "@/lib/utils";
 import {
   BedDouble,
-  Bus,
   CalendarRange,
   ChefHat,
-  Compass,
-  LoaderCircle,
+  Copy,
+  History,
   MapPinned,
-  Mountain,
+  RefreshCw,
+  Share2,
   Sparkles,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+
+interface PlannerTripOption {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  destinationHint?: string | null;
+}
+
+interface AITripPlannerProps {
+  trips: PlannerTripOption[];
+  initialTripId?: string;
+}
 
 const emptyForm: AITripPlannerRequest = {
   destination: "",
@@ -43,7 +58,7 @@ const emptyForm: AITripPlannerRequest = {
   travelDates: "",
 };
 
-function FieldLabel({
+function FormLabel({
   icon,
   children,
 }: {
@@ -51,29 +66,19 @@ function FieldLabel({
   children: React.ReactNode;
 }) {
   return (
-    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
-      <span className="text-sky-700">{icon}</span>
+    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-[#D8E2F1]">
+      <span className="text-[#00C2FF]">{icon}</span>
       {children}
     </label>
   );
 }
 
-function TextList({
-  items,
-  emptyText,
-}: {
-  items: string[];
-  emptyText?: string;
-}) {
-  if (items.length === 0) {
-    return <p className="text-sm text-slate-500">{emptyText || "No items yet."}</p>;
-  }
-
+function OutputList({ items }: { items: string[] }) {
   return (
     <ul className="space-y-2">
       {items.map((item) => (
-        <li key={item} className="flex gap-3 text-sm text-slate-700">
-          <span className="mt-1 size-1.5 shrink-0 rounded-full bg-sky-500" />
+        <li key={item} className="flex gap-3 text-sm leading-7 text-[#D8E2F1]">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00C2FF]" />
           <span>{item}</span>
         </li>
       ))}
@@ -81,11 +86,34 @@ function TextList({
   );
 }
 
-export default function AITripPlanner() {
+function formatTripWindow(trip: PlannerTripOption) {
+  return `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(
+    trip.endDate
+  ).toLocaleDateString()}`;
+}
+
+export default function AITripPlanner({
+  trips,
+  initialTripId,
+}: AITripPlannerProps) {
   const [form, setForm] = useState<AITripPlannerRequest>(emptyForm);
-  const [result, setResult] = useState<AITripPlannerResponse | null>(null);
+  const [result, setResult] = useState<PersistedItinerary | null>(null);
+  const [versions, setVersions] = useState<ItineraryVersionRecord[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [selectedTripId, setSelectedTripId] = useState(
+    initialTripId && trips.some((trip) => trip.id === initialTripId)
+      ? initialTripId
+      : trips[0]?.id || ""
+  );
+  const [providerLabel, setProviderLabel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isVersionsLoading, setIsVersionsLoading] = useState(false);
+  const [isRestoringVersion, setIsRestoringVersion] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedTrip = trips.find((trip) => trip.id === selectedTripId) || null;
+  const selectedVersion =
+    versions.find((version) => version.id === selectedVersionId) || null;
 
   function updateField<K extends keyof AITripPlannerRequest>(
     field: K,
@@ -100,14 +128,12 @@ export default function AITripPlanner() {
         ? current.interests.filter((item) => item !== interest)
         : [...current.interests, interest];
 
-      return {
-        ...current,
-        interests: nextInterests,
-      };
+      return { ...current, interests: nextInterests };
     });
   }
 
   function validateForm() {
+    if (!selectedTripId) return "Select a trip before generating an itinerary.";
     if (!form.destination.trim()) return "Destination is required.";
     if (form.days < 1 || form.days > 21) return "Days must be between 1 and 21.";
     if (form.travelers < 1 || form.travelers > 20) {
@@ -117,36 +143,100 @@ export default function AITripPlanner() {
     return null;
   }
 
+  async function loadVersions(tripId: string) {
+    setIsVersionsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/itineraries?tripId=${tripId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load itinerary history.");
+      }
+
+      const nextVersions = data as ItineraryVersionRecord[];
+      const activeVersion = nextVersions.find((version) => version.isActive) || nextVersions[0];
+
+      setVersions(nextVersions);
+      setSelectedVersionId(activeVersion?.id || null);
+      setProviderLabel(activeVersion?.sourceProvider || null);
+      setResult(activeVersion?.itineraryData || null);
+    } catch (loadError) {
+      setVersions([]);
+      setSelectedVersionId(null);
+      setProviderLabel(null);
+      setResult(null);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load saved itinerary versions."
+      );
+    } finally {
+      setIsVersionsLoading(false);
+    }
+  }
+
+  async function submitPlanner() {
+    const requestPayload: AITripPlannerRequest = {
+      ...form,
+      tripId: selectedTripId,
+    };
+
+    const response = await fetch("/api/ai-trip-planner", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestPayload),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.details || data.error || "Failed to generate itinerary.");
+    }
+
+    const saveResponse = await fetch("/api/itineraries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tripId: selectedTripId,
+        itinerary: data,
+        requestPayload,
+        sourceProvider: response.headers.get("x-ai-provider") || "ai",
+        title: `${form.destination} itinerary`,
+      }),
+    });
+
+    const savedVersion = await saveResponse.json();
+    if (!saveResponse.ok) {
+      throw new Error(savedVersion.error || "Failed to save itinerary version.");
+    }
+
+    return savedVersion as ItineraryVersionRecord;
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
     }
 
-    setIsLoading(true);
     setError(null);
+    setIsLoading(true);
 
     try {
-      const response = await fetch("/api/ai-trip-planner", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate itinerary.");
-      }
-
-      setResult(data);
+      const savedVersion = await submitPlanner();
+      setVersions((current) => [
+        savedVersion,
+        ...current
+          .filter((version) => version.id !== savedVersion.id)
+          .map((version) => ({ ...version, isActive: false })),
+      ]);
+      setSelectedVersionId(savedVersion.id);
+      setProviderLabel(savedVersion.sourceProvider);
+      setResult(savedVersion.itineraryData);
     } catch (submissionError) {
-      setResult(null);
       setError(
         submissionError instanceof Error
           ? submissionError.message
@@ -157,206 +247,263 @@ export default function AITripPlanner() {
     }
   }
 
+  async function restoreVersion(versionId: string) {
+    setIsRestoringVersion(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/itineraries/${versionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ setActive: true }),
+      });
+
+      const updated = await response.json();
+      if (!response.ok) {
+        throw new Error(updated.error || "Failed to restore itinerary version.");
+      }
+
+      const nextVersion = updated as ItineraryVersionRecord;
+      setVersions((current) =>
+        current.map((version) =>
+          version.id === nextVersion.id
+            ? nextVersion
+            : { ...version, isActive: false }
+        )
+      );
+      setSelectedVersionId(nextVersion.id);
+      setProviderLabel(nextVersion.sourceProvider);
+      setResult(nextVersion.itineraryData);
+    } catch (restoreError) {
+      setError(
+        restoreError instanceof Error
+          ? restoreError.message
+          : "Unable to restore that version."
+      );
+    } finally {
+      setIsRestoringVersion(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedTripId) {
+      setVersions([]);
+      setSelectedVersionId(null);
+      setProviderLabel(null);
+      setResult(null);
+      return;
+    }
+
+    const trip = trips.find((item) => item.id === selectedTripId);
+    if (trip) {
+      setForm((current) => ({
+        ...current,
+        destination: current.destination || trip.destinationHint || trip.title,
+        travelDates:
+          current.travelDates ||
+          `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(
+            trip.endDate
+          ).toLocaleDateString()}`,
+      }));
+    }
+
+    void loadVersions(selectedTripId);
+  }, [selectedTripId, trips]);
+
+  const actionSummary = useMemo(() => {
+    if (!result) return "";
+    return [
+      result.trip_overview,
+      ...result.days.map((day) => `Day ${day.day}: ${day.title}`),
+    ].join("\n");
+  }, [result]);
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_35%),linear-gradient(180deg,_#f8fbff_0%,_#ffffff_48%,_#f8fafc_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-4 py-2 text-sm font-medium text-sky-900 shadow-sm backdrop-blur">
-              <Sparkles className="size-4" />
-              Smart itinerary generator
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-                Plan a polished multi-day trip in seconds.
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600">
-                Generate a day-wise itinerary with hotel picks, food guidance,
-                attraction timing, and flexible alternatives tuned to your budget
-                and travel style.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Card className="border-white/70 bg-white/80 shadow-lg shadow-sky-100/60 backdrop-blur">
-                <CardContent className="pt-6">
-                  <div className="mb-3 inline-flex rounded-2xl bg-sky-100 p-3 text-sky-800">
-                    <CalendarRange className="size-5" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-900">Day-wise flow</p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Morning, afternoon, and evening activities with pacing baked in.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="border-white/70 bg-white/80 shadow-lg shadow-sky-100/60 backdrop-blur">
-                <CardContent className="pt-6">
-                  <div className="mb-3 inline-flex rounded-2xl bg-amber-100 p-3 text-amber-800">
-                    <BedDouble className="size-5" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-900">Hotel guidance</p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    3 to 5 property recommendations tailored to your trip profile.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="border-white/70 bg-white/80 shadow-lg shadow-sky-100/60 backdrop-blur">
-                <CardContent className="pt-6">
-                  <div className="mb-3 inline-flex rounded-2xl bg-emerald-100 p-3 text-emerald-800">
-                    <Compass className="size-5" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-900">Practical extras</p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Local foods, transport tips, hidden gems, and backup options.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          <Card className="border-white/70 bg-white/90 shadow-2xl shadow-sky-100/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-2xl text-slate-950">
-                AI Trip Planner
-              </CardTitle>
-              <CardDescription>
-                Fill in the essentials and generate a structured premium-style itinerary.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+    <div className="app-shell px-4 py-8 sm:px-6 lg:px-8">
+      <section className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
+        <Card className="sticky top-24 h-fit">
+          <CardHeader>
+            <p className="section-label">AI Planner</p>
+            <CardTitle className="text-[36px] text-white">
+              Build and save a trip plan you can iterate on
+            </CardTitle>
+            <p className="max-w-lg text-sm leading-7 text-[#8B9BB4]">
+              Generate a day-wise itinerary, save version history to a real trip, and
+              keep the best draft active while we layer in streaming and refine chat next.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {trips.length === 0 ? (
+              <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
+                <h3 className="text-lg font-semibold text-white">Create a trip first</h3>
+                <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+                  Saved AI versions now attach to a specific trip. Create one trip shell,
+                  then come back here to generate and manage itinerary drafts cleanly.
+                </p>
+                <Link href="/trips/new" className="mt-5 inline-flex">
+                  <Button>Create New Trip</Button>
+                </Link>
+              </div>
+            ) : (
               <form className="space-y-5" onSubmit={handleSubmit}>
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <FieldLabel icon={<MapPinned className="size-4" />}>
-                      Destination
-                    </FieldLabel>
-                    <input
-                      value={form.destination}
-                      onChange={(event) => updateField("destination", event.target.value)}
-                      placeholder="Kyoto, Japan"
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    />
+                <div>
+                  <FormLabel icon={<History className="size-4" />}>Attach to trip</FormLabel>
+                  <select
+                    value={selectedTripId}
+                    onChange={(event) => setSelectedTripId(event.target.value)}
+                    className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                  >
+                    {trips.map((trip) => (
+                      <option key={trip.id} value={trip.id} className="bg-[#0F1117]">
+                        {trip.title}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedTrip ? (
+                    <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
+                      {formatTripWindow(selectedTrip)}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <FormLabel icon={<MapPinned className="size-4" />}>Destination</FormLabel>
+                  <input
+                    value={form.destination}
+                    onChange={(event) => updateField("destination", event.target.value)}
+                    placeholder="Kyoto, Japan"
+                    className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-[#4A5568] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <FormLabel icon={<Sparkles className="size-4" />}>Purpose</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {tripPurposeOptions.map((purpose) => {
+                        const active = form.purpose === purpose;
+                        return (
+                          <button
+                            key={purpose}
+                            type="button"
+                            onClick={() => updateField("purpose", purpose)}
+                            className={cn(
+                              "rounded-full border px-3 py-2 text-sm transition",
+                              active
+                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4] hover:text-white"
+                            )}
+                          >
+                            {purpose}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div>
-                    <FieldLabel icon={<Sparkles className="size-4" />}>
-                      Trip purpose
-                    </FieldLabel>
-                    <select
-                      value={form.purpose}
-                      onChange={(event) => updateField("purpose", event.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    >
-                      {tripPurposeOptions.map((purpose) => (
-                        <option key={purpose} value={purpose}>
-                          {purpose}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <FormLabel icon={<CalendarRange className="size-4" />}>Days</FormLabel>
+                      <input
+                        type="number"
+                        min={1}
+                        max={21}
+                        value={form.days}
+                        onChange={(event) => updateField("days", Number(event.target.value))}
+                        className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                      />
+                    </div>
+                    <div>
+                      <FormLabel icon={<Users className="size-4" />}>Travelers</FormLabel>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={form.travelers}
+                        onChange={(event) =>
+                          updateField("travelers", Number(event.target.value))
+                        }
+                        className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                      />
+                    </div>
                   </div>
+                </div>
 
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <FieldLabel icon={<Users className="size-4" />}>
-                      Travelers
-                    </FieldLabel>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={form.travelers}
-                      onChange={(event) =>
-                        updateField("travelers", Number(event.target.value))
-                      }
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    />
+                    <FormLabel icon={<Sparkles className="size-4" />}>Travel style</FormLabel>
+                    <div className="grid grid-cols-3 gap-2">
+                      {travelStyleOptions.map((style) => {
+                        const active = form.travelStyle === style;
+                        return (
+                          <button
+                            key={style}
+                            type="button"
+                            onClick={() => updateField("travelStyle", style)}
+                            className={cn(
+                              "rounded-[12px] border px-3 py-3 text-sm transition",
+                              active
+                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
+                            )}
+                          >
+                            {style}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-
                   <div>
-                    <FieldLabel icon={<CalendarRange className="size-4" />}>
-                      Number of days
-                    </FieldLabel>
-                    <input
-                      type="number"
-                      min={1}
-                      max={21}
-                      value={form.days}
-                      onChange={(event) => updateField("days", Number(event.target.value))}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    />
+                    <FormLabel icon={<BedDouble className="size-4" />}>Hotel</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      {hotelCategoryOptions.map((category) => {
+                        const active = form.hotelCategory === category;
+                        return (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => updateField("hotelCategory", category)}
+                            className={cn(
+                              "rounded-[12px] border px-3 py-3 text-sm transition",
+                              active
+                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
+                            )}
+                          >
+                            {category}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+                </div>
 
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <FieldLabel icon={<Mountain className="size-4" />}>
-                      Travel style
-                    </FieldLabel>
-                    <select
-                      value={form.travelStyle}
-                      onChange={(event) =>
-                        updateField("travelStyle", event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    >
-                      {travelStyleOptions.map((style) => (
-                        <option key={style} value={style}>
-                          {style}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <FieldLabel icon={<BedDouble className="size-4" />}>
-                      Hotel category
-                    </FieldLabel>
-                    <select
-                      value={form.hotelCategory}
-                      onChange={(event) =>
-                        updateField("hotelCategory", event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    >
-                      {hotelCategoryOptions.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <FieldLabel icon={<Compass className="size-4" />}>
-                      Budget range
-                    </FieldLabel>
+                    <FormLabel icon={<ChefHat className="size-4" />}>Budget range</FormLabel>
                     <input
                       value={form.budgetRange}
                       onChange={(event) => updateField("budgetRange", event.target.value)}
-                      placeholder="$1500 - $2500"
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      placeholder="INR 40,000 - INR 80,000"
+                      className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
                     />
                   </div>
-
                   <div>
-                    <FieldLabel icon={<CalendarRange className="size-4" />}>
-                      Travel dates
-                    </FieldLabel>
+                    <FormLabel icon={<CalendarRange className="size-4" />}>Travel dates</FormLabel>
                     <input
                       value={form.travelDates}
                       onChange={(event) => updateField("travelDates", event.target.value)}
                       placeholder="12 Aug - 16 Aug 2026"
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <FieldLabel icon={<ChefHat className="size-4" />}>
-                    Interests
-                  </FieldLabel>
+                  <FormLabel icon={<Sparkles className="size-4" />}>Interests</FormLabel>
                   <div className="flex flex-wrap gap-2">
                     {interestOptions.map((interest) => {
-                      const isSelected = form.interests.includes(interest);
-
+                      const active = form.interests.includes(interest);
                       return (
                         <button
                           key={interest}
@@ -364,9 +511,9 @@ export default function AITripPlanner() {
                           onClick={() => toggleInterest(interest)}
                           className={cn(
                             "rounded-full border px-4 py-2 text-sm transition",
-                            isSelected
-                              ? "border-sky-500 bg-sky-500 text-white shadow-sm"
-                              : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50"
+                            active
+                              ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
+                              : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
                           )}
                         >
                           {interest}
@@ -376,208 +523,357 @@ export default function AITripPlanner() {
                   </div>
                 </div>
 
-                {error && (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error ? (
+                  <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FFB4B4]">
                     {error}
                   </div>
-                )}
+                ) : null}
 
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isLoading}
-                  className="w-full rounded-2xl bg-slate-950 py-6 text-base hover:bg-slate-800"
-                >
-                  {isLoading ? (
-                    <>
-                      <LoaderCircle className="size-4 animate-spin" />
-                      Generating itinerary...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="size-4" />
-                      Generate AI Itinerary
-                    </>
-                  )}
+                <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Generating and saving..." : "Generate AI Itinerary"}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-        </section>
+            )}
+          </CardContent>
+        </Card>
 
-        <section className="mt-10">
-          {!result ? (
-            <Card className="border-dashed border-slate-200 bg-white/70 shadow-lg shadow-sky-100/60">
-              <CardContent className="flex min-h-72 flex-col items-center justify-center text-center">
-                <div className="mb-5 inline-flex rounded-full bg-slate-100 p-4 text-slate-700">
-                  <Sparkles className="size-8" />
-                </div>
-                <h2 className="text-2xl font-semibold text-slate-950">
-                  Your itinerary will appear here
+        <div className="space-y-6">
+          <GlassWidget className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="section-label">Live Output</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                  {isLoading
+                    ? "Thinking through your route..."
+                    : "Saved itinerary and version history"}
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                  Generate a trip plan to see trip overview, hotel recommendations,
-                  day-by-day flow, food ideas, and travel tips in a single structured view.
-                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!result}
+                  onClick={() => navigator.clipboard.writeText(actionSummary)}
+                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Copy className="size-4" />
+                    Copy
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!result}
+                  onClick={() =>
+                    window.alert(
+                      "PDF export will fit naturally once versioned itinerary editing is in place."
+                    )
+                  }
+                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                >
+                  PDF
+                </button>
+                <button
+                  type="button"
+                  disabled={!result}
+                  onClick={() => {
+                    if (navigator.share && result) {
+                      void navigator.share({
+                        title: "AI Travel Planner Itinerary",
+                        text: result.trip_overview,
+                      });
+                    }
+                  }}
+                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Share2 className="size-4" />
+                    Share
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!selectedTripId || isLoading}
+                  onClick={() => {
+                    if (selectedTripId) {
+                      void loadVersions(selectedTripId);
+                    }
+                  }}
+                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] disabled:opacity-40"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <RefreshCw className="size-4" />
+                    Reload
+                  </span>
+                </button>
+              </div>
+            </div>
+          </GlassWidget>
+
+          {selectedTripId ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="section-label">Version History</p>
+                    <CardTitle className="mt-2 text-2xl text-white">
+                      {selectedTrip?.title || "Saved itinerary drafts"}
+                    </CardTitle>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
+                    {versions.length} saved
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isVersionsLoading ? (
+                  <div className="space-y-3">
+                    <SkeletonCard className="h-[92px]" />
+                    <SkeletonCard className="h-[92px]" />
+                  </div>
+                ) : versions.length > 0 ? (
+                  <div className="space-y-3">
+                    {versions.map((version) => {
+                      const previewing = version.id === selectedVersionId;
+                      return (
+                        <div
+                          key={version.id}
+                          className={cn(
+                            "rounded-[18px] border p-4 transition",
+                            previewing
+                              ? "border-[#00C2FF]/30 bg-[#00C2FF]/8"
+                              : "border-white/8 bg-white/[0.03]"
+                          )}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-medium text-white">
+                                Version {version.versionNumber}
+                              </p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
+                                {version.sourceProvider} ·{" "}
+                                {new Date(version.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                            {version.isActive ? <StatusBadge status="upcoming" /> : null}
+                          </div>
+                          <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
+                            {version.title || version.itineraryData.trip_summary.destination}
+                          </p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant={previewing ? "default" : "outline"}
+                              className="h-9"
+                              onClick={() => {
+                                setSelectedVersionId(version.id);
+                                setProviderLabel(version.sourceProvider);
+                                setResult(version.itineraryData);
+                              }}
+                            >
+                              Preview
+                            </Button>
+                            {!version.isActive ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9"
+                                disabled={isRestoringVersion}
+                                onClick={() => void restoreVersion(version.id)}
+                              >
+                                {isRestoringVersion && previewing
+                                  ? "Restoring..."
+                                  : "Make active"}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+                    No saved versions yet for this trip. Generate the first itinerary draft and
+                    it will appear here automatically.
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ) : (
+          ) : null}
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="rounded-[24px] border border-white/8 bg-[#0F1117] px-6 py-8">
+                <p className="mb-4 text-sm uppercase tracking-[0.24em] text-[#00C2FF]">
+                  Thinking...
+                </p>
+                <div className="flex gap-4">
+                  <SkeletonCard className="flex-1" />
+                  <SkeletonCard className="hidden flex-1 lg:block" />
+                </div>
+              </div>
+              <SkeletonCard className="h-[220px]" />
+              <SkeletonCard className="h-[220px]" />
+            </div>
+          ) : result ? (
             <div className="space-y-6">
-              <Card className="overflow-hidden border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                <div className="h-2 bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400" />
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-2xl text-slate-950">
-                    Trip Overview
-                  </CardTitle>
-                  <CardDescription>{result.trip_overview}</CardDescription>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="section-label">Trip Overview</p>
+                      <CardTitle className="mt-2 text-3xl text-white">
+                        {result.trip_summary.destination}
+                      </CardTitle>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedVersion?.isActive ? <StatusBadge status="upcoming" /> : null}
+                      {providerLabel ? (
+                        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
+                          {providerLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-4">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Destination
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-slate-900">
-                      {result.trip_summary.destination}
-                    </p>
+                <CardContent className="space-y-6">
+                  <AITypingEffect
+                    text={result.trip_overview}
+                    className="max-w-3xl text-base leading-8 text-[#D8E2F1]"
+                  />
+                  <div className="grid gap-4 md:grid-cols-4">
+                    {[
+                      [
+                        "Trip profile",
+                        `${result.trip_summary.purpose} · ${result.trip_summary.travel_style}`,
+                      ],
+                      [
+                        "Duration",
+                        `${result.trip_summary.duration_days} days · ${result.trip_summary.travelers} travelers`,
+                      ],
+                      ["Stay zone", result.trip_summary.ideal_area_to_stay],
+                      ["Budget", result.trip_summary.budget_range],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label as string}
+                        className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
+                      >
+                        <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
+                          {label}
+                        </p>
+                        <p className="mt-3 text-sm leading-7 text-white">{value}</p>
+                      </div>
+                    ))}
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Trip profile
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-slate-900">
-                      {result.trip_summary.purpose} · {result.trip_summary.travel_style}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Duration
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-slate-900">
-                      {result.trip_summary.duration_days} days · {result.trip_summary.travelers} travelers
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Stay zone
-                    </p>
-                    <p className="mt-2 text-sm font-medium text-slate-900">
-                      {result.trip_summary.ideal_area_to_stay}
-                    </p>
-                  </div>
+                  {result.trip_summary.best_time_windows.length > 0 ? (
+                    <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
+                        Best time windows
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {result.trip_summary.best_time_windows.map((window) => (
+                          <span
+                            key={window}
+                            className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/10 px-3 py-1 text-sm text-[#D8E2F1]"
+                          >
+                            {window}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 
-              <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
                 <div className="space-y-6">
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="text-2xl text-slate-950">
-                        Day-wise Itinerary
-                      </CardTitle>
-                      <CardDescription>
-                        Each day includes activity flow, place suggestions, food ideas, and flexible alternatives.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {result.days.map((day) => (
-                        <div
-                          key={day.day}
-                          className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5"
-                        >
-                          <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-start md:justify-between">
-                            <div>
-                              <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-700">
-                                Day {day.day}
-                              </p>
-                              <h3 className="mt-1 text-xl font-semibold text-slate-950">
-                                {day.title}
-                              </h3>
-                            </div>
-                            <div className="rounded-full bg-white px-4 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                              {day.travel_time_notes[0] || "Balanced local pacing"}
-                            </div>
+                  {result.days.map((day) => (
+                    <Card key={day.day} className="overflow-hidden">
+                      <div className="h-1 bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]" />
+                      <CardContent className="space-y-5 pt-6">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="section-label">Day {day.day}</p>
+                            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                              {day.title}
+                            </h3>
                           </div>
-
-                          <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">Morning</p>
-                              <div className="mt-3">
-                                <TextList items={day.morning} />
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">Afternoon</p>
-                              <div className="mt-3">
-                                <TextList items={day.afternoon} />
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">Evening</p>
-                              <div className="mt-3">
-                                <TextList items={day.evening} />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">
-                                Recommended attractions
-                              </p>
-                              <div className="mt-3">
-                                <TextList items={day.places} />
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">
-                                Food and recharge
-                              </p>
-                              <div className="mt-3">
-                                <TextList items={day.food_recommendations} />
-                              </div>
-                              <div className="mt-4 border-t border-slate-200 pt-4">
-                                <TextList
-                                  items={day.relaxation_suggestions}
-                                  emptyText="No relaxation suggestions for this day."
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">
-                                Travel time notes
-                              </p>
-                              <div className="mt-3">
-                                <TextList
-                                  items={day.travel_time_notes}
-                                  emptyText="No major travel transfers noted."
-                                />
-                              </div>
-                            </div>
-                            <div className="rounded-2xl bg-white p-4 shadow-sm">
-                              <p className="text-sm font-semibold text-slate-900">
-                                Alternative ideas
-                              </p>
-                              <div className="mt-3">
-                                <TextList
-                                  items={day.activity_alternatives}
-                                  emptyText="No alternatives suggested for this day."
-                                />
-                              </div>
+                          <div className="flex flex-wrap gap-2">
+                            {day.destinationSeason ? (
+                              <span className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-[#8B9BB4]">
+                                {day.destinationSeason.label} ·{" "}
+                                {Math.round(day.destinationSeason.confidenceScore * 100)}%
+                              </span>
+                            ) : null}
+                            <div className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-[#8B9BB4]">
+                              {day.travel_time_notes[0] || "Comfortable pacing"}
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+
+                        {day.weather ? (
+                          <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
+                            <p className="text-sm font-medium text-white">Weather outlook</p>
+                            <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+                              {day.weather.summary} · {day.weather.temperatureMin}C to{" "}
+                              {day.weather.temperatureMax}C
+                            </p>
+                          </div>
+                        ) : null}
+
+                        <div className="grid gap-4 lg:grid-cols-3">
+                          {[
+                            ["Morning", day.morning],
+                            ["Afternoon", day.afternoon],
+                            ["Evening", day.evening],
+                          ].map(([label, items]) => (
+                            <div
+                              key={label as string}
+                              className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
+                            >
+                              <p className="text-sm font-medium text-white">{label}</p>
+                              <div className="mt-3">
+                                <OutputList items={items as string[]} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
+                            <p className="text-sm font-medium text-white">Attractions</p>
+                            <div className="mt-3">
+                              <OutputList items={day.places} />
+                            </div>
+                          </div>
+                          <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
+                            <p className="text-sm font-medium text-white">Food and recharge</p>
+                            <div className="mt-3">
+                              <OutputList
+                                items={[
+                                  ...day.food_recommendations,
+                                  ...day.relaxation_suggestions,
+                                ]}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {day.estimatedCost ? (
+                          <div className="rounded-[16px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 p-4">
+                            <p className="text-sm font-medium text-white">Estimated day cost</p>
+                            <p className="mt-2 text-sm leading-7 text-[#D8E2F1]">
+                              {day.estimatedCost.currency} {day.estimatedCost.total.toLocaleString()}
+                            </p>
+                          </div>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
 
                 <div className="space-y-6">
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
+                  <Card>
                     <CardHeader>
-                      <CardTitle className="text-xl text-slate-950">
+                      <CardTitle className="text-2xl text-white">
                         Hotel Recommendations
                       </CardTitle>
                     </CardHeader>
@@ -585,88 +881,62 @@ export default function AITripPlanner() {
                       {result.hotel_recommendations.map((hotel) => (
                         <div
                           key={hotel.name}
-                          className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
+                          className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-base font-semibold text-slate-950">
-                              {hotel.name}
-                            </h3>
-                            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
+                            <h3 className="text-lg font-semibold text-white">{hotel.name}</h3>
+                            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
                               {hotel.price_range}
                             </span>
                           </div>
-                          <p className="mt-3 text-sm text-slate-600">
+                          <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
                             {hotel.description}
                           </p>
-                          <p className="mt-3 text-sm font-medium text-sky-800">
-                            Why this works: {hotel.recommendation_reason}
+                          <p className="mt-3 text-sm text-[#D8E2F1]">
+                            {hotel.recommendation_reason}
                           </p>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-slate-950">
-                        Food Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TextList items={result.local_foods} />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-slate-950">
-                        Must-Visit Attractions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TextList items={result.must_visit_attractions} />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-slate-950">
-                        Hidden Gems
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TextList items={result.hidden_gems} />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-xl text-slate-950">
-                        <Bus className="size-5 text-sky-700" />
-                        Transportation Suggestions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TextList items={result.transportation_suggestions} />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-white/70 bg-white shadow-xl shadow-sky-100/80">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-slate-950">
-                        Travel Tips
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TextList items={result.travel_tips} />
-                    </CardContent>
-                  </Card>
+                  {[
+                    ["Local Foods", result.local_foods],
+                    ["Must-Visit Attractions", result.must_visit_attractions],
+                    ["Hidden Gems", result.hidden_gems],
+                    ["Transportation Suggestions", result.transportation_suggestions],
+                    ["Travel Tips", result.travel_tips],
+                  ].map(([title, items]) => (
+                    <Card key={title as string}>
+                      <CardHeader>
+                        <CardTitle className="text-xl text-white">{title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <OutputList items={items as string[]} />
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
             </div>
+          ) : (
+            <Card className="min-h-[620px]">
+              <CardContent className="flex h-full flex-col items-center justify-center py-20 text-center">
+                <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-4 text-[#00C2FF]">
+                  <Sparkles className="size-7" />
+                </div>
+                <h2 className="text-3xl font-semibold text-white">
+                  Your saved itinerary will appear here
+                </h2>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-[#8B9BB4]">
+                  Generate a trip draft to create the first saved version, then preview and
+                  restore itinerary history from this panel.
+                </p>
+              </CardContent>
+            </Card>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

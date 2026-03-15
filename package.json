@@ -15,8 +15,10 @@
     "@prisma/client": "^6.4.1",
     "@radix-ui/react-tabs": "^1.1.4",
     "@uploadthing/react": "^7.3.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.36.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.487.0",
     "next": "15.3.3",
@@ -27,7 +29,8 @@
     "react-leaflet": "^5.0.0",
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5",
-    "uploadthing": "^7.5.2"
+    "uploadthing": "^7.5.2",
+    "vanilla-tilt": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
