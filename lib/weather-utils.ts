@@ -80,8 +80,51 @@ export function buildWeatherSnapshot(
   };
 }
 
+function isValidDate(value: Date) {
+  return !Number.isNaN(value.getTime());
+}
+
+export function parseTravelDateInput(input?: string) {
+  if (!input?.trim()) {
+    return new Date();
+  }
+
+  const trimmed = input.trim();
+  const directDate = new Date(trimmed);
+  if (isValidDate(directDate)) {
+    return directDate;
+  }
+
+  const normalizedRange = trimmed
+    .replace(/\s+to\s+/gi, " - ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const [startPart, endPart] = normalizedRange.split(" - ").map((part) => part?.trim());
+
+  if (startPart && endPart) {
+    const endYearMatch = endPart.match(/\b(\d{4})\b/);
+    const inferredStart = endYearMatch ? `${startPart} ${endYearMatch[1]}` : startPart;
+    const parsedStart = new Date(inferredStart);
+
+    if (isValidDate(parsedStart)) {
+      return parsedStart;
+    }
+  }
+
+  const fallbackText = trimmed.match(/[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}|\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}/);
+  if (fallbackText?.[0]) {
+    const fallbackDate = new Date(fallbackText[0]);
+    if (isValidDate(fallbackDate)) {
+      return fallbackDate;
+    }
+  }
+
+  return new Date();
+}
+
 export function estimateTripWeatherContext(days: number, startDate?: string) {
-  const anchor = startDate ? new Date(startDate) : new Date();
+  const anchor = parseTravelDateInput(startDate);
   const monthIndex = anchor.getMonth();
   const averageWeatherCode = warmWeatherCodes.has(monthIndex) ? 1 : 3;
 

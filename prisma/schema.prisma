@@ -85,8 +85,11 @@ model Trip {
   budget Budget?
   expenses Expense[]
   packingList PackingList?
+  documents Document[]
+  journalEntries JournalEntry[]
   itineraryVersions ItineraryVersion[]
   chatMessages ChatMessage[]
+  share TripShare?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,6 +103,7 @@ model Location {
   trip Trip @relation(fields: [tripId], references: [id] )
   tripId String
   order Int @default(0)
+  notes Note[]
   createdAt DateTime @default(now())
 }
 
@@ -153,6 +157,45 @@ model PackingList {
   updatedAt DateTime @updatedAt
 }
 
+model Document {
+  id         String   @id @default(cuid())
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId     String
+  name       String
+  type       String
+  url        String
+  expiryDate DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([tripId, createdAt])
+}
+
+model Note {
+  id           String   @id @default(cuid())
+  location     Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId   String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([locationId, createdAt])
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String
+  day       Int
+  content   String
+  photos    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tripId, day])
+  @@index([tripId, createdAt])
+}
+
 model ItineraryVersion {
   id             String   @id @default(cuid())
   trip           Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
@@ -198,6 +241,16 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, read, createdAt])
+}
+
+model TripShare {
+  id        String   @id @default(cuid())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String   @unique
+  token     String   @unique
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ThemePreference {

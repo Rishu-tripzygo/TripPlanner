@@ -1,22 +1,44 @@
 "use client";
 
 import { Location, Trip } from "@/app/generated/prisma";
+import { DestinationForecast, PersistedItinerary } from "@/lib/phase-one-types";
 import StatusBadge from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Map from "@/components/map";
 import SortableItinerary from "@/components/sortable-itinerary";
-import { Calendar, Compass, MapPinned, Plus } from "lucide-react";
+import DestinationNotesPanel from "@/components/destination-notes-panel";
+import TripSharePanel from "@/components/trip-share-panel";
+import {
+  Calendar,
+  CloudSun,
+  Compass,
+  FolderLock,
+  BookOpenText,
+  Landmark,
+  MapPinned,
+  Package,
+  Plus,
+  TriangleAlert,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type TripWithLocation = Trip & {
   locations: Location[];
 };
 
-export default function TripDetailClient({ trip }: { trip: TripWithLocation }) {
+export default function TripDetailClient({
+  trip,
+  activeItinerary,
+}: {
+  trip: TripWithLocation;
+  activeItinerary?: PersistedItinerary | null;
+}) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [forecasts, setForecasts] = useState<DestinationForecast[]>([]);
+  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
 
   const status = useMemo(() => {
     const now = new Date();
@@ -31,6 +53,41 @@ export default function TripDetailClient({ trip }: { trip: TripWithLocation }) {
       (trip.endDate.getTime() - trip.startDate.getTime()) / (1000 * 60 * 60 * 24)
     )
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadForecasts() {
+      setIsWeatherLoading(true);
+
+      try {
+        const response = await fetch(`/api/weather/trip/${trip.id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load weather data.");
+        }
+
+        if (!cancelled) {
+          setForecasts(data as DestinationForecast[]);
+        }
+      } catch {
+        if (!cancelled) {
+          setForecasts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsWeatherLoading(false);
+        }
+      }
+    }
+
+    void loadForecasts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trip.id]);
 
   return (
     <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -53,12 +110,38 @@ export default function TripDetailClient({ trip }: { trip: TripWithLocation }) {
                 {trip.startDate.toLocaleDateString()} - {trip.endDate.toLocaleDateString()}
               </p>
             </div>
-            <Link href={`/trips/${trip.id}/itinerary/new`}>
-              <Button size="lg">
-                <Plus className="size-4" />
-                Add Location
-              </Button>
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link href={`/budget/${trip.id}`}>
+                <Button size="lg" variant="outline">
+                  <Landmark className="size-4" />
+                  Budget
+                </Button>
+              </Link>
+              <Link href={`/packing/${trip.id}`}>
+                <Button size="lg" variant="outline">
+                  <Package className="size-4" />
+                  Packing
+                </Button>
+              </Link>
+              <Link href={`/documents/${trip.id}`}>
+                <Button size="lg" variant="outline">
+                  <FolderLock className="size-4" />
+                  Documents
+                </Button>
+              </Link>
+              <Link href={`/journal/${trip.id}`}>
+                <Button size="lg" variant="outline">
+                  <BookOpenText className="size-4" />
+                  Journal
+                </Button>
+              </Link>
+              <Link href={`/trips/${trip.id}/itinerary/new`}>
+                <Button size="lg">
+                  <Plus className="size-4" />
+                  Add Location
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -113,16 +196,139 @@ export default function TripDetailClient({ trip }: { trip: TripWithLocation }) {
                 <Map itineraries={trip.locations} />
               </div>
             </div>
+
+            <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="section-label">Weather</p>
+                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+                    Destination forecast and season signals
+                  </h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-8 text-[#8B9BB4]">
+                    Seven-day forecast windows come from Open-Meteo when available. We also
+                    surface seasonal guidance to flag rain-heavy or heat-heavy travel windows.
+                  </p>
+                </div>
+                <div className="inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                  <CloudSun className="size-5" />
+                </div>
+              </div>
+
+              {isWeatherLoading ? (
+                <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                  <div className="h-[220px] animate-pulse rounded-[18px] border border-white/8 bg-white/[0.03]" />
+                  <div className="h-[220px] animate-pulse rounded-[18px] border border-white/8 bg-white/[0.03]" />
+                </div>
+              ) : forecasts.length > 0 ? (
+                <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                  {forecasts.map((forecast) => (
+                    <div
+                      key={forecast.destinationId}
+                      className="rounded-[18px] border border-white/8 bg-[#0F1117] p-5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-xl font-semibold text-white">
+                            {forecast.destinationName}
+                          </h3>
+                          <p className="mt-2 text-sm text-[#8B9BB4]">
+                            {forecast.bestTimeToVisit.label} · best months{" "}
+                            {forecast.bestTimeToVisit.bestMonths.join(", ")}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#D8E2F1]">
+                          {Math.round(forecast.bestTimeToVisit.confidenceScore)}% fit
+                        </span>
+                      </div>
+
+                      {forecast.alert ? (
+                        <div className="mt-4 flex gap-3 rounded-[16px] border border-[#F59E0B]/20 bg-[#F59E0B]/10 p-4 text-sm leading-7 text-[#F8D7A1]">
+                          <TriangleAlert className="mt-1 size-4 shrink-0 text-[#F59E0B]" />
+                          <span>{forecast.alert}</span>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {forecast.forecast.map((day) => (
+                          <div
+                            key={`${forecast.destinationId}-${day.date}`}
+                            className="rounded-[14px] border border-white/8 bg-white/[0.03] p-3"
+                          >
+                            <p className="text-xs uppercase tracking-[0.18em] text-[#4A5568]">
+                              {new Date(`${day.date}T00:00:00.000Z`).toLocaleDateString()}
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-white">
+                              {day.summary}
+                            </p>
+                            <p className="mt-1 text-sm text-[#8B9BB4]">
+                              {day.temperatureMin}C - {day.temperatureMax}C
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-6 rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+                  Weather data is not available yet for this trip. Forecasts appear once we have
+                  destination coordinates and a valid travel window.
+                </div>
+              )}
+            </div>
+
+            {activeItinerary ? (
+              <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-6">
+                <p className="section-label">AI Weather Outlook</p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+                  Day-by-day badges from your active AI itinerary
+                </h2>
+                <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {activeItinerary.days.map((day) => (
+                    <div
+                      key={day.day}
+                      className="rounded-[18px] border border-white/8 bg-[#0F1117] p-5"
+                    >
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
+                        Day {day.day}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-white">{day.title}</h3>
+                      {day.weather ? (
+                        <p className="mt-3 text-sm leading-7 text-[#D8E2F1]">
+                          {day.weather.summary} · {day.weather.temperatureMin}C to{" "}
+                          {day.weather.temperatureMax}C
+                        </p>
+                      ) : (
+                        <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
+                          Weather badge will appear once the itinerary has weather context.
+                        </p>
+                      )}
+                      {day.destinationSeason ? (
+                        <div className="mt-4 inline-flex rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#D8E2F1]">
+                          {day.destinationSeason.label}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <TripSharePanel tripId={trip.id} tripTitle={trip.title} />
           </TabsContent>
 
           <TabsContent value="itinerary">
-            {trip.locations.length > 0 ? (
-              <SortableItinerary locations={trip.locations} tripId={trip.id} />
-            ) : (
-              <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-center text-[#8B9BB4]">
-                Add locations to build your itinerary.
-              </div>
-            )}
+            <div className="space-y-6">
+              {trip.locations.length > 0 ? (
+                <SortableItinerary locations={trip.locations} tripId={trip.id} />
+              ) : (
+                <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-center text-[#8B9BB4]">
+                  Add locations to build your itinerary.
+                </div>
+              )}
+
+              <DestinationNotesPanel locations={trip.locations} />
+            </div>
           </TabsContent>
 
           <TabsContent value="map">

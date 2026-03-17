@@ -38,6 +38,16 @@ export interface WeatherSnapshot {
   summary: string;
 }
 
+export interface DestinationForecast {
+  destinationId: string;
+  destinationName: string;
+  latitude: number;
+  longitude: number;
+  forecast: WeatherSnapshot[];
+  bestTimeToVisit: DestinationSeasonBadge;
+  alert?: string;
+}
+
 export type BaseDayPlan = AITripPlannerResponse["days"][number];
 
 export interface EditableDayPlan extends BaseDayPlan {
@@ -105,4 +115,42 @@ export interface RefinementMessage {
   role: ChatRole;
   content: string;
   createdAt: string;
+  itineraryVersionId?: string | null;
+}
+
+export interface TripShareRecord {
+  id: string;
+  tripId: string;
+  token: string;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentRecord {
+  id: string;
+  tripId: string;
+  name: string;
+  type: string;
+  url: string;
+  expiryDate?: string | null;
+  createdAt: string;
+}
+
+export interface NoteRecord {
+  id: string;
+  locationId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JournalEntryRecord {
+  id: string;
+  tripId: string;
+  day: number;
+  content: string;
+  photos: string[];
+  createdAt: string;
+  updatedAt: string;
 }

@@ -1,0 +1,68 @@
+import { auth } from "@/auth";
+import PackingListManager from "@/components/packing-list-manager";
+import { prisma } from "@/lib/prisma";
+import { PackingListRecord } from "@/lib/phase-one-types";
+import { generatePackingItems } from "@/lib/packing-list";
+
+export default async function PackingPage({
+  params,
+}: {
+  params: Promise<{ tripId: string }>;
+}) {
+  const session = await auth();
+  const { tripId } = await params;
+
+  if (!session?.user?.id) {
+    return <div className="app-shell px-4 py-20 text-white">Please sign in.</div>;
+  }
+
+  const trip = await prisma.trip.findFirst({
+    where: {
+      id: tripId,
+      userId: session.user.id,
+    },
+    include: {
+      packingList: true,
+      locations: {
+        orderBy: { order: "asc" },
+      },
+      itineraryVersions: {
+        where: { isActive: true },
+        take: 1,
+      },
+    },
+  });
+
+  if (!trip) {
+    return <div className="app-shell px-4 py-20 text-white">Trip not found.</div>;
+  }
+
+  const initialList: PackingListRecord = trip.packingList
+    ? {
+        id: trip.packingList.id,
+        tripId: trip.packingList.tripId,
+        template: trip.packingList.template,
+        items: trip.packingList.items as unknown as PackingListRecord["items"],
+      }
+    : {
+        id: "generated",
+        tripId: trip.id,
+        template: "Smart AI pack",
+        items: generatePackingItems({
+          tripTitle: trip.title,
+          startDate: trip.startDate.toISOString(),
+          endDate: trip.endDate.toISOString(),
+          destinationNames: trip.locations.map((location) => location.locationTitle),
+          itinerary:
+            (trip.itineraryVersions[0]?.itineraryData as never) || null,
+        }),
+      };
+
+  return (
+    <PackingListManager
+      tripId={trip.id}
+      tripTitle={trip.title}
+      initialList={initialList}
+    />
+  );
+}

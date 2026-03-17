@@ -17,7 +17,13 @@ export default async function TripDetail({
 
   const trip = await prisma.trip.findFirst({
     where: { id: tripId, userId: session.user?.id },
-    include: { locations: true },
+    include: {
+      locations: true,
+      itineraryVersions: {
+        where: { isActive: true },
+        take: 1,
+      },
+    },
   });
 
   console.log(trip);
@@ -26,5 +32,12 @@ export default async function TripDetail({
     return <div> Trip not found.</div>;
   }
 
-  return <TripDetailClient trip={trip} />;
+  return (
+    <TripDetailClient
+      trip={trip}
+      activeItinerary={
+        (trip.itineraryVersions[0]?.itineraryData as never) || null
+      }
+    />
+  );
 }

@@ -42,6 +42,31 @@
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.06);
   --ring: rgba(0, 194, 255, 0.42);
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --nav-bg: rgba(8, 9, 14, 0.7);
+}
+
+html.light {
+  --background: #f7f8fb;
+  --foreground: #0a0e1a;
+  --card: #ffffff;
+  --card-foreground: #0a0e1a;
+  --primary: #1b3a6b;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f6;
+  --secondary-foreground: #0a0e1a;
+  --muted: #eef1f6;
+  --muted-foreground: #556277;
+  --accent: #00c2ff;
+  --accent-foreground: #0a0e1a;
+  --destructive: #ef4444;
+  --border: rgba(10, 14, 26, 0.08);
+  --input: rgba(10, 14, 26, 0.04);
+  --ring: rgba(0, 194, 255, 0.28);
+  --surface-1: rgba(10, 14, 26, 0.03);
+  --surface-2: rgba(10, 14, 26, 0.06);
+  --nav-bg: rgba(247, 248, 251, 0.82);
 }
 
 @layer base {
@@ -60,6 +85,13 @@
       radial-gradient(circle at top left, rgba(27, 58, 107, 0.36), transparent 24%),
       radial-gradient(circle at top right, rgba(0, 194, 255, 0.12), transparent 20%),
       linear-gradient(180deg, #08090e 0%, #0b0f18 48%, #08090e 100%);
+  }
+
+  html.light body {
+    background-image:
+      radial-gradient(circle at top left, rgba(27, 58, 107, 0.1), transparent 24%),
+      radial-gradient(circle at top right, rgba(0, 194, 255, 0.08), transparent 20%),
+      linear-gradient(180deg, #fafbfd 0%, #f2f5fa 48%, #fafbfd 100%);
   }
 
   button,
@@ -99,17 +131,17 @@
   }
 
   .surface-1 {
-    background: #0f1117;
+    background: var(--surface-1);
   }
 
   .surface-2 {
-    background: #161820;
+    background: var(--surface-2);
   }
 
   .glass-panel {
-    background: rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--card) 78%, transparent);
     backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
   }
 
   .app-shell {

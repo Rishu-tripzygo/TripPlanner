@@ -18,6 +18,7 @@ import {
 import {
   ItineraryVersionRecord,
   PersistedItinerary,
+  RefinementMessage,
 } from "@/lib/phase-one-types";
 import { cn } from "@/lib/utils";
 import {
@@ -27,7 +28,9 @@ import {
   Copy,
   History,
   MapPinned,
+  MessageSquareText,
   RefreshCw,
+  Send,
   Share2,
   Sparkles,
   Users,
@@ -45,6 +48,12 @@ interface AITripPlannerProps {
   trips: PlannerTripOption[];
   initialTripId?: string;
 }
+
+type StreamEvent =
+  | { type: "status"; stage: string; message: string }
+  | { type: "overview_chunk"; text: string }
+  | { type: "complete"; version: ItineraryVersionRecord }
+  | { type: "error"; error: string };
 
 const emptyForm: AITripPlannerRequest = {
   destination: "",
@@ -99,6 +108,7 @@ export default function AITripPlanner({
   const [form, setForm] = useState<AITripPlannerRequest>(emptyForm);
   const [result, setResult] = useState<PersistedItinerary | null>(null);
   const [versions, setVersions] = useState<ItineraryVersionRecord[]>([]);
+  const [messages, setMessages] = useState<RefinementMessage[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [selectedTripId, setSelectedTripId] = useState(
     initialTripId && trips.some((trip) => trip.id === initialTripId)
@@ -109,6 +119,10 @@ export default function AITripPlanner({
   const [isLoading, setIsLoading] = useState(false);
   const [isVersionsLoading, setIsVersionsLoading] = useState(false);
   const [isRestoringVersion, setIsRestoringVersion] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
+  const [refinePrompt, setRefinePrompt] = useState("");
+  const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const [streamingOverview, setStreamingOverview] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const selectedTrip = trips.find((trip) => trip.id === selectedTripId) || null;
@@ -177,41 +191,76 @@ export default function AITripPlanner({
     }
   }
 
+  async function loadMessages(tripId: string) {
+    try {
+      const response = await fetch(`/api/chat-messages?tripId=${tripId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load AI conversation.");
+      }
+
+      setMessages(data as RefinementMessage[]);
+    } catch {
+      setMessages([]);
+    }
+  }
+
   async function submitPlanner() {
     const requestPayload: AITripPlannerRequest = {
       ...form,
       tripId: selectedTripId,
     };
 
-    const response = await fetch("/api/ai-trip-planner", {
+    const response = await fetch("/api/ai-trip-planner/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestPayload),
     });
 
-    const data = await response.json();
     if (!response.ok) {
+      const data = await response.json();
       throw new Error(data.details || data.error || "Failed to generate itinerary.");
     }
 
-    const saveResponse = await fetch("/api/itineraries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tripId: selectedTripId,
-        itinerary: data,
-        requestPayload,
-        sourceProvider: response.headers.get("x-ai-provider") || "ai",
-        title: `${form.destination} itinerary`,
-      }),
-    });
-
-    const savedVersion = await saveResponse.json();
-    if (!saveResponse.ok) {
-      throw new Error(savedVersion.error || "Failed to save itinerary version.");
+    if (!response.body) {
+      throw new Error("Streaming response body was not available.");
     }
 
-    return savedVersion as ItineraryVersionRecord;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let completedVersion: ItineraryVersionRecord | null = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line) as StreamEvent;
+
+        if (event.type === "status") {
+          setStreamStatus(event.message);
+        } else if (event.type === "overview_chunk") {
+          setStreamingOverview((current) => current + event.text);
+        } else if (event.type === "complete") {
+          completedVersion = event.version;
+        } else if (event.type === "error") {
+          throw new Error(event.error);
+        }
+      }
+    }
+
+    if (!completedVersion) {
+      throw new Error("Streaming completed without a saved itinerary version.");
+    }
+
+    return completedVersion;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -224,6 +273,8 @@ export default function AITripPlanner({
 
     setError(null);
     setIsLoading(true);
+    setStreamStatus("Preparing your trip brief");
+    setStreamingOverview("");
 
     try {
       const savedVersion = await submitPlanner();
@@ -244,6 +295,8 @@ export default function AITripPlanner({
       );
     } finally {
       setIsLoading(false);
+      setStreamStatus(null);
+      setStreamingOverview("");
     }
   }
 
@@ -285,9 +338,85 @@ export default function AITripPlanner({
     }
   }
 
+  async function handleRefineSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedVersionId) {
+      setError("Choose an itinerary version before refining it.");
+      return;
+    }
+
+    const instruction = refinePrompt.trim();
+    if (!instruction) {
+      setError("Enter a refinement request first.");
+      return;
+    }
+
+    setIsRefining(true);
+    setError(null);
+
+    const optimisticUserMessage: RefinementMessage = {
+      id: `temp-${Date.now()}`,
+      role: "USER",
+      content: instruction,
+      createdAt: new Date().toISOString(),
+      itineraryVersionId: selectedVersionId,
+    };
+
+    setMessages((current) => [...current, optimisticUserMessage]);
+
+    try {
+      const response = await fetch(`/api/itineraries/${selectedVersionId}/refine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Failed to refine itinerary.");
+      }
+
+      const nextVersion = data.version as ItineraryVersionRecord;
+      const assistantMessage = data.assistantMessage as RefinementMessage;
+
+      setVersions((current) => [
+        nextVersion,
+        ...current
+          .filter((version) => version.id !== nextVersion.id)
+          .map((version) => ({ ...version, isActive: false })),
+      ]);
+      setSelectedVersionId(nextVersion.id);
+      setProviderLabel(nextVersion.sourceProvider);
+      setResult(nextVersion.itineraryData);
+      setMessages((current) => [
+        ...current.filter((message) => message.id !== optimisticUserMessage.id),
+        {
+          ...optimisticUserMessage,
+          id: `user-${nextVersion.id}`,
+          itineraryVersionId: selectedVersionId,
+        },
+        assistantMessage,
+      ]);
+      setRefinePrompt("");
+    } catch (refineError) {
+      setMessages((current) =>
+        current.filter((message) => message.id !== optimisticUserMessage.id)
+      );
+      setError(
+        refineError instanceof Error
+          ? refineError.message
+          : "Unable to refine that itinerary right now."
+      );
+    } finally {
+      setIsRefining(false);
+    }
+  }
+
   useEffect(() => {
     if (!selectedTripId) {
       setVersions([]);
+      setMessages([]);
       setSelectedVersionId(null);
       setProviderLabel(null);
       setResult(null);
@@ -308,6 +437,7 @@ export default function AITripPlanner({
     }
 
     void loadVersions(selectedTripId);
+    void loadMessages(selectedTripId);
   }, [selectedTripId, trips]);
 
   const actionSummary = useMemo(() => {
@@ -703,11 +833,28 @@ export default function AITripPlanner({
             <div className="space-y-4">
               <div className="rounded-[24px] border border-white/8 bg-[#0F1117] px-6 py-8">
                 <p className="mb-4 text-sm uppercase tracking-[0.24em] text-[#00C2FF]">
-                  Thinking...
+                  Live generation
                 </p>
-                <div className="flex gap-4">
-                  <SkeletonCard className="flex-1" />
-                  <SkeletonCard className="hidden flex-1 lg:block" />
+                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
+                  <p className="text-sm font-medium text-white">
+                    {streamStatus || "Generating your itinerary"}
+                  </p>
+                  <div className="mt-4 min-h-[108px] rounded-[16px] border border-white/8 bg-[#08090E] p-4">
+                    {streamingOverview ? (
+                      <p className="text-sm leading-7 text-[#D8E2F1]">
+                        {streamingOverview}
+                        <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-[#00C2FF]" />
+                      </p>
+                    ) : (
+                      <p className="text-sm leading-7 text-[#8B9BB4]">
+                        Thinking through pace, neighborhoods, hotels, and daily flow...
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <SkeletonCard className="h-[180px]" />
+                  <SkeletonCard className="h-[180px]" />
                 </div>
               </div>
               <SkeletonCard className="h-[220px]" />
@@ -918,6 +1065,100 @@ export default function AITripPlanner({
                   ))}
                 </div>
               </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="section-label">Refine With AI</p>
+                      <CardTitle className="mt-2 flex items-center gap-2 text-2xl text-white">
+                        <MessageSquareText className="size-5 text-[#00C2FF]" />
+                        Adjust this itinerary with natural language
+                      </CardTitle>
+                    </div>
+                    {selectedVersion ? (
+                      <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
+                        Based on v{selectedVersion.versionNumber}
+                      </span>
+                    ) : null}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {[
+                      "Make day 2 more budget-friendly",
+                      "Add a beach sunset plan on day 3",
+                      "Replace nightlife with family-friendly options",
+                    ].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setRefinePrompt(suggestion)}
+                        className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4 text-left text-sm leading-7 text-[#D8E2F1] transition hover:border-[#00C2FF]/20 hover:bg-[#00C2FF]/6"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-3 rounded-[18px] border border-white/8 bg-[#0F1117]/80 p-4">
+                    {messages.length > 0 ? (
+                      <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
+                        {messages.map((message) => {
+                          const isUser = message.role === "USER";
+                          return (
+                            <div
+                              key={message.id}
+                              className={cn(
+                                "rounded-[16px] border p-4",
+                                isUser
+                                  ? "ml-auto max-w-[88%] border-[#00C2FF]/20 bg-[#00C2FF]/10"
+                                  : "mr-auto max-w-[92%] border-white/8 bg-white/[0.03]"
+                              )}
+                            >
+                              <p className="text-xs uppercase tracking-[0.2em] text-[#4A5568]">
+                                {isUser ? "You" : "AI Planner"}
+                              </p>
+                              <p className="mt-2 text-sm leading-7 text-[#D8E2F1]">
+                                {message.content}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.02] p-4 text-sm leading-7 text-[#8B9BB4]">
+                        No refinement history yet. Ask for a smaller change like updating one
+                        day, making the plan cheaper, or swapping in different activities.
+                      </div>
+                    )}
+
+                    <form className="space-y-3" onSubmit={handleRefineSubmit}>
+                      <textarea
+                        value={refinePrompt}
+                        onChange={(event) => setRefinePrompt(event.target.value)}
+                        placeholder="Try: make day 2 slower-paced and add one vegetarian dinner option."
+                        className="min-h-[120px] w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white placeholder:text-[#4A5568] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                      />
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm text-[#8B9BB4]">
+                          Each refinement creates a new saved itinerary version.
+                        </p>
+                        <Button
+                          type="submit"
+                          disabled={isRefining || !selectedVersionId}
+                          className="min-w-[190px]"
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <Send className="size-4" />
+                            {isRefining ? "Refining..." : "Apply refinement"}
+                          </span>
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           ) : (
             <Card className="min-h-[620px]">
