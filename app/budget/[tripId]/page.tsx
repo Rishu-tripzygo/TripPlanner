@@ -22,6 +22,7 @@ export default async function BudgetTrackerPage({
     },
     include: {
       budget: true,
+      locations: true,
       expenses: {
         orderBy: { expenseDate: "desc" },
       },
@@ -62,6 +63,7 @@ export default async function BudgetTrackerPage({
     <BudgetTracker
       tripId={trip.id}
       tripTitle={trip.title}
+      destinations={trip.locations.map((location) => location.locationTitle)}
       initialBudget={budget}
       initialExpenses={expenses}
       activeItinerary={

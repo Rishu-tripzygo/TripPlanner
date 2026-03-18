@@ -5,7 +5,7 @@ import { UploadButton } from "@/lib/upload-thing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JournalEntryRecord } from "@/lib/phase-one-types";
-import { BookOpenText, Camera, Save } from "lucide-react";
+import { BookOpenText, Camera, Download, Save } from "lucide-react";
 
 export default function JournalManager({
   tripId,
@@ -81,12 +81,22 @@ export default function JournalManager({
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card>
           <CardHeader>
-            <p className="section-label">Trip Journal</p>
-            <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
-            <p className="text-sm leading-7 text-[#8B9BB4]">
-              Capture what happened each day so the trip becomes a memory timeline, not just a
-              plan. Add reflections, moments, and supporting photos as you go.
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="section-label">Trip Journal</p>
+                <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
+                <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
+                  Capture what happened each day so the trip becomes a memory timeline, not just a
+                  plan. Add reflections, moments, and supporting photos as you go.
+                </p>
+              </div>
+              <Button type="button" variant="outline" onClick={() => window.print()}>
+                <span className="inline-flex items-center gap-2">
+                  <Download className="size-4" />
+                  Export PDF
+                </span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">

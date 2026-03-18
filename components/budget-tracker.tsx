@@ -3,12 +3,15 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CurrencyConverterWidget from "@/components/currency-converter-widget";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { BudgetBreakdown, ExpenseRecord, PersistedItinerary } from "@/lib/phase-one-types";
 import { Landmark, Receipt, Wallet } from "lucide-react";
 
 interface BudgetTrackerProps {
   tripId: string;
   tripTitle: string;
+  destinations: string[];
   initialBudget: BudgetBreakdown | null;
   initialExpenses: ExpenseRecord[];
   activeItinerary: PersistedItinerary | null;
@@ -76,6 +79,7 @@ function DonutChart({
 export default function BudgetTracker({
   tripId,
   tripTitle,
+  destinations,
   initialBudget,
   initialExpenses,
   activeItinerary,
@@ -225,7 +229,7 @@ export default function BudgetTracker({
                 }
                 className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
               >
-                {["INR", "USD", "EUR", "GBP", "JPY"].map((currency) => (
+                {SUPPORTED_CURRENCIES.map((currency) => (
                   <option key={currency} value={currency} className="bg-[#0F1117]">
                     {currency}
                   </option>
@@ -327,6 +331,14 @@ export default function BudgetTracker({
           </CardContent>
         </Card>
       </section>
+
+      <CurrencyConverterWidget
+        destinations={destinations}
+        defaultFrom={budget.currency}
+        suggestedAmount={budget.totalBudget || activeItinerary?.total_estimated_cost?.total || 10000}
+        title="Budget in local currency"
+        compact
+      />
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>

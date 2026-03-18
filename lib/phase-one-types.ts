@@ -1,6 +1,7 @@
 import { AITripPlannerResponse } from "@/lib/ai-trip-types";
+import { CurrencyCode } from "@/lib/currency";
 
-export type SupportedCurrency = "INR" | "USD" | "EUR" | "GBP" | "JPY";
+export type SupportedCurrency = CurrencyCode;
 
 export type ThemePreference = "SYSTEM" | "LIGHT" | "DARK";
 
@@ -153,4 +154,23 @@ export interface JournalEntryRecord {
   photos: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CurrencyConversionRecord {
+  from: CurrencyCode;
+  to: CurrencyCode;
+  amount: number;
+  convertedAmount: number;
+  rate: number;
+  source: "live" | "fallback" | "same-currency";
+}
+
+export interface NotificationRecord {
+  id: string;
+  userId: string;
+  type: string;
+  message: string;
+  read: boolean;
+  tripId?: string | null;
+  createdAt: string;
 }

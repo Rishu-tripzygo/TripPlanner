@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Map from "@/components/map";
 import SortableItinerary from "@/components/sortable-itinerary";
 import DestinationNotesPanel from "@/components/destination-notes-panel";
+import CurrencyConverterWidget from "@/components/currency-converter-widget";
 import TripSharePanel from "@/components/trip-share-panel";
 import {
   Calendar,
@@ -313,6 +314,13 @@ export default function TripDetailClient({
                 </div>
               </div>
             ) : null}
+
+            <CurrencyConverterWidget
+              destinations={trip.locations.map((location) => location.locationTitle)}
+              defaultFrom={activeItinerary?.total_estimated_cost?.currency || "INR"}
+              suggestedAmount={activeItinerary?.total_estimated_cost?.total || 10000}
+              title="Local currency preview"
+            />
 
             <TripSharePanel tripId={trip.id} tripTitle={trip.title} />
           </TabsContent>
