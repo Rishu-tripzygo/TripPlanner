@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTrip } from "@/lib/actions/create-trip";
 import { cn } from "@/lib/utils";
 import { UploadButton } from "@/lib/upload-thing";
-import { CalendarRange, ImagePlus, MapPinned, Plane, Sparkles } from "lucide-react";
+import { CalendarRange, ImagePlus, MapPinned, Plane } from "lucide-react";
 import { useState, useTransition } from "react";
 import Image from "next/image";
 

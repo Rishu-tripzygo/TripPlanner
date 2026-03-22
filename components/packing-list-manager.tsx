@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackingItem, PackingListRecord } from "@/lib/phase-one-types";
-import { Briefcase, CheckCheck, ClipboardList, Plus, Save, Shirt } from "lucide-react";
+import { Briefcase, CheckCheck, ClipboardList, Plus, Shirt } from "lucide-react";
 
 const categoryOrder: PackingItem["category"][] = [
   "Clothing",

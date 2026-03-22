@@ -516,7 +516,7 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
                     <Stars key={i} className="size-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-sm leading-8 text-[#D6E2F1]">"{testimonial.quote}"</p>
+                <p className="text-sm leading-8 text-[#D6E2F1]">&ldquo;{testimonial.quote}&rdquo;</p>
                 <div className="mt-6">
                   <p className="font-medium text-white">{testimonial.name}</p>
                   <p className="text-sm text-[#8FA0BC]">{testimonial.destination}</p>

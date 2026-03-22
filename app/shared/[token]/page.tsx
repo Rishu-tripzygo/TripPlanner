@@ -3,7 +3,7 @@ import StatusBadge from "@/components/ui/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { PersistedItinerary } from "@/lib/phase-one-types";
-import { Calendar, MapPinned, Share2, Sparkles } from "lucide-react";
+import { Calendar, Share2, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 export default async function SharedTripPage({

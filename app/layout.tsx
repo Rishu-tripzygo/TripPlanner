@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import Footer from "@/components/footer";
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/auth";
@@ -15,7 +16,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Voya | AI Travel Planner",
+  title: "Wandrly | AI Travel Planner",
   description:
     "Premium AI-powered travel planning, maps, itineraries, and travel memories.",
 };
@@ -49,6 +50,7 @@ export default async function RootLayout({
         <ThemeProvider initialPreference={userThemePreference}>
           <Navbar session={session} />
           {children}
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
