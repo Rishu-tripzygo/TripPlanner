@@ -174,3 +174,73 @@ export interface NotificationRecord {
   tripId?: string | null;
   createdAt: string;
 }
+
+export interface PublicTripCardRecord {
+  shareId: string;
+  tripId: string;
+  token: string;
+  title: string;
+  description: string;
+  imageUrl?: string | null;
+  startDate: string;
+  endDate: string;
+  destination?: string | null;
+  travelStyle?: string | null;
+  purpose?: string | null;
+  stops: number;
+  bookmarksCount: number;
+  reactionsCount: number;
+  author: {
+    id: string;
+    name: string;
+    username: string;
+    image?: string | null;
+    location?: string | null;
+  };
+  isBookmarked?: boolean;
+  hasReacted?: boolean;
+}
+
+export interface PublicProfileRecord {
+  id: string;
+  name: string;
+  username: string;
+  bio?: string | null;
+  location?: string | null;
+  image?: string | null;
+  coverImageUrl?: string | null;
+  tripsShared: number;
+  destinationsVisited: number;
+  followersCount: number;
+  followingCount: number;
+  isFollowing?: boolean;
+  publicTrips: PublicTripCardRecord[];
+}
+
+export interface SearchResultRecord {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  category: "trip" | "destination" | "journal" | "note" | "public-trip";
+}
+
+export interface AssistantMessageRecord {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+}
+
+export interface MemoryYearRecord {
+  year: number;
+  trips: Array<{
+    id: string;
+    title: string;
+    imageUrl?: string | null;
+    destination?: string | null;
+    monthLabel: string;
+  }>;
+  photoCount: number;
+  journalEntries: number;
+}

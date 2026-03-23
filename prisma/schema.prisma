@@ -15,17 +15,26 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
-  emailVerified DateTime?
-  image         String?
+  id              String            @id @default(cuid())
+  name            String?
+  username        String?           @unique
+  bio             String?
+  location        String?
+  coverImageUrl   String?
+  isPublicProfile Boolean           @default(true)
+  email           String            @unique
+  emailVerified   DateTime?
+  image           String?
   themePreference ThemePreference @default(SYSTEM)
-  accounts      Account[]
-  sessions      Session[]
-  trips         Trip[]
-  chatMessages  ChatMessage[]
-  notifications Notification[]
+  accounts        Account[]
+  sessions        Session[]
+  trips           Trip[]
+  chatMessages    ChatMessage[]
+  notifications   Notification[]
+  bookmarks       TripBookmark[]
+  reactions       TripReaction[]
+  following       Follow[]          @relation("UserFollowing")
+  followers       Follow[]          @relation("UserFollowers")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -244,13 +253,51 @@ model Notification {
 }
 
 model TripShare {
-  id        String   @id @default(cuid())
-  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  tripId    String   @unique
-  token     String   @unique
-  isPublic  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String         @id @default(cuid())
+  trip      Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String         @unique
+  token     String         @unique
+  isPublic  Boolean        @default(false)
+  bookmarks TripBookmark[]
+  reactions TripReaction[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+model TripBookmark {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  tripShare   TripShare @relation(fields: [tripShareId], references: [id], onDelete: Cascade)
+  tripShareId String
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, tripShareId])
+  @@index([tripShareId, createdAt])
+}
+
+model TripReaction {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  tripShare   TripShare @relation(fields: [tripShareId], references: [id], onDelete: Cascade)
+  tripShareId String
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, tripShareId])
+  @@index([tripShareId, createdAt])
 }
 
 enum ThemePreference {

@@ -6,6 +6,8 @@ import {
 
 export type AIProvider = "gemini" | "openai";
 
+const DEFAULT_PROVIDER_ORDER: AIProvider[] = ["openai", "gemini"];
+
 export const itinerarySchema = {
   type: "object",
   additionalProperties: false,
@@ -337,7 +339,7 @@ function getProviderOrder(): AIProvider[] {
     });
   }
 
-  return (["gemini", "openai"] as AIProvider[]).filter((provider) => {
+  return DEFAULT_PROVIDER_ORDER.filter((provider) => {
     if (provider === "gemini") return hasUsableGeminiKey();
     return hasUsableOpenAIKey();
   });

@@ -4,6 +4,7 @@ import TripCard from "@/components/trip-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getNotificationFeed, syncTripReminderNotifications } from "@/lib/notifications";
+import { getMemoriesByYear } from "@/lib/public-travel";
 import { prisma } from "@/lib/prisma";
 import {
   ArrowRight,
@@ -70,6 +71,7 @@ export default async function TripsPage() {
     (trip) => trip.itineraryVersions.length > 0 && trip.locations.length > 0
   );
   const nextTrip = upcomingTrips[0] || null;
+  const memoriesByYear = await getMemoriesByYear(session.user.id);
   const daysToNextTrip = nextTrip
     ? Math.max(
         0,
@@ -81,53 +83,63 @@ export default async function TripsPage() {
 
   return (
     <div className="app-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr_0.72fr]">
-        <div className="paper-soft rounded-[32px] p-8">
-          <p className="font-[family-name:var(--font-noto-serif)] text-[40px] font-bold tracking-[-0.05em] text-[#024785]">
-            Welcome back
-          </p>
-          <p className="mt-3 max-w-sm text-base leading-8 text-[#61738C]">
-            This dashboard is your control center. Start the trip, shape the route, then move
-            into prep.
-          </p>
-
-          <nav className="mt-8 space-y-2">
-            {[
-              { href: "/trips", label: "Dashboard", active: true },
-              { href: "/ai-trip-planner", label: "Plan with AI", active: false },
-              { href: "/globe", label: "Travel Globe", active: false },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex items-center rounded-[18px] px-4 py-3 text-sm font-medium transition ${
-                  item.active
-                    ? "bg-white text-[#024785] shadow-[0_12px_24px_rgba(26,28,27,0.06)]"
-                    : "text-[#61738C] hover:bg-white/70 hover:text-[#024785]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="mt-10">
-            <Link href="/trips/new">
-              <Button className="w-full rounded-full">Plan new trip</Button>
-            </Link>
-          </div>
-        </div>
-
+      <section className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="overflow-hidden rounded-[36px] bg-white shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
-          <div className="flex items-center justify-between px-8 pt-8">
+          <div className="flex flex-col gap-8 px-6 pt-6 sm:px-8 sm:pt-8">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-xl">
+                <p className="section-label">Control center</p>
+                <p className="mt-4 font-[family-name:var(--font-noto-serif)] text-[44px] font-bold leading-[0.95] tracking-[-0.05em] text-[#024785] sm:text-[54px]">
+                  Good morning,
+                  <br />
+                  <span className="break-words">
+                    {session.user.name?.split(" ")[0] || "Traveler"}
+                  </span>
+                </p>
+                <p className="mt-3 max-w-lg text-base leading-8 text-[#61738C]">
+                  This dashboard is your command deck. Start the trip, shape the route, then
+                  move into budgets, docs, packing, and journals.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/trips/new">
+                    <Button className="rounded-full">Plan new trip</Button>
+                  </Link>
+                  <Link href="/ai-trip-planner">
+                    <Button variant="outline" className="rounded-full">Plan with AI</Button>
+                  </Link>
+                  <Link href="/globe">
+                    <Button variant="ghost" className="rounded-full">Travel globe</Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] bg-[#F4F3F1] p-1">
+                <div className="grid grid-cols-3 gap-1">
+                  {[
+                    ["Trips", trips.length],
+                    ["Nations", Math.max(1, totalStops)],
+                    ["Days", upcomingTrips.length + completedTrips.length],
+                  ].map(([label, value], index) => (
+                    <div
+                      key={label as string}
+                      className={`min-w-[88px] rounded-[20px] px-4 py-3 text-center ${
+                        index === 0 ? "bg-white shadow-[0_8px_18px_rgba(26,28,27,0.06)]" : ""
+                      }`}
+                    >
+                      <p className="text-3xl font-semibold tracking-[-0.03em] text-[#024785]">
+                        {value}
+                      </p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7B8CA3]">
+                        {label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div>
-              <p className="section-label">Control center</p>
-              <h1 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[54px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785]">
-                Good morning,
-                <br />
-                {session.user.name?.split(" ")[0] || "Traveler"}
-              </h1>
-              <p className="mt-3 text-base text-[#61738C]">
+              <p className="text-base text-[#61738C]">
                 {today.toLocaleDateString(undefined, {
                   weekday: "long",
                   month: "long",
@@ -136,33 +148,9 @@ export default async function TripsPage() {
                 })}
               </p>
             </div>
-
-            <div className="rounded-full bg-[#F4F3F1] p-1">
-              <div className="grid grid-cols-3 gap-1">
-                {[
-                  ["Trips", trips.length],
-                  ["Nations", Math.max(1, totalStops)],
-                  ["Days", upcomingTrips.length + completedTrips.length],
-                ].map(([label, value], index) => (
-                  <div
-                    key={label as string}
-                    className={`rounded-full px-6 py-3 text-center ${
-                      index === 0 ? "bg-white shadow-[0_8px_18px_rgba(26,28,27,0.06)]" : ""
-                    }`}
-                  >
-                    <p className="text-3xl font-semibold tracking-[-0.03em] text-[#024785]">
-                      {value}
-                    </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7B8CA3]">
-                      {label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
-          <div className="px-8 py-8">
+          <div className="px-6 py-6 sm:px-8 sm:py-8">
             <div
               className="relative overflow-hidden rounded-[34px] bg-cover bg-center p-8 shadow-[0_20px_40px_rgba(26,28,27,0.08)]"
               style={{
@@ -174,7 +162,7 @@ export default async function TripsPage() {
                 <p className="inline-flex rounded-full bg-white/18 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em]">
                   Your next adventure
                 </p>
-                <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[58px] font-bold leading-[0.92] tracking-[-0.05em]">
+                <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[42px] font-bold leading-[0.92] tracking-[-0.05em] sm:text-[58px]">
                   {nextTrip?.title || "Start your next trip"}
                 </h2>
                 <p className="mt-4 text-sm leading-8 text-white/85">
@@ -301,10 +289,10 @@ export default async function TripsPage() {
       </section>
 
       <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
-          <CardHeader>
-            <p className="section-label">Recommended flow</p>
-            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+          <Card>
+            <CardHeader>
+              <p className="section-label">Recommended flow</p>
+              <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
               What you should do next
             </CardTitle>
           </CardHeader>
@@ -349,7 +337,7 @@ export default async function TripsPage() {
                 <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-[#024785] shadow-[0_10px_18px_rgba(26,28,27,0.04)]">
                   {item.icon}
                 </div>
-                <h3 className="font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em] text-[#1A1C1B]">
+                <h3 className="break-words font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em] text-[#1A1C1B]">
                   {item.title}
                 </h3>
                 <p className="mt-3 text-sm leading-8 text-[#61738C]">{item.text}</p>
@@ -416,6 +404,67 @@ export default async function TripsPage() {
           </CardContent>
         </Card>
       </section>
+
+      {memoriesByYear.length > 0 ? (
+        <section className="rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-white px-8 py-10 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+          <p className="section-label">Trip memories</p>
+          <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[48px] font-bold tracking-[-0.05em] text-[#024785]">
+            Your travel years, turned into a living recap.
+          </h2>
+
+          <div className="mt-10 grid gap-8 xl:grid-cols-2">
+            {memoriesByYear.map((year) => (
+              <div key={year.year} className="rounded-[28px] bg-[#F4F3F1] p-6">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="font-[family-name:var(--font-noto-serif)] text-[40px] font-bold tracking-[-0.04em] text-[#024785]">
+                      {year.year}
+                    </p>
+                    <p className="mt-2 text-sm text-[#61738C]">
+                      {year.trips.length} trip{year.trips.length === 1 ? "" : "s"} · {year.journalEntries} journal entries · {year.photoCount} photos
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-4">
+                  {year.trips.slice(0, 4).map((trip, index) => (
+                    <Link
+                      key={trip.id}
+                      href={`/trips/${trip.id}`}
+                      className={`overflow-hidden rounded-[22px] ${
+                        index === 0 ? "col-span-2" : ""
+                      }`}
+                    >
+                      <div
+                        className={`relative bg-cover bg-center ${
+                          index === 0 ? "h-44" : "h-32"
+                        }`}
+                        style={{
+                          backgroundImage: trip.imageUrl
+                            ? `linear-gradient(180deg,rgba(2,71,133,0.12),rgba(2,71,133,0.58)),url(${trip.imageUrl})`
+                            : "linear-gradient(145deg,#dfeaf7,#f8f7f4)",
+                        }}
+                      >
+                        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70">
+                            {trip.monthLabel}
+                          </p>
+                          <p className="mt-2 font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em]">
+                            {trip.title}
+                          </p>
+                          {trip.destination ? (
+                            <p className="mt-1 text-sm text-white/84">{trip.destination}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

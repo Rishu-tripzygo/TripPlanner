@@ -4,10 +4,9 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Footer from "@/components/footer";
 import Navbar from "@/components/Navbar";
-import { ThemeProvider } from "@/components/theme-provider";
+import AssistantBubble from "@/components/assistant-bubble";
+import PWARegister from "@/components/pwa-register";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { ThemePreference } from "@/lib/phase-one-types";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -33,31 +32,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  const userThemePreference: ThemePreference =
-    session?.user?.id
-      ? ((await prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: { themePreference: true },
-        }))?.themePreference as ThemePreference | undefined) || "SYSTEM"
-      : "SYSTEM";
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var stored=localStorage.getItem('theme-preference');var initial='${userThemePreference}';var pref=(stored==='LIGHT'||stored==='DARK'||stored==='SYSTEM')?stored:initial;var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=pref==='LIGHT'?'light':pref==='DARK'?'dark':(systemDark?'dark':'light');document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(theme);document.documentElement.dataset.theme=theme;}catch(e){document.documentElement.classList.add('light');document.documentElement.dataset.theme='light';}})();`,
-          }}
-        />
-      </head>
+    <html lang="en">
       <body
         className={`${plusJakartaSans.variable} ${notoSerif.variable} font-[family-name:var(--font-plus-jakarta-sans)] antialiased`}
       >
-        <ThemeProvider initialPreference={userThemePreference}>
-          <Navbar session={session} />
-          {children}
-          <Footer />
-        </ThemeProvider>
+        <Navbar session={session} />
+        {children}
+        <PWARegister />
+        <AssistantBubble />
+        <Footer />
       </body>
     </html>
   );

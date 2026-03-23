@@ -23,29 +23,36 @@ export default function DestinationCard({
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const element = ref.current;
+    if (!element) return;
 
-    VanillaTilt.init(ref.current, {
-      max: 8,
-      speed: 320,
+    VanillaTilt.init(element, {
+      max: 4,
+      speed: 360,
       perspective: 1000,
       glare: false,
-      scale: 1.02,
+      scale: 1.005,
     });
+
+    return () => {
+      (element as HTMLDivElement & {
+        vanillaTilt?: { destroy: () => void };
+      }).vanillaTilt?.destroy();
+    };
   }, []);
 
   return (
     <motion.div
-      whileHover={{ y: -6 }}
+      whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 220, damping: 18 }}
-      className="shrink-0"
+      className="w-full shrink-0"
     >
       <div
         ref={ref}
-        className="group relative h-[280px] w-[370px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0F1117] shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
+        className="group relative h-[280px] w-full max-w-[370px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0F1117] shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
       >
         <div
-          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
+          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-[1.04]"
           style={{ backgroundImage: `url(${image})` }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.08),rgba(3,7,18,0.26)_34%,rgba(3,7,18,0.92)_100%)]" />
