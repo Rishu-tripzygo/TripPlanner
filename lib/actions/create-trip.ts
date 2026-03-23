@@ -23,7 +23,7 @@ export async function createTrip(formData: FormData) {
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
 
-  await prisma.trip.create({
+  const trip = await prisma.trip.create({
     data: {
       title,
       description,
@@ -34,5 +34,5 @@ export async function createTrip(formData: FormData) {
     },
   });
 
-  redirect("/trips");
+  redirect(`/ai-trip-planner?tripId=${trip.id}`);
 }

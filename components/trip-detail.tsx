@@ -43,10 +43,11 @@ export default function TripDetailClient({
 
   const status = useMemo(() => {
     const now = new Date();
+    if (!activeItinerary && trip.locations.length === 0) return "draft";
     if (trip.endDate < now) return "done";
     if (trip.startDate >= now) return "upcoming";
     return "planning";
-  }, [trip.endDate, trip.startDate]);
+  }, [activeItinerary, trip.endDate, trip.locations.length, trip.startDate]);
 
   const duration = Math.max(
     1,
@@ -92,14 +93,14 @@ export default function TripDetailClient({
 
   return (
     <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="overflow-hidden rounded-[32px] border border-white/8 bg-[#0F1117] shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_8px_40px_rgba(0,0,0,0.6)]">
+      <section className="overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-white shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
         <div className="relative h-[360px]">
           {trip.imageUrl ? (
             <Image src={trip.imageUrl} alt={trip.title} fill className="object-cover" priority />
           ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(0,194,255,0.16),transparent_28%),linear-gradient(145deg,#161820,#08090E)]" />
+            <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(0,194,255,0.12),transparent_28%),linear-gradient(145deg,#e4edf8,#f8f7f4)]" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08090E] via-[#08090E]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1B3A6B]/78 via-[#1B3A6B]/22 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-5 p-8 md:flex-row md:items-end md:justify-between">
             <div>
               <StatusBadge status={status} />
@@ -163,20 +164,111 @@ export default function TripDetailClient({
         ].map(([label, value, icon]) => (
           <div
             key={label as string}
-            className="rounded-[24px] border border-white/8 bg-[#0F1117] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_4px_24px_rgba(0,0,0,0.4)]"
+            className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white p-6 shadow-[0_20px_40px_rgba(26,28,27,0.06)]"
           >
-            <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#024785]">
               {icon}
             </div>
-            <p className="text-sm text-[#8B9BB4]">{label}</p>
-            <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+            <p className="text-sm text-[#61738C]">{label}</p>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#024785]">
               {value}
             </p>
           </div>
         ))}
       </section>
 
-      <section className="rounded-[24px] border border-white/8 bg-[#0F1117] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_4px_24px_rgba(0,0,0,0.4)]">
+      <section className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white p-6 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="section-label">Trip Workflow</p>
+            <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-4xl font-bold tracking-[-0.04em] text-[#024785]">
+              Move this trip through the right order
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-8 text-[#61738C]">
+              The best Wandrly flow is: create the trip shell, generate or refine the AI plan,
+              add mapped stops, then prepare the trip with budget, packing, documents, and notes.
+            </p>
+          </div>
+          {!activeItinerary ? (
+            <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
+              <Button size="lg">
+                <Compass className="size-4" />
+                Generate AI Itinerary
+              </Button>
+            </Link>
+          ) : null}
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-4">
+          {[
+            {
+              title: "Trip shell",
+              description: "Title, dates, and cover are already in place.",
+              actionLabel: "Edit basics",
+              actionHref: `/trips/${trip.id}`,
+              complete: true,
+            },
+            {
+              title: "AI itinerary",
+              description: activeItinerary
+                ? "A saved itinerary version exists and can be refined."
+                : "Generate the first itinerary draft to shape the trip.",
+              actionLabel: activeItinerary ? "Refine itinerary" : "Generate now",
+              actionHref: `/ai-trip-planner?tripId=${trip.id}`,
+              complete: Boolean(activeItinerary),
+            },
+            {
+              title: "Mapped destinations",
+              description:
+                trip.locations.length > 0
+                  ? `${trip.locations.length} route stop${trip.locations.length === 1 ? "" : "s"} added.`
+                  : "Add route stops so map, weather, and order become useful.",
+              actionLabel: trip.locations.length > 0 ? "Manage stops" : "Add first stop",
+              actionHref: `/trips/${trip.id}/itinerary/new`,
+              complete: trip.locations.length > 0,
+            },
+            {
+              title: "Travel prep",
+              description:
+                activeItinerary && trip.locations.length > 0
+                  ? "Budget, packing, documents, notes, and share flow are now meaningful."
+                  : "Prep modules become more useful after itinerary and destinations are ready.",
+              actionLabel: activeItinerary && trip.locations.length > 0 ? "Open prep" : "Open workspace",
+              actionHref:
+                activeItinerary && trip.locations.length > 0
+                  ? `/budget/${trip.id}`
+                  : `/trips/${trip.id}`,
+              complete: activeItinerary && trip.locations.length > 0,
+            },
+          ].map((step) => (
+            <div
+              key={step.title}
+              className="rounded-[20px] bg-[#F4F3F1] p-5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em] text-[#1A1C1B]">
+                  {step.title}
+                </p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em] ${
+                    step.complete
+                      ? "border border-[#024785]/10 bg-white text-[#024785]"
+                      : "border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] text-[#61738C]"
+                  }`}
+                >
+                  {step.complete ? "Ready" : "Next"}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-[#61738C]">{step.description}</p>
+              <Link href={step.actionHref} className="mt-5 inline-flex">
+                <Button variant="outline">{step.actionLabel}</Button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white p-6 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -186,39 +278,39 @@ export default function TripDetailClient({
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-              <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-6">
+              <div className="rounded-[24px] bg-[#F4F3F1] p-6">
                 <p className="section-label">Summary</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+                <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-4xl font-bold tracking-[-0.04em] text-[#024785]">
                   Trip details
                 </h2>
-                <p className="mt-4 text-sm leading-8 text-[#8B9BB4]">{trip.description}</p>
+                <p className="mt-4 text-sm leading-8 text-[#61738C]">{trip.description}</p>
               </div>
-              <div className="h-[420px] overflow-hidden rounded-[20px] border border-white/8">
+              <div className="h-[420px] overflow-hidden rounded-[24px] border border-[rgba(2,71,133,0.08)]">
                 <Map itineraries={trip.locations} />
               </div>
             </div>
 
-            <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-6">
+            <div className="rounded-[24px] bg-[#F4F3F1] p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="section-label">Weather</p>
-                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+                  <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-4xl font-bold tracking-[-0.04em] text-[#024785]">
                     Destination forecast and season signals
                   </h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-8 text-[#8B9BB4]">
+                  <p className="mt-3 max-w-3xl text-sm leading-8 text-[#61738C]">
                     Seven-day forecast windows come from Open-Meteo when available. We also
                     surface seasonal guidance to flag rain-heavy or heat-heavy travel windows.
                   </p>
                 </div>
-                <div className="inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                <div className="inline-flex rounded-2xl bg-white p-3 text-[#024785] shadow-[0_10px_18px_rgba(26,28,27,0.04)]">
                   <CloudSun className="size-5" />
                 </div>
               </div>
 
               {isWeatherLoading ? (
                 <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                  <div className="h-[220px] animate-pulse rounded-[18px] border border-white/8 bg-white/[0.03]" />
-                  <div className="h-[220px] animate-pulse rounded-[18px] border border-white/8 bg-white/[0.03]" />
+                  <div className="h-[220px] animate-pulse rounded-[18px] bg-white" />
+                  <div className="h-[220px] animate-pulse rounded-[18px] bg-white" />
                 </div>
               ) : forecasts.length > 0 ? (
                 <div className="mt-6 grid gap-4 xl:grid-cols-2">
@@ -271,7 +363,7 @@ export default function TripDetailClient({
                   ))}
                 </div>
               ) : (
-                <div className="mt-6 rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+                <div className="mt-6 rounded-[18px] border border-dashed border-[rgba(2,71,133,0.12)] bg-white p-5 text-sm leading-7 text-[#61738C]">
                   Weather data is not available yet for this trip. Forecasts appear once we have
                   destination coordinates and a valid travel window.
                 </div>
@@ -279,9 +371,9 @@ export default function TripDetailClient({
             </div>
 
             {activeItinerary ? (
-              <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-6">
+              <div className="rounded-[24px] bg-[#F4F3F1] p-6">
                 <p className="section-label">AI Weather Outlook</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+                <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-4xl font-bold tracking-[-0.04em] text-[#024785]">
                   Day-by-day badges from your active AI itinerary
                 </h2>
                 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -330,7 +422,7 @@ export default function TripDetailClient({
               {trip.locations.length > 0 ? (
                 <SortableItinerary locations={trip.locations} tripId={trip.id} />
               ) : (
-                <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-center text-[#8B9BB4]">
+                <div className="rounded-[20px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] p-8 text-center text-[#61738C]">
                   Add locations to build your itinerary.
                 </div>
               )}
@@ -340,7 +432,7 @@ export default function TripDetailClient({
           </TabsContent>
 
           <TabsContent value="map">
-            <div className="h-[520px] overflow-hidden rounded-[20px] border border-white/8">
+            <div className="h-[520px] overflow-hidden rounded-[24px] border border-[rgba(2,71,133,0.08)]">
               <Map itineraries={trip.locations} />
             </div>
           </TabsContent>

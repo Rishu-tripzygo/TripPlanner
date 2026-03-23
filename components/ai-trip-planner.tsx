@@ -75,8 +75,8 @@ function FormLabel({
   children: React.ReactNode;
 }) {
   return (
-    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-[#D8E2F1]">
-      <span className="text-[#00C2FF]">{icon}</span>
+    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-[#3E536F]">
+      <span className="text-[#024785]">{icon}</span>
       {children}
     </label>
   );
@@ -86,8 +86,8 @@ function OutputList({ items }: { items: string[] }) {
   return (
     <ul className="space-y-2">
       {items.map((item) => (
-        <li key={item} className="flex gap-3 text-sm leading-7 text-[#D8E2F1]">
-          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00C2FF]" />
+        <li key={item} className="flex gap-3 text-sm leading-7 text-[#3E536F]">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#024785]" />
           <span>{item}</span>
         </li>
       ))}
@@ -449,24 +449,26 @@ export default function AITripPlanner({
   }, [result]);
 
   return (
-    <div className="app-shell px-4 py-8 sm:px-6 lg:px-8">
+    <div className="app-shell">
       <section className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
         <Card className="sticky top-24 h-fit">
           <CardHeader>
             <p className="section-label">AI Planner</p>
-            <CardTitle className="text-[36px] text-white">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[40px] text-[#024785]">
               Build and save a trip plan you can iterate on
             </CardTitle>
-            <p className="max-w-lg text-sm leading-7 text-[#8B9BB4]">
+            <p className="max-w-lg text-sm leading-7 text-[#61738C]">
               Generate a day-wise itinerary, save version history to a real trip, and
               keep the best draft active while we layer in streaming and refine chat next.
             </p>
           </CardHeader>
           <CardContent>
             {trips.length === 0 ? (
-              <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
-                <h3 className="text-lg font-semibold text-white">Create a trip first</h3>
-                <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+              <div className="rounded-[20px] bg-[#F4F3F1] p-5">
+                <h3 className="font-[family-name:var(--font-noto-serif)] text-[30px] font-bold tracking-[-0.03em] text-[#024785]">
+                  Create a trip first
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-[#61738C]">
                   Saved AI versions now attach to a specific trip. Create one trip shell,
                   then come back here to generate and manage itinerary drafts cleanly.
                 </p>
@@ -481,10 +483,10 @@ export default function AITripPlanner({
                   <select
                     value={selectedTripId}
                     onChange={(event) => setSelectedTripId(event.target.value)}
-                    className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                    className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
                   >
                     {trips.map((trip) => (
-                      <option key={trip.id} value={trip.id} className="bg-[#0F1117]">
+                      <option key={trip.id} value={trip.id} className="bg-white text-[#1A1C1B]">
                         {trip.title}
                       </option>
                     ))}
@@ -502,7 +504,7 @@ export default function AITripPlanner({
                     value={form.destination}
                     onChange={(event) => updateField("destination", event.target.value)}
                     placeholder="Kyoto, Japan"
-                    className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-[#4A5568] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                    className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-[#8A96A8] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
                   />
                 </div>
 
@@ -520,8 +522,8 @@ export default function AITripPlanner({
                             className={cn(
                               "rounded-full border px-3 py-2 text-sm transition",
                               active
-                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
-                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4] hover:text-white"
+                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
+                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C] hover:text-[#024785]"
                             )}
                           >
                             {purpose}
@@ -540,7 +542,7 @@ export default function AITripPlanner({
                         max={21}
                         value={form.days}
                         onChange={(event) => updateField("days", Number(event.target.value))}
-                        className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                        className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
                       />
                     </div>
                     <div>
@@ -553,7 +555,7 @@ export default function AITripPlanner({
                         onChange={(event) =>
                           updateField("travelers", Number(event.target.value))
                         }
-                        className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                        className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
                       />
                     </div>
                   </div>
@@ -573,8 +575,8 @@ export default function AITripPlanner({
                             className={cn(
                               "rounded-[12px] border px-3 py-3 text-sm transition",
                               active
-                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
-                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
+                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
+                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
                             )}
                           >
                             {style}
@@ -596,8 +598,8 @@ export default function AITripPlanner({
                             className={cn(
                               "rounded-[12px] border px-3 py-3 text-sm transition",
                               active
-                                ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
-                                : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
+                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
+                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
                             )}
                           >
                             {category}
@@ -615,7 +617,7 @@ export default function AITripPlanner({
                       value={form.budgetRange}
                       onChange={(event) => updateField("budgetRange", event.target.value)}
                       placeholder="INR 40,000 - INR 80,000"
-                      className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                      className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
                     />
                   </div>
                   <div>
@@ -624,7 +626,7 @@ export default function AITripPlanner({
                       value={form.travelDates}
                       onChange={(event) => updateField("travelDates", event.target.value)}
                       placeholder="12 Aug - 16 Aug 2026"
-                      className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                      className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
                     />
                   </div>
                 </div>
@@ -642,8 +644,8 @@ export default function AITripPlanner({
                           className={cn(
                             "rounded-full border px-4 py-2 text-sm transition",
                             active
-                              ? "border-[#00C2FF]/40 bg-[#00C2FF]/10 text-white"
-                              : "border-white/10 bg-white/[0.03] text-[#8B9BB4]"
+                              ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
+                              : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
                           )}
                         >
                           {interest}
@@ -672,7 +674,7 @@ export default function AITripPlanner({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="section-label">Live Output</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white">
+                <h2 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] font-bold tracking-[-0.03em] text-[#024785]">
                   {isLoading
                     ? "Thinking through your route..."
                     : "Saved itinerary and version history"}
@@ -683,7 +685,7 @@ export default function AITripPlanner({
                   type="button"
                   disabled={!result}
                   onClick={() => navigator.clipboard.writeText(actionSummary)}
-                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Copy className="size-4" />
@@ -698,7 +700,7 @@ export default function AITripPlanner({
                       "PDF export will fit naturally once versioned itinerary editing is in place."
                     )
                   }
-                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
                 >
                   PDF
                 </button>
@@ -713,7 +715,7 @@ export default function AITripPlanner({
                       });
                     }
                   }}
-                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] transition disabled:opacity-40"
+                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Share2 className="size-4" />
@@ -728,7 +730,7 @@ export default function AITripPlanner({
                       void loadVersions(selectedTripId);
                     }
                   }}
-                  className="rounded-[10px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#D8E2F1] disabled:opacity-40"
+                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <RefreshCw className="size-4" />
@@ -745,11 +747,11 @@ export default function AITripPlanner({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="section-label">Version History</p>
-                    <CardTitle className="mt-2 text-2xl text-white">
+                    <CardTitle className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] text-[#024785]">
                       {selectedTrip?.title || "Saved itinerary drafts"}
                     </CardTitle>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
+                  <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
                     {versions.length} saved
                   </span>
                 </div>
@@ -770,13 +772,13 @@ export default function AITripPlanner({
                           className={cn(
                             "rounded-[18px] border p-4 transition",
                             previewing
-                              ? "border-[#00C2FF]/30 bg-[#00C2FF]/8"
-                              : "border-white/8 bg-white/[0.03]"
+                              ? "border-[#024785]/20 bg-[#EEF2F8]"
+                              : "border-[rgba(2,71,133,0.08)] bg-[#FAF9F7]"
                           )}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-medium text-white">
+                              <p className="text-sm font-medium text-[#1A1C1B]">
                                 Version {version.versionNumber}
                               </p>
                               <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
@@ -786,7 +788,7 @@ export default function AITripPlanner({
                             </div>
                             {version.isActive ? <StatusBadge status="upcoming" /> : null}
                           </div>
-                          <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
+                          <p className="mt-3 text-sm leading-7 text-[#61738C]">
                             {version.title || version.itineraryData.trip_summary.destination}
                           </p>
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -821,7 +823,7 @@ export default function AITripPlanner({
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+                  <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-5 text-sm leading-7 text-[#61738C]">
                     No saved versions yet for this trip. Generate the first itinerary draft and
                     it will appear here automatically.
                   </div>
@@ -831,22 +833,22 @@ export default function AITripPlanner({
           ) : null}
           {isLoading ? (
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-white/8 bg-[#0F1117] px-6 py-8">
+              <div className="rounded-[24px] bg-[#F4F3F1] px-6 py-8">
                 <p className="mb-4 text-sm uppercase tracking-[0.24em] text-[#00C2FF]">
                   Live generation
                 </p>
-                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
-                  <p className="text-sm font-medium text-white">
+                <div className="rounded-[20px] bg-white p-5">
+                  <p className="text-sm font-medium text-[#1A1C1B]">
                     {streamStatus || "Generating your itinerary"}
                   </p>
-                  <div className="mt-4 min-h-[108px] rounded-[16px] border border-white/8 bg-[#08090E] p-4">
+                  <div className="mt-4 min-h-[108px] rounded-[16px] bg-[#FAF9F7] p-4">
                     {streamingOverview ? (
-                      <p className="text-sm leading-7 text-[#D8E2F1]">
+                      <p className="text-sm leading-7 text-[#3E536F]">
                         {streamingOverview}
-                        <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-[#00C2FF]" />
+                        <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-[#024785]" />
                       </p>
                     ) : (
-                      <p className="text-sm leading-7 text-[#8B9BB4]">
+                      <p className="text-sm leading-7 text-[#61738C]">
                         Thinking through pace, neighborhoods, hotels, and daily flow...
                       </p>
                     )}

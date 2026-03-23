@@ -1,50 +1,74 @@
 import { auth } from "@/auth";
-import { getNotificationFeed, syncTripReminderNotifications } from "@/lib/notifications";
 import StatCard from "@/components/stat-card";
 import TripCard from "@/components/trip-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getNotificationFeed, syncTripReminderNotifications } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
-import { BellRing, CalendarClock, MapPinned, Sparkles, TicketsPlane, Trees } from "lucide-react";
+import {
+  ArrowRight,
+  BellRing,
+  CalendarClock,
+  MapPinned,
+  Sparkles,
+  TicketsPlane,
+  Trees,
+  WalletCards,
+} from "lucide-react";
 import Link from "next/link";
 
 export default async function TripsPage() {
   const session = await auth();
-
-  const trips = await prisma.trip.findMany({
-    where: { userId: session?.user?.id },
-    include: { locations: true },
-  });
-
-  const sortedTrips = [...trips].sort(
-    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-  );
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const upcomingTrips = sortedTrips.filter((trip) => new Date(trip.startDate) >= today);
-  const completedTrips = sortedTrips.filter((trip) => new Date(trip.endDate) < today);
-  const totalStops = sortedTrips.reduce((sum, trip) => sum + trip.locations.length, 0);
 
   if (!session?.user?.id) {
     return (
       <div className="app-shell px-4 py-20 sm:px-6 lg:px-8">
         <Card className="mx-auto max-w-2xl text-center">
           <CardHeader>
-            <CardTitle className="text-3xl text-white">
-              Sign in to view your travel dashboard
+            <p className="section-label">Travel dashboard</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+              Sign in to open your trip workspace
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-[#8B9BB4]">
-            Your saved trips, AI plans, route maps, and travel insights are all waiting here.
+          <CardContent className="text-[#61738C]">
+            Your AI plans, live trips, budgets, maps, documents, and journals all sit behind
+            one calm dashboard.
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const trips = await prisma.trip.findMany({
+    where: { userId: session.user.id },
+    include: {
+      locations: true,
+      itineraryVersions: {
+        where: { isActive: true },
+        take: 1,
+      },
+    },
+    orderBy: { startDate: "desc" },
+  });
+
   await syncTripReminderNotifications(session.user.id);
   const { notifications, unreadCount } = await getNotificationFeed(session.user.id);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcomingTrips = trips.filter((trip) => new Date(trip.startDate) >= today);
+  const completedTrips = trips.filter((trip) => new Date(trip.endDate) < today);
+  const totalStops = trips.reduce((sum, trip) => sum + trip.locations.length, 0);
+  const draftTrips = trips.filter(
+    (trip) => trip.locations.length === 0 && trip.itineraryVersions.length === 0
+  );
+  const tripsNeedingLocations = trips.filter(
+    (trip) => trip.itineraryVersions.length > 0 && trip.locations.length === 0
+  );
+  const tripsReadyForPrep = trips.filter(
+    (trip) => trip.itineraryVersions.length > 0 && trip.locations.length > 0
+  );
   const nextTrip = upcomingTrips[0] || null;
   const daysToNextTrip = nextTrip
     ? Math.max(
@@ -57,81 +81,210 @@ export default async function TripsPage() {
 
   return (
     <div className="app-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="overflow-hidden">
-          <div className="h-1.5 bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]" />
-          <CardContent className="pt-8">
-            <p className="section-label">Dashboard</p>
-            <h1 className="mt-4 text-[40px] font-semibold tracking-[-0.05em] text-white sm:text-[54px]">
-              Good evening, {session.user?.name?.split(" ")[0] || "Rishu"}.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-[#8B9BB4]">
-              You have {upcomingTrips.length} upcoming trip
-              {upcomingTrips.length === 1 ? "" : "s"} and {completedTrips.length} completed
-              journey{completedTrips.length === 1 ? "" : "s"} in your travel archive.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/trips/new">
-                <Button size="lg">Create New Trip</Button>
-              </Link>
-              <Link href="/ai-trip-planner">
-                <Button size="lg" variant="outline">
-                  Open AI Planner
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <section className="grid gap-8 xl:grid-cols-[0.92fr_1.08fr_0.72fr]">
+        <div className="paper-soft rounded-[32px] p-8">
+          <p className="font-[family-name:var(--font-noto-serif)] text-[40px] font-bold tracking-[-0.05em] text-[#024785]">
+            Welcome back
+          </p>
+          <p className="mt-3 max-w-sm text-base leading-8 text-[#61738C]">
+            This dashboard is your control center. Start the trip, shape the route, then move
+            into prep.
+          </p>
 
-        <Card className="overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(0,194,255,0.16),transparent_30%),linear-gradient(145deg,#161820,#0F1117)]">
-          <CardContent className="pt-8">
-            <p className="section-label">Your Next Trip</p>
-            {nextTrip ? (
-              <>
-                <h2 className="mt-4 text-[34px] font-semibold tracking-[-0.04em] text-white">
-                  {nextTrip.title}
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-[#D8E2F1]">{nextTrip.description}</p>
-                <div className="mt-6 h-2 rounded-full bg-white/6">
+          <nav className="mt-8 space-y-2">
+            {[
+              { href: "/trips", label: "Dashboard", active: true },
+              { href: "/ai-trip-planner", label: "Plan with AI", active: false },
+              { href: "/globe", label: "Travel Globe", active: false },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center rounded-[18px] px-4 py-3 text-sm font-medium transition ${
+                  item.active
+                    ? "bg-white text-[#024785] shadow-[0_12px_24px_rgba(26,28,27,0.06)]"
+                    : "text-[#61738C] hover:bg-white/70 hover:text-[#024785]"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="mt-10">
+            <Link href="/trips/new">
+              <Button className="w-full rounded-full">Plan new trip</Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[36px] bg-white shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+          <div className="flex items-center justify-between px-8 pt-8">
+            <div>
+              <p className="section-label">Control center</p>
+              <h1 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[54px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785]">
+                Good morning,
+                <br />
+                {session.user.name?.split(" ")[0] || "Traveler"}
+              </h1>
+              <p className="mt-3 text-base text-[#61738C]">
+                {today.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
+
+            <div className="rounded-full bg-[#F4F3F1] p-1">
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  ["Trips", trips.length],
+                  ["Nations", Math.max(1, totalStops)],
+                  ["Days", upcomingTrips.length + completedTrips.length],
+                ].map(([label, value], index) => (
                   <div
-                    className="h-2 rounded-full bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]"
-                    style={{ width: `${Math.min(100, 40 + nextTrip.locations.length * 10)}%` }}
-                  />
-                </div>
-                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-[#8B9BB4]">
-                  <span>{daysToNextTrip} days to go</span>
-                  <span>·</span>
-                  <span>{nextTrip.locations.length} saved destinations</span>
-                  <span>·</span>
-                  <span>{new Date(nextTrip.startDate).toLocaleDateString()}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="mt-4 text-[34px] font-semibold tracking-[-0.04em] text-white">
-                  No trip is queued up yet
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-[#D8E2F1]">
-                  Build a new itinerary or ask the AI planner to draft your next escape.
+                    key={label as string}
+                    className={`rounded-full px-6 py-3 text-center ${
+                      index === 0 ? "bg-white shadow-[0_8px_18px_rgba(26,28,27,0.06)]" : ""
+                    }`}
+                  >
+                    <p className="text-3xl font-semibold tracking-[-0.03em] text-[#024785]">
+                      {value}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7B8CA3]">
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-8 py-8">
+            <div
+              className="relative overflow-hidden rounded-[34px] bg-cover bg-center p-8 shadow-[0_20px_40px_rgba(26,28,27,0.08)]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(180deg,rgba(2,71,133,0.18),rgba(2,71,133,0.72)),url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80')",
+              }}
+            >
+              <div className="max-w-xl text-white">
+                <p className="inline-flex rounded-full bg-white/18 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em]">
+                  Your next adventure
                 </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[58px] font-bold leading-[0.92] tracking-[-0.05em]">
+                  {nextTrip?.title || "Start your next trip"}
+                </h2>
+                <p className="mt-4 text-sm leading-8 text-white/85">
+                  {nextTrip?.description ||
+                    "Use AI first if you want the quickest way to go from idea to a structured plan."}
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <div className="rounded-[24px] border border-white/20 bg-white/14 px-5 py-4 text-white backdrop-blur-xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
+                    Departing in
+                  </p>
+                  <p className="mt-2 text-[42px] font-semibold tracking-[-0.04em]">
+                    {daysToNextTrip ?? 0}
+                    <span className="ml-2 text-base font-normal">days</span>
+                  </p>
+                </div>
+                <div className="rounded-[24px] border border-white/20 bg-white/14 px-5 py-4 text-white backdrop-blur-xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
+                    Route status
+                  </p>
+                  <p className="mt-2 text-[42px] font-semibold tracking-[-0.04em]">
+                    {nextTrip?.locations.length || 0}
+                    <span className="ml-2 text-base font-normal">stops</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-[32px] bg-white p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+            <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#024785]">
+              Explore destinations
+            </h3>
+            <div className="mt-6 space-y-4">
+              {[
+                [
+                  "Paris, France",
+                  "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80",
+                ],
+                [
+                  "Reykjavik, Iceland",
+                  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+                ],
+              ].map(([title, image]) => (
+                <div
+                  key={title as string}
+                  className="relative h-32 overflow-hidden rounded-[22px] bg-cover bg-center"
+                  style={{ backgroundImage: `linear-gradient(180deg,transparent,rgba(0,0,0,0.52)),url(${image})` }}
+                >
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <p className="font-semibold text-white">{title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[32px] bg-white p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#024785]">
+                  Attention
+                </h3>
+                <p className="mt-2 text-sm text-[#61738C]">{unreadCount} unread reminders</p>
+              </div>
+              <BellRing className="size-5 text-[#024785]" />
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {notifications.slice(0, 3).map((notification) => (
+                <div key={notification.id} className="flex gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EEF2F8] text-[#024785]">
+                    <BellRing className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#1A1C1B]">{notification.message}</p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7B8CA3]">
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {notifications.length === 0 ? (
+                <p className="text-sm leading-7 text-[#61738C]">
+                  No active reminders yet. Once a trip gets close, your prep prompts will show up
+                  here.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={<TicketsPlane className="size-5" />}
           label="Trips Planned"
-          value={sortedTrips.length}
+          value={trips.length}
           trend="All time"
         />
         <StatCard
           icon={<MapPinned className="size-5" />}
           label="Destinations"
           value={totalStops}
-          trend="Saved stops"
+          trend="Mapped stops"
         />
         <StatCard
           icon={<CalendarClock className="size-5" />}
@@ -147,149 +300,121 @@ export default async function TripsPage() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+      <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
         <Card>
           <CardHeader>
-            <p className="section-label">Countdown</p>
-            <CardTitle className="text-3xl text-white">Trip launch monitor</CardTitle>
+            <p className="section-label">Recommended flow</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+              What you should do next
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "1. Start a trip",
+                text:
+                  draftTrips.length > 0
+                    ? `${draftTrips.length} draft trip shell${draftTrips.length === 1 ? "" : "s"} still need an AI itinerary.`
+                    : "Create a trip shell when you already know the destination and travel dates.",
+                actionHref: draftTrips[0] ? `/ai-trip-planner?tripId=${draftTrips[0].id}` : "/trips/new",
+                actionLabel: draftTrips[0] ? "Generate AI plan" : "Create trip",
+                icon: <Sparkles className="size-5" />,
+              },
+              {
+                title: "2. Add route stops",
+                text:
+                  tripsNeedingLocations.length > 0
+                    ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} need mapped destinations before the workspace becomes useful.`
+                    : "Map destinations so weather, ordering, and local context become meaningful.",
+                actionHref: tripsNeedingLocations[0]
+                  ? `/trips/${tripsNeedingLocations[0].id}/itinerary/new`
+                  : nextTrip
+                    ? `/trips/${nextTrip.id}/itinerary/new`
+                    : "/trips",
+                actionLabel: "Add destinations",
+                icon: <MapPinned className="size-5" />,
+              },
+              {
+                title: "3. Operationalize it",
+                text:
+                  tripsReadyForPrep.length > 0
+                    ? `${tripsReadyForPrep.length} trip${tripsReadyForPrep.length === 1 ? "" : "s"} are ready for budget, packing, docs, and journals.`
+                    : "Prep modules become much stronger once both itinerary and route are in place.",
+                actionHref: tripsReadyForPrep[0] ? `/trips/${tripsReadyForPrep[0].id}` : "/trips",
+                actionLabel: "Open workspace",
+                icon: <WalletCards className="size-5" />,
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-[24px] bg-[#F4F3F1] p-5">
+                <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-[#024785] shadow-[0_10px_18px_rgba(26,28,27,0.04)]">
+                  {item.icon}
+                </div>
+                <h3 className="font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em] text-[#1A1C1B]">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-8 text-[#61738C]">{item.text}</p>
+                <Link href={item.actionHref} className="mt-5 inline-flex">
+                  <Button variant="outline">{item.actionLabel}</Button>
+                </Link>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <p className="section-label">Recent trips</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+              Open a workspace and keep it moving
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {nextTrip && daysToNextTrip !== null ? (
-              <div className="space-y-5">
-                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
-                  <p className="text-sm text-[#8B9BB4]">Your nearest departure</p>
-                  <h3 className="mt-2 text-2xl font-semibold text-white">{nextTrip.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#D8E2F1]">
-                    {daysToNextTrip === 0
-                      ? "Your trip starts today. Documents, weather, and essentials should all be ready."
-                      : `You have ${daysToNextTrip} day${daysToNextTrip === 1 ? "" : "s"} left to finish planning.`}
-                  </p>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {[
-                    ["Start", new Date(nextTrip.startDate).toLocaleDateString()],
-                    ["End", new Date(nextTrip.endDate).toLocaleDateString()],
-                    ["Stops", `${nextTrip.locations.length}`],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
-                    >
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#4A5568]">{label}</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
-                    </div>
-                  ))}
-                </div>
+            {trips.length === 0 ? (
+              <div className="rounded-[24px] bg-[#F4F3F1] p-6 text-sm leading-8 text-[#61738C]">
+                No trips yet. Start with AI if you want the fastest path from idea to a
+                structured travel plan.
               </div>
             ) : (
-              <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-                No active countdown yet. Create an upcoming trip and we’ll start surfacing
-                reminder milestones here.
+              <div className="grid gap-6 md:grid-cols-2">
+                {trips.slice(0, 4).map((trip) => {
+                  const status =
+                    trip.locations.length === 0 && trip.itineraryVersions.length === 0
+                      ? "draft"
+                      : new Date(trip.endDate) < today
+                        ? "done"
+                        : new Date(trip.startDate) >= today
+                          ? "upcoming"
+                          : "planning";
+
+                  return (
+                    <TripCard
+                      key={trip.id}
+                      id={trip.id}
+                      title={trip.title}
+                      description={trip.description}
+                      startDate={trip.startDate}
+                      endDate={trip.endDate}
+                      imageUrl={trip.imageUrl}
+                      stops={trip.locations.length}
+                      status={status}
+                    />
+                  );
+                })}
               </div>
             )}
+
+            {trips.length > 4 ? (
+              <div className="mt-6">
+                <Link href="/trips" className="inline-flex">
+                  <Button variant="outline">
+                    See all trips
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </Link>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="section-label">Reminder Center</p>
-                <CardTitle className="text-3xl text-white">In-app notifications</CardTitle>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#D8E2F1]">
-                <BellRing className="size-4 text-[#00C2FF]" />
-                {unreadCount} unread
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {notifications.length > 0 ? (
-              notifications.slice(0, 5).map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`rounded-[16px] border p-4 ${
-                    notification.read
-                      ? "border-white/8 bg-white/[0.03]"
-                      : "border-[#00C2FF]/20 bg-[#00C2FF]/10"
-                  }`}
-                >
-                  <p className="text-sm leading-7 text-white">{notification.message}</p>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[#8B9BB4]">
-                    <span>{new Date(notification.createdAt).toLocaleString()}</span>
-                    {notification.tripId ? (
-                      <Link
-                        href={`/trips/${notification.tripId}`}
-                        className="text-[#00C2FF] hover:underline"
-                      >
-                        Open trip
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-                No reminder notifications yet. Trip milestones at 30, 7, 1, and 0 days will show
-                up here automatically.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="section-label">Recent Trips</p>
-            <h2 className="mt-3 text-[36px] font-semibold tracking-[-0.04em] text-white sm:text-[48px]">
-              Travel plans that still feel editable
-            </h2>
-          </div>
-        </div>
-
-        {sortedTrips.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/5 p-4 text-[#00C2FF]">
-                <Sparkles className="size-7" />
-              </div>
-              <h3 className="text-2xl font-semibold text-white">No trips yet</h3>
-              <p className="mt-3 max-w-md text-sm leading-7 text-[#8B9BB4]">
-                Start with a fresh itinerary shell or let the AI planner shape the first draft for
-                you.
-              </p>
-              <Link href="/trips/new" className="mt-6">
-                <Button>Create Trip</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {sortedTrips.slice(0, 6).map((trip) => {
-              const status =
-                new Date(trip.endDate) < today
-                  ? "done"
-                  : new Date(trip.startDate) >= today
-                    ? "upcoming"
-                    : "planning";
-
-              return (
-                <TripCard
-                  key={trip.id}
-                  id={trip.id}
-                  title={trip.title}
-                  description={trip.description}
-                  startDate={trip.startDate}
-                  endDate={trip.endDate}
-                  imageUrl={trip.imageUrl}
-                  stops={trip.locations.length}
-                  status={status}
-                />
-              );
-            })}
-          </div>
-        )}
       </section>
     </div>
   );

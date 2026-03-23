@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Noto_Serif, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Footer from "@/components/footer";
@@ -11,6 +11,12 @@ import { ThemePreference } from "@/lib/phase-one-types";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const notoSerif = Noto_Serif({
+  variable: "--font-noto-serif",
   subsets: ["latin"],
   display: "swap",
 });
@@ -40,12 +46,12 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var stored=localStorage.getItem('theme-preference');var initial='${userThemePreference}';var pref=(stored==='LIGHT'||stored==='DARK'||stored==='SYSTEM')?stored:initial;var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=pref==='LIGHT'?'light':pref==='DARK'?'dark':(systemDark?'dark':'light');document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(theme);document.documentElement.dataset.theme=theme;}catch(e){document.documentElement.classList.add('dark');document.documentElement.dataset.theme='dark';}})();`,
+            __html: `(function(){try{var stored=localStorage.getItem('theme-preference');var initial='${userThemePreference}';var pref=(stored==='LIGHT'||stored==='DARK'||stored==='SYSTEM')?stored:initial;var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=pref==='LIGHT'?'light':pref==='DARK'?'dark':(systemDark?'dark':'light');document.documentElement.classList.remove('light','dark');document.documentElement.classList.add(theme);document.documentElement.dataset.theme=theme;}catch(e){document.documentElement.classList.add('light');document.documentElement.dataset.theme='light';}})();`,
           }}
         />
       </head>
       <body
-        className={`${plusJakartaSans.variable} font-[family-name:var(--font-plus-jakarta-sans)] antialiased`}
+        className={`${plusJakartaSans.variable} ${notoSerif.variable} font-[family-name:var(--font-plus-jakarta-sans)] antialiased`}
       >
         <ThemeProvider initialPreference={userThemePreference}>
           <Navbar session={session} />

@@ -30,7 +30,10 @@ export default function TripCard({
 }: TripCardProps) {
   return (
     <Link href={`/trips/${id}`} className="block h-full">
-      <motion.div whileHover={{ y: -6, scale: 1.02 }} transition={{ type: "spring", stiffness: 220, damping: 18 }}>
+      <motion.div
+        whileHover={{ y: -6, scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 220, damping: 18 }}
+      >
         <Card className="group h-full overflow-hidden">
           <div className="relative h-56 overflow-hidden">
             {imageUrl ? (
@@ -41,9 +44,9 @@ export default function TripCard({
                 className="object-cover transition duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(0,194,255,0.22),transparent_30%),linear-gradient(145deg,#161820,#0A0E1A)]" />
+              <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(0,194,255,0.14),transparent_30%),linear-gradient(145deg,#dfeaf7,#f8f7f4)]" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#08090E] via-[#08090E]/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1B3A6B]/70 via-[#1B3A6B]/12 to-transparent" />
             <div className="absolute left-5 top-5">
               <StatusBadge status={status} />
             </div>
@@ -54,10 +57,8 @@ export default function TripCard({
             </div>
           </div>
           <CardContent className="space-y-4 pt-5">
-            <p className="line-clamp-2 text-sm leading-7 text-[#8B9BB4]">
-              {description}
-            </p>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-[#8B9BB4]">
+            <p className="line-clamp-2 text-sm leading-7 text-[#61738C]">{description}</p>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-[#61738C]">
               <span className="inline-flex items-center gap-2">
                 <CalendarDays className="size-4 text-[#00C2FF]" />
                 {new Date(startDate).toLocaleDateString()} -{" "}

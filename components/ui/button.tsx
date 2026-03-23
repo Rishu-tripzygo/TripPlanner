@@ -9,13 +9,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)] text-white shadow-[0_0_20px_rgba(0,194,255,0.18)] hover:brightness-110",
+          "bg-[linear-gradient(135deg,#024785,#2B5F9E)] text-white shadow-[0_20px_40px_rgba(2,71,133,0.14)] hover:brightness-105",
         destructive:
           "bg-destructive text-white shadow-[0_8px_24px_rgba(239,68,68,0.24)] hover:brightness-110",
         outline:
-          "border border-[var(--border)] bg-[var(--surface-1)] text-[var(--foreground)] shadow-[0_0_0_1px_var(--border),0_4px_24px_rgba(0,0,0,0.16)] hover:bg-[var(--surface-2)]",
+          "border border-[var(--border)] bg-white text-[var(--foreground)] shadow-[0_12px_24px_rgba(26,28,27,0.05)] hover:bg-[#F4F3F1]",
         secondary:
-          "bg-[var(--secondary)] text-[var(--secondary-foreground)] shadow-[0_0_0_1px_var(--border),0_8px_24px_rgba(0,0,0,0.16)] hover:brightness-[1.03]",
+          "bg-[var(--secondary)] text-[var(--secondary-foreground)] shadow-[0_12px_24px_rgba(26,28,27,0.05)] hover:brightness-[1.01]",
         ghost: "text-[var(--foreground)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)]",
         link: "text-[#00C2FF] underline-offset-4 hover:underline",
       },

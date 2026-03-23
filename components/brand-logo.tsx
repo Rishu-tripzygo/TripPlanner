@@ -14,8 +14,8 @@ export default function BrandLogo({
   compact = false,
   light = false,
 }: BrandLogoProps) {
-  const textColor = light ? "text-white" : "text-[#F0F2F7]";
-  const secondaryColor = light ? "text-white/60" : "text-[#8B9BB4]";
+  const textColor = light ? "text-white" : "text-[#024785]";
+  const secondaryColor = light ? "text-white/70" : "text-[#61738C]";
 
   return (
     <motion.div
@@ -23,52 +23,56 @@ export default function BrandLogo({
       transition={{ type: "spring", stiffness: 260, damping: 18 }}
       className={cn("inline-flex items-center gap-3", className)}
     >
-      <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(0,194,255,0.34),transparent_45%),linear-gradient(145deg,#1B3A6B,#0A0E1A)] shadow-[0_0_24px_rgba(0,194,255,0.18)]">
+      <div
+        className={cn(
+          "relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border shadow-[0_14px_28px_rgba(26,28,27,0.08)]",
+          light
+            ? "border-white/20 bg-white/10 backdrop-blur-xl"
+            : "border-[rgba(2,71,133,0.1)] bg-[linear-gradient(145deg,#ffffff,#f4f3f1)]"
+        )}
+      >
         <svg
           viewBox="0 0 48 48"
           className="h-7 w-7"
           aria-hidden="true"
           fill="none"
         >
-          <circle cx="24" cy="24" r="13" stroke="white" strokeWidth="2.5" />
+          <circle
+            cx="24"
+            cy="24"
+            r="13"
+            stroke={light ? "white" : "#024785"}
+            strokeWidth="2.5"
+          />
           <path
-            d="M14 24h20M24 11c4.5 4.3 6.8 8.7 6.8 13s-2.3 8.7-6.8 13c-4.5-4.3-6.8-8.7-6.8-13s2.3-8.7 6.8-13Z"
-            stroke="#00C2FF"
+            d="M16.5 28.5c3.4-6 7.9-10.6 15-13.8"
+            stroke="#2B5F9E"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          <path d="M28.5 14.7 33 13l-1.6 4.7" stroke="#2B5F9E" strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />
+        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#024785]" />
       </div>
 
       {!compact && (
         <div className="leading-none">
-          <div className={cn("flex items-center text-[1.2rem] font-semibold tracking-[-0.04em]", textColor)}>
-            V
-            <span className="mx-[0.02em] inline-flex h-[1.05em] w-[1.05em] items-center justify-center">
-              <svg viewBox="0 0 36 36" className="h-[0.95em] w-[0.95em]" aria-hidden="true">
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="13"
-                  stroke={light ? "white" : "#F0F2F7"}
-                  strokeWidth="2.4"
-                  fill="none"
-                />
-                <path
-                  d="M7 18h22M18 5.5c4.3 4.1 6.5 8.3 6.5 12.5S22.3 26.4 18 30.5c-4.3-4.1-6.5-8.3-6.5-12.5S13.7 9.6 18 5.5Z"
-                  stroke="#00C2FF"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            ya
+          <div
+            className={cn(
+              "font-[family-name:var(--font-noto-serif)] text-[1.95rem] font-bold italic tracking-[-0.05em]",
+              textColor
+            )}
+          >
+            Wandrly
           </div>
-          <div className={cn("mt-1 text-[0.63rem] uppercase tracking-[0.34em]", secondaryColor)}>
-            AI Travel Planner
+          <div
+            className={cn(
+              "mt-1 text-[0.62rem] uppercase tracking-[0.34em]",
+              secondaryColor
+            )}
+          >
+            Curated Travel AI
           </div>
         </div>
       )}

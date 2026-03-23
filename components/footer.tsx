@@ -1,60 +1,52 @@
 import BrandLogo from "@/components/brand-logo";
 import Link from "next/link";
-import { Compass, Globe2, MapPinned, Sparkles } from "lucide-react";
+import { Globe2, MapPinned, Sparkles } from "lucide-react";
 
 const footerSections = [
   {
     title: "Product",
     links: [
       { href: "/", label: "Home" },
-      { href: "/ai-trip-planner", label: "AI Planner" },
-      { href: "/trips", label: "Trips Dashboard" },
+      { href: "/ai-trip-planner", label: "Plan with AI" },
+      { href: "/trips", label: "Trip workspace" },
+      { href: "/globe", label: "Travel globe" },
     ],
   },
   {
-    title: "Core Modules",
+    title: "Journey",
     links: [
-      { href: "/trips", label: "Maps and Itineraries" },
-      { href: "/trips", label: "Budget and Packing" },
-      { href: "/trips", label: "Documents and Journal" },
+      { href: "/trips/new", label: "Create trip shell" },
+      { href: "/trips", label: "Budget and packing" },
+      { href: "/trips", label: "Documents and journal" },
+      { href: "/trips", label: "Sharing and memories" },
     ],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="px-3 pb-24 pt-12 sm:px-6 sm:pb-10">
-      <div className="app-shell overflow-hidden rounded-[32px] border border-[var(--border-strong)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_90%,transparent),color-mix(in_srgb,var(--card)_96%,transparent))] shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
-        <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-10 lg:py-10">
+    <footer className="px-3 pb-24 pt-14 sm:px-6 sm:pb-10">
+      <div className="app-shell overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#ffffff,#f8f7f4)] shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+        <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-12 lg:py-12">
           <div className="max-w-xl">
-            <div className="flex items-center gap-4">
-              <BrandLogo compact />
-              <div>
-                <p className="text-[1.18rem] font-semibold tracking-[-0.04em] text-white">
-                  Wandrly
-                </p>
-                <p className="mt-1 text-[0.7rem] uppercase tracking-[0.32em] text-[#8FA0BC]">
-                  Premium AI Travel Planner
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-5 text-sm leading-8 text-[#8FA0BC]">
-              A high-end travel planning workspace for immersive itinerary design, route mapping,
-              budgeting, packing, journaling, and destination decision-making.
+            <BrandLogo />
+            <p className="mt-6 text-sm leading-8 text-[#61738C]">
+              Wandrly is built to feel like a digital travel concierge: elegant enough for
+              client presentation, practical enough for real trip execution, and structured
+              around the full journey from AI planning to memories.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               {[
-                { icon: <Sparkles className="size-4" />, label: "AI itinerary engine" },
-                { icon: <MapPinned className="size-4" />, label: "Route-aware planning" },
-                { icon: <Globe2 className="size-4" />, label: "Travel memory system" },
+                { icon: <Sparkles className="size-4" />, label: "AI-curated itineraries" },
+                { icon: <MapPinned className="size-4" />, label: "Operational trip workspace" },
+                { icon: <Globe2 className="size-4" />, label: "Travel memory archive" },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-xs text-[#DCE6F3]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#F4F3F1] px-3 py-2 text-xs text-[#3E536F]"
                 >
-                  <span className="text-[#00C2FF]">{item.icon}</span>
+                  <span className="text-[#024785]">{item.icon}</span>
                   {item.label}
                 </div>
               ))}
@@ -63,7 +55,7 @@ export default function Footer() {
 
           {footerSections.map((section) => (
             <div key={section.title}>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#00C2FF]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#024785]">
                 {section.title}
               </p>
               <div className="mt-4 space-y-3">
@@ -71,7 +63,7 @@ export default function Footer() {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="block text-sm text-[#8FA0BC] transition hover:text-white"
+                    className="block text-sm text-[#61738C] transition hover:text-[#024785]"
                   >
                     {link.label}
                   </Link>
@@ -81,12 +73,9 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-white/8 px-6 py-4 text-sm text-[#73849F] sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-          <p>Wandrly is being shaped as a premium travel product experience, not just a demo.</p>
-          <div className="inline-flex items-center gap-2">
-            <Compass className="size-4 text-[#00C2FF]" />
-            <span>Designed for planning, selling, and client-facing presentation.</span>
-          </div>
+        <div className="flex flex-col gap-4 border-t border-[rgba(2,71,133,0.08)] px-6 py-4 text-sm text-[#7A879B] sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
+          <p>Wandrly AI. Curated journeys, mapped clearly, remembered beautifully.</p>
+          <p>Built for public launch, client demos, and real travel planning workflows.</p>
         </div>
       </div>
     </footer>
