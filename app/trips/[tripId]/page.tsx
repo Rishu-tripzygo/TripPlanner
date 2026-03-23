@@ -25,9 +25,6 @@ export default async function TripDetail({
       },
     },
   });
-
-  console.log(trip);
-
   if (!trip) {
     return <div> Trip not found.</div>;
   }

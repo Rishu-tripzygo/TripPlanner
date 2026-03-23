@@ -1,5 +1,6 @@
 "use client";
 
+import AuthButton from "@/components/auth-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTrip } from "@/lib/actions/create-trip";
@@ -8,10 +9,38 @@ import { UploadButton } from "@/lib/upload-thing";
 import { CalendarRange, ImagePlus, MapPinned, Plane } from "lucide-react";
 import { useState, useTransition } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export default function NewTrip() {
   const [isPending, startTransition] = useTransition();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+
+  if (status !== "loading" && !session?.user) {
+    return (
+      <div className="app-shell px-4 py-20 sm:px-6 lg:px-8">
+        <Card className="mx-auto max-w-3xl text-center">
+          <CardHeader>
+            <p className="section-label">New Trip</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+              Sign in to create a trip workspace
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 text-[#61738C]">
+            <p className="mx-auto max-w-2xl text-sm leading-8">
+              Trips are the base layer for AI planning, route stops, budgets, packing, and docs.
+            </p>
+            <AuthButton
+              isLoggedIn={false}
+              className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white"
+            >
+              Sign in with GitHub
+            </AuthButton>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell grid gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8">

@@ -4,12 +4,12 @@ import BrandLogo from "@/components/brand-logo";
 import GlobalSearch from "@/components/global-search";
 import NotificationBell from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
-import { login, logout } from "@/lib/auth-actions";
 import { cn } from "@/lib/utils";
 import { Compass, Home, LogOut, Map, Search, Sparkles, UserRound, UsersRound } from "lucide-react";
 import { Session } from "next-auth";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -21,6 +21,18 @@ const navItems = [
 
 export default function Navbar({ session }: { session: Session | null }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: liveSession } = useSession();
+  const currentSession = liveSession ?? session;
+
+  async function handleLogin() {
+    await signIn("github", { callbackUrl: "/trips" });
+  }
+
+  async function handleLogout() {
+    await signOut({ callbackUrl: "/" });
+    router.refresh();
+  }
 
   return (
     <>
@@ -58,7 +70,7 @@ export default function Navbar({ session }: { session: Session | null }) {
                 <GlobalSearch />
               </div>
 
-              {session ? (
+              {currentSession ? (
                 <>
                   <NotificationBell />
                   <Link
@@ -67,10 +79,10 @@ export default function Navbar({ session }: { session: Session | null }) {
                   >
                     <UserRound className="size-4 text-[#024785]" />
                     <span className="truncate">
-                      {session.user?.name || "Traveler"}
+                      {currentSession.user?.name || "Traveler"}
                     </span>
                   </Link>
-                  <Button variant="outline" onClick={logout} className="shrink-0 rounded-full px-4">
+                  <Button variant="outline" onClick={handleLogout} className="shrink-0 rounded-full px-4">
                     <span className="inline-flex items-center gap-2">
                       <LogOut className="size-4" />
                       Sign out
@@ -78,16 +90,16 @@ export default function Navbar({ session }: { session: Session | null }) {
                   </Button>
                 </>
               ) : (
-                <Button onClick={login} className="rounded-full px-5">Sign in</Button>
+                <Button onClick={handleLogin} className="rounded-full px-5">Sign in</Button>
               )}
             </div>
 
             <div className="flex items-center gap-2 xl:hidden">
-              {session ? <NotificationBell /> : null}
-              {session ? (
+              {currentSession ? <NotificationBell /> : null}
+              {currentSession ? (
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="inline-flex size-10 items-center justify-center rounded-full bg-[#F4F3F1] text-[#024785]"
                   aria-label="Sign out"
                 >
@@ -96,7 +108,7 @@ export default function Navbar({ session }: { session: Session | null }) {
               ) : (
                 <button
                   type="button"
-                  onClick={login}
+                  onClick={handleLogin}
                   className="inline-flex size-10 items-center justify-center rounded-full bg-[#F4F3F1] text-[#024785]"
                   aria-label="Sign in"
                 >
@@ -130,9 +142,9 @@ export default function Navbar({ session }: { session: Session | null }) {
             );
           })}
 
-          {session ? (
+          {currentSession ? (
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="flex min-w-[64px] flex-col items-center gap-1 rounded-full px-3 py-2 text-[11px] font-medium text-[#61738C] transition hover:text-[#024785]"
             >
               <LogOut className="size-4" />
@@ -140,7 +152,7 @@ export default function Navbar({ session }: { session: Session | null }) {
             </button>
           ) : (
             <button
-              onClick={login}
+              onClick={handleLogin}
               className="flex min-w-[64px] flex-col items-center gap-1 rounded-full px-3 py-2 text-[11px] font-medium text-[#61738C] transition hover:text-[#024785]"
             >
               <Compass className="size-4" />

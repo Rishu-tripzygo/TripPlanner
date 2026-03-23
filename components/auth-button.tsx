@@ -1,7 +1,7 @@
 "use client";
 
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/auth-actions";
 
 interface AuthButtonProps {
   isLoggedIn: boolean;
@@ -15,12 +15,14 @@ export default function AuthButton({
   children,
 }: AuthButtonProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const loggedIn = Boolean(session?.user) || isLoggedIn;
 
   const handleClick = async () => {
-    if (isLoggedIn) {
+    if (loggedIn) {
       router.push("/trips");
     } else {
-      await login();
+      await signIn("github", { callbackUrl: "/trips" });
     }
   };
 

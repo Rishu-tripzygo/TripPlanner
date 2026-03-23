@@ -448,29 +448,117 @@ export default function AITripPlanner({
     ].join("\n");
   }, [result]);
 
+  const plannerSteps = [
+    {
+      label: "Brief",
+      title: "Shape the trip brief",
+      description: "Choose the right trip shell, destination, pace, and guest profile.",
+    },
+    {
+      label: "Draft",
+      title: "Generate a structured route",
+      description: "Create a full saved itinerary with hotels, food cues, and day cards.",
+    },
+    {
+      label: "Refine",
+      title: "Iterate without losing history",
+      description: "Preview older drafts, restore a favorite, or ask AI for precise changes.",
+    },
+  ];
+
   return (
-    <div className="app-shell">
-      <section className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-        <Card className="h-fit xl:sticky xl:top-24">
+    <div className="app-shell space-y-8">
+      <section className="relative overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,251,0.92))] p-6 shadow-[0_28px_70px_rgba(26,28,27,0.08)] sm:p-8">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[42%] bg-[radial-gradient(circle_at_top,rgba(0,194,255,0.16),transparent_50%),radial-gradient(circle_at_bottom,rgba(2,71,133,0.12),transparent_46%)]" />
+        <div className="relative grid gap-8 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
+          <div className="space-y-6">
+            <p className="section-label">AI Trip Planner</p>
+            <div className="space-y-4">
+              <h1 className="max-w-4xl font-[family-name:var(--font-noto-serif)] text-[44px] leading-[0.95] tracking-[-0.05em] text-[#024785] sm:text-[58px] xl:text-[72px]">
+                Plan the route beautifully, then keep refining it like a real travel workspace.
+              </h1>
+              <p className="max-w-2xl text-base leading-8 text-[#5C6F89]">
+                Wandrly turns one destination brief into a saved itinerary version with daily pacing,
+                hotel recommendations, food suggestions, and version history your trip can grow from.
+              </p>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {plannerSteps.map((step) => (
+                <div
+                  key={step.label}
+                  className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-white/88 p-5 shadow-[0_14px_28px_rgba(26,28,27,0.05)] backdrop-blur-sm"
+                >
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">
+                    {step.label}
+                  </p>
+                  <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[28px] leading-[1.02] tracking-[-0.04em] text-[#1A1C1B]">
+                    {step.title}
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-[#61738C]">
+                    {step.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white/84 p-5 shadow-[0_18px_40px_rgba(26,28,27,0.07)] backdrop-blur-sm sm:grid-cols-3 xl:grid-cols-1">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Saved versions</p>
+              <p className="mt-3 font-[family-name:var(--font-noto-serif)] text-[42px] leading-none tracking-[-0.05em] text-[#024785]">
+                {versions.length}
+              </p>
+              <p className="mt-2 text-sm text-[#61738C]">
+                Each generated draft stays recoverable instead of being overwritten.
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Active trip</p>
+              <p className="mt-3 text-lg font-semibold text-[#1A1C1B]">
+                {selectedTrip?.title || "Choose a trip"}
+              </p>
+              <p className="mt-2 text-sm text-[#61738C]">
+                {selectedTrip ? formatTripWindow(selectedTrip) : "Attach the planner to a trip shell first."}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Current state</p>
+              <p className="mt-3 text-lg font-semibold text-[#1A1C1B]">
+                {isLoading ? "Generating..." : result ? "Ready to refine" : "Waiting for brief"}
+              </p>
+              <p className="mt-2 text-sm text-[#61738C]">
+                {isLoading
+                  ? streamStatus || "The planner is shaping your route."
+                  : result
+                    ? "Preview the active itinerary, compare versions, and refine with AI."
+                    : "Complete the form to create your first saved itinerary."}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
+        <Card className="h-fit border-[rgba(2,71,133,0.08)] bg-white/96 xl:sticky xl:top-24">
           <CardHeader>
-            <p className="section-label">AI Planner</p>
-            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[36px] leading-[1.02] text-[#024785] sm:text-[40px]">
-              Build a polished itinerary, then keep refining it
+            <p className="section-label">Trip Brief</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] text-[#024785]">
+              Give the planner the right context
             </CardTitle>
             <p className="max-w-lg text-sm leading-7 text-[#61738C]">
-              Start from one destination brief, save each AI version to a real trip, and
-              keep improving the plan without losing earlier drafts.
+              The better the brief is here, the more useful the saved itinerary becomes across
+              budget, weather, packing, and trip prep later.
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-5">
             {trips.length === 0 ? (
-              <div className="rounded-[20px] bg-[#F4F3F1] p-5">
-                <h3 className="font-[family-name:var(--font-noto-serif)] text-[30px] font-bold tracking-[-0.03em] text-[#024785]">
+              <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#F6F4EF] p-6">
+                <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.03em] text-[#024785]">
                   Create a trip first
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-[#61738C]">
-                  Saved AI versions now attach to a specific trip. Create one trip shell,
-                  then come back here to generate and manage itinerary drafts cleanly.
+                <p className="mt-3 text-sm leading-7 text-[#61738C]">
+                  Saved AI versions attach to real trips. Create a trip shell first, then come
+                  back here to generate and manage itinerary drafts cleanly.
                 </p>
                 <Link href="/trips/new" className="mt-5 inline-flex">
                   <Button>Create New Trip</Button>
@@ -478,12 +566,12 @@ export default function AITripPlanner({
               </div>
             ) : (
               <form className="space-y-5" onSubmit={handleSubmit}>
-                <div>
+                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                   <FormLabel icon={<History className="size-4" />}>Attach to trip</FormLabel>
                   <select
                     value={selectedTripId}
                     onChange={(event) => setSelectedTripId(event.target.value)}
-                    className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
+                    className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
                   >
                     {trips.map((trip) => (
                       <option key={trip.id} value={trip.id} className="bg-white text-[#1A1C1B]">
@@ -492,24 +580,24 @@ export default function AITripPlanner({
                     ))}
                   </select>
                   {selectedTrip ? (
-                    <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
+                    <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
                       {formatTripWindow(selectedTrip)}
                     </p>
                   ) : null}
                 </div>
 
-                <div>
+                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                   <FormLabel icon={<MapPinned className="size-4" />}>Destination</FormLabel>
                   <input
                     value={form.destination}
                     onChange={(event) => updateField("destination", event.target.value)}
                     placeholder="Kyoto, Japan"
-                    className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-[#8A96A8] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
+                    className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
                   />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div>
+                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     <FormLabel icon={<Sparkles className="size-4" />}>Purpose</FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {tripPurposeOptions.map((purpose) => {
@@ -533,7 +621,7 @@ export default function AITripPlanner({
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4 sm:grid-cols-2">
                     <div>
                       <FormLabel icon={<CalendarRange className="size-4" />}>Days</FormLabel>
                       <input
@@ -542,7 +630,7 @@ export default function AITripPlanner({
                         max={21}
                         value={form.days}
                         onChange={(event) => updateField("days", Number(event.target.value))}
-                        className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
+                        className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
                       />
                     </div>
                     <div>
@@ -555,14 +643,14 @@ export default function AITripPlanner({
                         onChange={(event) =>
                           updateField("travelers", Number(event.target.value))
                         }
-                        className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
+                        className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div>
+                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     <FormLabel icon={<Sparkles className="size-4" />}>Travel style</FormLabel>
                     <div className="grid grid-cols-3 gap-2">
                       {travelStyleOptions.map((style) => {
@@ -573,7 +661,7 @@ export default function AITripPlanner({
                             type="button"
                             onClick={() => updateField("travelStyle", style)}
                             className={cn(
-                              "rounded-[12px] border px-3 py-3 text-sm transition",
+                              "rounded-[14px] border px-3 py-3 text-sm transition",
                               active
                                 ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
                                 : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
@@ -585,7 +673,8 @@ export default function AITripPlanner({
                       })}
                     </div>
                   </div>
-                  <div>
+
+                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     <FormLabel icon={<BedDouble className="size-4" />}>Hotel</FormLabel>
                     <div className="grid grid-cols-2 gap-2">
                       {hotelCategoryOptions.map((category) => {
@@ -596,7 +685,7 @@ export default function AITripPlanner({
                             type="button"
                             onClick={() => updateField("hotelCategory", category)}
                             className={cn(
-                              "rounded-[12px] border px-3 py-3 text-sm transition",
+                              "rounded-[14px] border px-3 py-3 text-sm transition",
                               active
                                 ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
                                 : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
@@ -611,27 +700,27 @@ export default function AITripPlanner({
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div>
+                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     <FormLabel icon={<ChefHat className="size-4" />}>Budget range</FormLabel>
                     <input
                       value={form.budgetRange}
                       onChange={(event) => updateField("budgetRange", event.target.value)}
                       placeholder="INR 40,000 - INR 80,000"
-                      className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
+                      className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
                     />
                   </div>
-                  <div>
+                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     <FormLabel icon={<CalendarRange className="size-4" />}>Travel dates</FormLabel>
                     <input
                       value={form.travelDates}
                       onChange={(event) => updateField("travelDates", event.target.value)}
                       placeholder="12 Aug - 16 Aug 2026"
-                      className="w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-3 text-sm text-[#1A1C1B]"
+                      className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
                     />
                   </div>
                 </div>
 
-                <div>
+                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                   <FormLabel icon={<Sparkles className="size-4" />}>Interests</FormLabel>
                   <div className="flex flex-wrap gap-2">
                     {interestOptions.map((interest) => {
@@ -656,12 +745,17 @@ export default function AITripPlanner({
                 </div>
 
                 {error ? (
-                  <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FFB4B4]">
+                  <div className="rounded-[18px] border border-[#EF4444]/25 bg-[#FFF2F2] px-4 py-3 text-sm text-[#B42318]">
                     {error}
                   </div>
                 ) : null}
 
-                <Button type="submit" size="lg" className="w-full rounded-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-14 w-full rounded-full text-base"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Generating and saving..." : "Generate AI Itinerary"}
                 </Button>
               </form>
@@ -670,26 +764,29 @@ export default function AITripPlanner({
         </Card>
 
         <div className="space-y-6">
-          <GlassWidget className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <GlassWidget className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white/80 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="section-label">Live Output</p>
                 <h2 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] font-bold tracking-[-0.03em] text-[#024785]">
-                  {isLoading
-                    ? "Thinking through your route..."
-                    : "Saved itinerary and version history"}
+                  {isLoading ? "Thinking through your route..." : "Saved itinerary workspace"}
                 </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-[#61738C]">
+                  {isLoading
+                    ? streamStatus || "The planner is shaping your route, pace, and hotel logic."
+                    : "Review the active itinerary, compare saved versions, and keep refining the plan without losing history."}
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   disabled={!result}
                   onClick={() => navigator.clipboard.writeText(actionSummary)}
-                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
+                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Copy className="size-4" />
-                    Copy
+                    Copy brief
                   </span>
                 </button>
                 <button
@@ -700,7 +797,7 @@ export default function AITripPlanner({
                       "PDF export will fit naturally once versioned itinerary editing is in place."
                     )
                   }
-                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
+                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
                 >
                   PDF
                 </button>
@@ -715,7 +812,7 @@ export default function AITripPlanner({
                       });
                     }
                   }}
-                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] transition disabled:opacity-40"
+                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Share2 className="size-4" />
@@ -730,24 +827,23 @@ export default function AITripPlanner({
                       void loadVersions(selectedTripId);
                     }
                   }}
-                  className="rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-white px-3 py-2 text-sm text-[#3E536F] disabled:opacity-40"
+                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
                 >
                   <span className="inline-flex items-center gap-2">
                     <RefreshCw className="size-4" />
-                    Reload
+                    Refresh
                   </span>
                 </button>
               </div>
             </div>
           </GlassWidget>
-
           {selectedTripId ? (
-            <Card>
+            <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="section-label">Version History</p>
-                    <CardTitle className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] text-[#024785]">
+                    <CardTitle className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] text-[#024785]">
                       {selectedTrip?.title || "Saved itinerary drafts"}
                     </CardTitle>
                   </div>
@@ -772,7 +868,7 @@ export default function AITripPlanner({
                           className={cn(
                             "rounded-[18px] border p-4 transition",
                             previewing
-                              ? "border-[#024785]/20 bg-[#EEF2F8]"
+                              ? "border-[#024785]/18 bg-[#EEF2F8]"
                               : "border-[rgba(2,71,133,0.08)] bg-[#FAF9F7]"
                           )}
                         >
@@ -782,8 +878,7 @@ export default function AITripPlanner({
                                 Version {version.versionNumber}
                               </p>
                               <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
-                                {version.sourceProvider} ·{" "}
-                                {new Date(version.createdAt).toLocaleString()}
+                                {version.sourceProvider} / {new Date(version.createdAt).toLocaleString()}
                               </p>
                             </div>
                             {version.isActive ? <StatusBadge status="upcoming" /> : null}
@@ -812,9 +907,7 @@ export default function AITripPlanner({
                                 disabled={isRestoringVersion}
                                 onClick={() => void restoreVersion(version.id)}
                               >
-                                {isRestoringVersion && previewing
-                                  ? "Restoring..."
-                                  : "Make active"}
+                                {isRestoringVersion && previewing ? "Restoring..." : "Make active"}
                               </Button>
                             ) : null}
                           </div>
@@ -831,17 +924,18 @@ export default function AITripPlanner({
               </CardContent>
             </Card>
           ) : null}
+
           {isLoading ? (
             <div className="space-y-4">
-              <div className="rounded-[24px] bg-[#F4F3F1] px-6 py-8">
+              <div className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-[#F6F4EF] px-6 py-8">
                 <p className="mb-4 text-sm uppercase tracking-[0.24em] text-[#00C2FF]">
                   Live generation
                 </p>
-                <div className="rounded-[20px] bg-white p-5">
+                <div className="rounded-[22px] border border-[rgba(2,71,133,0.08)] bg-white p-5">
                   <p className="text-sm font-medium text-[#1A1C1B]">
                     {streamStatus || "Generating your itinerary"}
                   </p>
-                  <div className="mt-4 min-h-[108px] rounded-[16px] bg-[#FAF9F7] p-4">
+                  <div className="mt-4 min-h-[108px] rounded-[18px] bg-[#FAF9F7] p-4">
                     {streamingOverview ? (
                       <p className="text-sm leading-7 text-[#3E536F]">
                         {streamingOverview}
@@ -864,10 +958,10 @@ export default function AITripPlanner({
             </div>
           ) : result ? (
             <div className="space-y-6">
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden border-[rgba(2,71,133,0.08)] bg-white/96">
                 <div className="h-1 bg-[linear-gradient(135deg,#024785,#3b79b6)]" />
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <p className="section-label">Trip Overview</p>
                       <CardTitle className="mt-2 text-3xl text-[#024785]">
@@ -893,18 +987,18 @@ export default function AITripPlanner({
                     {[
                       [
                         "Trip profile",
-                        `${result.trip_summary.purpose} · ${result.trip_summary.travel_style}`,
+                        `${result.trip_summary.purpose} / ${result.trip_summary.travel_style}`,
                       ],
                       [
                         "Duration",
-                        `${result.trip_summary.duration_days} days · ${result.trip_summary.travelers} travelers`,
+                        `${result.trip_summary.duration_days} days / ${result.trip_summary.travelers} travelers`,
                       ],
                       ["Stay zone", result.trip_summary.ideal_area_to_stay],
                       ["Budget", result.trip_summary.budget_range],
                     ].map(([label, value]) => (
                       <div
                         key={label as string}
-                        className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
+                        className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
                       >
                         <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
                           {label}
@@ -914,7 +1008,7 @@ export default function AITripPlanner({
                     ))}
                   </div>
                   {result.trip_summary.best_time_windows.length > 0 ? (
-                    <div className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                    <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                       <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
                         Best time windows
                       </p>
@@ -933,13 +1027,13 @@ export default function AITripPlanner({
                 </CardContent>
               </Card>
 
-              <div className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+              <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
                 <div className="space-y-6">
                   {result.days.map((day) => (
-                    <Card key={day.day} className="overflow-hidden">
+                    <Card key={day.day} className="overflow-hidden border-[rgba(2,71,133,0.08)] bg-white/96">
                       <div className="h-1 bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]" />
                       <CardContent className="space-y-5 pt-6">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                           <div>
                             <p className="section-label">Day {day.day}</p>
                             <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#024785]">
@@ -949,8 +1043,7 @@ export default function AITripPlanner({
                           <div className="flex flex-wrap gap-2">
                             {day.destinationSeason ? (
                               <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C]">
-                                {day.destinationSeason.label} ·{" "}
-                                {Math.round(day.destinationSeason.confidenceScore * 100)}%
+                                {day.destinationSeason.label} / {Math.round(day.destinationSeason.confidenceScore * 100)}%
                               </span>
                             ) : null}
                             <div className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C]">
@@ -960,16 +1053,15 @@ export default function AITripPlanner({
                         </div>
 
                         {day.weather ? (
-                          <div className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                             <p className="text-sm font-medium text-[#1A1C1B]">Weather outlook</p>
                             <p className="mt-2 text-sm leading-7 text-[#61738C]">
-                              {day.weather.summary} · {day.weather.temperatureMin}C to{" "}
-                              {day.weather.temperatureMax}C
+                              {day.weather.summary} / {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
                             </p>
                           </div>
                         ) : null}
 
-                        <div className="grid gap-4 lg:grid-cols-3">
+                        <div className="grid gap-4 xl:grid-cols-3">
                           {[
                             ["Morning", day.morning],
                             ["Afternoon", day.afternoon],
@@ -977,7 +1069,7 @@ export default function AITripPlanner({
                           ].map(([label, items]) => (
                             <div
                               key={label as string}
-                              className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
+                              className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
                             >
                               <p className="text-sm font-medium text-[#1A1C1B]">{label}</p>
                               <div className="mt-3">
@@ -988,27 +1080,24 @@ export default function AITripPlanner({
                         </div>
 
                         <div className="grid gap-4 lg:grid-cols-2">
-                          <div className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                             <p className="text-sm font-medium text-[#1A1C1B]">Attractions</p>
                             <div className="mt-3">
                               <OutputList items={day.places} />
                             </div>
                           </div>
-                          <div className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                             <p className="text-sm font-medium text-[#1A1C1B]">Food and recharge</p>
                             <div className="mt-3">
                               <OutputList
-                                items={[
-                                  ...day.food_recommendations,
-                                  ...day.relaxation_suggestions,
-                                ]}
+                                items={[...day.food_recommendations, ...day.relaxation_suggestions]}
                               />
                             </div>
                           </div>
                         </div>
 
                         {day.estimatedCost ? (
-                          <div className="rounded-[16px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 p-4">
+                          <div className="rounded-[18px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 p-4">
                             <p className="text-sm font-medium text-[#024785]">Estimated day cost</p>
                             <p className="mt-2 text-sm leading-7 text-[#3E536F]">
                               {day.estimatedCost.currency} {day.estimatedCost.total.toLocaleString()}
@@ -1021,7 +1110,7 @@ export default function AITripPlanner({
                 </div>
 
                 <div className="space-y-6">
-                  <Card>
+                  <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
                     <CardHeader>
                       <CardTitle className="text-2xl text-[#024785]">
                         Hotel Recommendations
@@ -1031,7 +1120,7 @@ export default function AITripPlanner({
                       {result.hotel_recommendations.map((hotel) => (
                         <div
                           key={hotel.name}
-                          className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
+                          className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-semibold text-[#1A1C1B]">{hotel.name}</h3>
@@ -1057,7 +1146,7 @@ export default function AITripPlanner({
                     ["Transportation Suggestions", result.transportation_suggestions],
                     ["Travel Tips", result.travel_tips],
                   ].map(([title, items]) => (
-                    <Card key={title as string}>
+                    <Card key={title as string} className="border-[rgba(2,71,133,0.08)] bg-white/96">
                       <CardHeader>
                         <CardTitle className="text-xl text-[#024785]">{title}</CardTitle>
                       </CardHeader>
@@ -1069,14 +1158,14 @@ export default function AITripPlanner({
                 </div>
               </div>
 
-              <Card>
+              <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <p className="section-label">Refine With AI</p>
                       <CardTitle className="mt-2 flex items-center gap-2 text-2xl text-[#024785]">
                         <MessageSquareText className="size-5 text-[#00C2FF]" />
-                        Adjust this itinerary with natural language
+                        Adjust the plan in natural language
                       </CardTitle>
                     </div>
                     {selectedVersion ? (
@@ -1097,14 +1186,14 @@ export default function AITripPlanner({
                         key={suggestion}
                         type="button"
                         onClick={() => setRefinePrompt(suggestion)}
-                        className="rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4 text-left text-sm leading-7 text-[#3E536F] transition hover:border-[#00C2FF]/20 hover:bg-[#EEF7FD]"
+                        className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4 text-left text-sm leading-7 text-[#3E536F] transition hover:border-[#00C2FF]/20 hover:bg-[#EEF7FD]"
                       >
                         {suggestion}
                       </button>
                     ))}
                   </div>
 
-                  <div className="space-y-3 rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                  <div className="space-y-3 rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                     {messages.length > 0 ? (
                       <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
                         {messages.map((message) => {
@@ -1113,7 +1202,7 @@ export default function AITripPlanner({
                             <div
                               key={message.id}
                               className={cn(
-                                "rounded-[16px] border p-4",
+                                "rounded-[18px] border p-4",
                                 isUser
                                   ? "ml-auto max-w-[88%] border-[#00C2FF]/20 bg-[#00C2FF]/10"
                                   : "mr-auto max-w-[92%] border-[rgba(2,71,133,0.08)] bg-white"
@@ -1130,9 +1219,9 @@ export default function AITripPlanner({
                         })}
                       </div>
                     ) : (
-                      <div className="rounded-[16px] border border-dashed border-[rgba(2,71,133,0.12)] bg-white p-4 text-sm leading-7 text-[#61738C]">
-                        No refinement history yet. Ask for a smaller change like updating one
-                        day, making the plan cheaper, or swapping in different activities.
+                      <div className="rounded-[18px] border border-dashed border-[rgba(2,71,133,0.12)] bg-white p-4 text-sm leading-7 text-[#61738C]">
+                        No refinement history yet. Ask for a focused change like slowing one day
+                        down, making the route cheaper, or swapping activities.
                       </div>
                     )}
 
@@ -1141,7 +1230,7 @@ export default function AITripPlanner({
                         value={refinePrompt}
                         onChange={(event) => setRefinePrompt(event.target.value)}
                         placeholder="Try: make day 2 slower-paced and add one vegetarian dinner option."
-                        className="min-h-[120px] w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm leading-7 text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                        className="min-h-[120px] w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm leading-7 text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
                       />
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm text-[#61738C]">
@@ -1164,7 +1253,7 @@ export default function AITripPlanner({
               </Card>
             </div>
           ) : (
-            <Card className="min-h-[620px]">
+            <Card className="min-h-[620px] border-[rgba(2,71,133,0.08)] bg-white/96">
               <CardContent className="flex h-full flex-col items-center justify-center py-20 text-center">
                 <div className="mb-5 inline-flex rounded-full border border-[rgba(2,71,133,0.08)] bg-[#EEF7FD] p-4 text-[#00C2FF]">
                   <Sparkles className="size-7" />

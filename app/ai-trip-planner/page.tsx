@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
 import AITripPlanner from "@/components/ai-trip-planner";
+import AuthButton from "@/components/auth-button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
 interface AITripPlannerPageProps {
@@ -15,24 +17,49 @@ export default async function AITripPlannerPage({
   const params = await searchParams;
   const requestedTripId = Array.isArray(params.tripId) ? params.tripId[0] : params.tripId;
 
-  const trips = session?.user?.id
-    ? await prisma.trip.findMany({
-        where: { userId: session.user.id },
-        orderBy: { startDate: "desc" },
+  if (!session?.user?.id) {
+    return (
+      <div className="app-shell px-4 py-20 sm:px-6 lg:px-8">
+        <Card className="mx-auto max-w-3xl text-center">
+          <CardHeader>
+            <p className="section-label">Plan with AI</p>
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+              Sign in to generate and save itineraries
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 text-[#61738C]">
+            <p className="mx-auto max-w-2xl text-sm leading-8">
+              The planner saves versions to real trips so you can refine them, move into the
+              workspace, and keep budgets, maps, docs, and journals connected.
+            </p>
+            <AuthButton
+              isLoggedIn={false}
+              className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white"
+            >
+              Sign in with GitHub
+            </AuthButton>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const trips = await prisma.trip.findMany({
+    where: { userId: session.user.id },
+    orderBy: { startDate: "desc" },
+    select: {
+      id: true,
+      title: true,
+      startDate: true,
+      endDate: true,
+      locations: {
         select: {
-          id: true,
-          title: true,
-          startDate: true,
-          endDate: true,
-          locations: {
-            select: {
-              locationTitle: true,
-            },
-            take: 1,
-          },
+          locationTitle: true,
         },
-      })
-    : [];
+        take: 1,
+      },
+    },
+  });
 
   return (
     <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">

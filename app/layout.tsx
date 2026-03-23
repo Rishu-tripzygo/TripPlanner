@@ -6,6 +6,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/Navbar";
 import AssistantBubble from "@/components/assistant-bubble";
 import PWARegister from "@/components/pwa-register";
+import AppSessionProvider from "@/components/session-provider";
 import { auth } from "@/auth";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -40,11 +41,13 @@ export default async function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${notoSerif.variable} font-[family-name:var(--font-plus-jakarta-sans)] antialiased`}
       >
-        <Navbar session={session} />
-        {children}
-        <PWARegister />
-        <AssistantBubble />
-        <Footer />
+        <AppSessionProvider session={session}>
+          <Navbar session={session} />
+          {children}
+          <PWARegister />
+          <AssistantBubble />
+          <Footer />
+        </AppSessionProvider>
       </body>
     </html>
   );
