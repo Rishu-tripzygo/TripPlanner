@@ -1,78 +1,48 @@
 import BrandLogo from "@/components/brand-logo";
 import Link from "next/link";
-import { ArrowRight, Globe2, MapPinned, Sparkles } from "lucide-react";
 
-const footerSections = [
+const footerColumns = [
   {
     title: "Product",
     links: [
-      { href: "/", label: "Home" },
       { href: "/ai-trip-planner", label: "Plan with AI" },
       { href: "/trips", label: "Trip workspace" },
-      { href: "/explore", label: "Explore community" },
-      { href: "/assistant", label: "Travel assistant" },
+      { href: "/explore", label: "Explore" },
+      { href: "/assistant", label: "Assistant" },
     ],
   },
   {
-    title: "Journey",
+    title: "Company",
     links: [
-      { href: "/trips/new", label: "Create trip shell" },
-      { href: "/trips", label: "Budget and packing" },
-      { href: "/trips", label: "Documents and journal" },
-      { href: "/explore", label: "Public profiles" },
-      { href: "/trips", label: "Sharing and memories" },
+      { href: "/support", label: "Support" },
+      { href: "/safety", label: "Safety" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms & Conditions" },
     ],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="px-3 pb-24 pt-14 sm:px-6 sm:pb-10">
-      <div className="app-shell overflow-hidden rounded-[40px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#fffdfb,#f6f2ec)] shadow-[0_24px_60px_rgba(26,28,27,0.08)]">
-        <div className="grid gap-10 border-b border-[rgba(2,71,133,0.08)] px-6 py-10 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:px-12 lg:py-14">
-          <div className="max-w-xl">
+    <footer className="px-4 pb-24 pt-10 sm:px-6 sm:pb-10 lg:px-8">
+      <div className="app-shell rounded-[34px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#fffdfb,#f5f0e8)] px-6 py-8 shadow-[0_18px_36px_rgba(26,28,27,0.05)] sm:px-8 lg:px-10">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="max-w-lg">
             <BrandLogo />
-            <p className="mt-6 text-sm leading-8 text-[#61738C]">
-              Wandrly is a premium travel workspace for people who want the clarity of good
-              systems and the feeling of a beautifully planned journey. Plan faster, execute
-              better, and keep every trip memorable.
+            <p className="mt-5 text-sm leading-8 text-[#61738C]">
+              Premium travel planning, route intelligence, and trip operations in one calm
+              workspace built for real journeys.
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {[
-                { icon: <Sparkles className="size-4" />, label: "AI-curated itineraries" },
-                { icon: <MapPinned className="size-4" />, label: "Operational trip workspace" },
-                { icon: <Globe2 className="size-4" />, label: "Travel memory archive" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#F4F3F1] px-3 py-2 text-xs text-[#3E536F]"
-                >
-                  <span className="text-[#024785]">{item.icon}</span>
-                  {item.label}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 inline-flex">
-              <Link
-                href="/ai-trip-planner"
-                className="inline-flex items-center gap-2 rounded-full bg-[#024785] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_36px_rgba(2,71,133,0.18)] transition hover:translate-y-[-1px] hover:brightness-105"
-              >
-                Start planning
-                <ArrowRight className="size-4" />
-              </Link>
-            </div>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2">
-            {footerSections.map((section) => (
-              <div key={section.title}>
+            {footerColumns.map((column) => (
+              <div key={column.title}>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#024785]">
-                  {section.title}
+                  {column.title}
                 </p>
                 <div className="mt-4 space-y-3">
-                  {section.links.map((link) => (
+                  {column.links.map((link) => (
                     <Link
                       key={link.label}
                       href={link.href}
@@ -87,9 +57,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="grid gap-4 px-6 py-5 text-sm text-[#7A879B] sm:px-8 lg:grid-cols-[1fr_auto] lg:px-12">
-          <p>Wandrly AI. Curated journeys, mapped clearly, remembered beautifully.</p>
-          <p className="lg:text-right">Built for public launch, client demos, and real travel planning workflows.</p>
+        <div className="mt-8 border-t border-[rgba(2,71,133,0.08)] pt-5 text-xs uppercase tracking-[0.2em] text-[#7A879B]">
+          Wandrly AI · Curated travel intelligence
         </div>
       </div>
     </footer>

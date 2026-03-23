@@ -2,8 +2,6 @@
 
 import { CalendarDays, MapPin, WalletCards } from "lucide-react";
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
-import VanillaTilt from "vanilla-tilt";
 
 interface DestinationCardProps {
   title: string;
@@ -20,61 +18,48 @@ export default function DestinationCard({
   season,
   country,
 }: DestinationCardProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    VanillaTilt.init(element, {
-      max: 4,
-      speed: 360,
-      perspective: 1000,
-      glare: false,
-      scale: 1.005,
-    });
-
-    return () => {
-      (element as HTMLDivElement & {
-        vanillaTilt?: { destroy: () => void };
-      }).vanillaTilt?.destroy();
-    };
-  }, []);
-
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 220, damping: 18 }}
-      className="w-full shrink-0"
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 220, damping: 20 }}
+      className="w-full"
     >
-      <div
-        ref={ref}
-        className="group relative h-[280px] w-full max-w-[370px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0F1117] shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
-      >
-        <div
-          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-[1.04]"
+      <div className="group relative mx-auto h-[310px] w-full overflow-hidden rounded-[30px] border border-[#d8d1c8] bg-[#0F1117] shadow-[0_24px_60px_rgba(26,28,27,0.18)]">
+        <motion.div
+          whileHover={{ scale: 1.04 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${image})` }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.08),rgba(3,7,18,0.26)_34%,rgba(3,7,18,0.92)_100%)]" />
-        <div className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.24em] text-white/82 backdrop-blur-xl">
-          Signature escape
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 space-y-4 p-6">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[#B9C8DB]">
-            <MapPin className="size-3.5 text-[#00C2FF]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,15,28,0.06),rgba(7,15,28,0.24)_34%,rgba(7,15,28,0.88)_100%)]" />
+        <div className="absolute inset-x-6 top-6 flex items-center justify-between gap-3">
+          <div className="rounded-full border border-white/18 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/86 backdrop-blur-xl">
+            Signature escape
+          </div>
+          <div className="rounded-full border border-white/18 bg-black/18 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/72 backdrop-blur-xl">
             {country}
           </div>
-          <h3 className="text-[30px] font-semibold tracking-[-0.04em] text-white">{title}</h3>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[#E8F0FA]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2 backdrop-blur-xl">
-              <WalletCards className="size-4 text-[#00C2FF]" />
-              {budget}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2 backdrop-blur-xl">
-              <CalendarDays className="size-4 text-[#00C2FF]" />
-              {season}
-            </span>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-6">
+          <div className="rounded-[24px] border border-white/12 bg-black/16 p-5 backdrop-blur-xl">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[#c4d3e6]">
+              <MapPin className="size-3.5 text-[#00C2FF]" />
+              {country}
+            </div>
+            <h3 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2.1rem] font-bold tracking-[-0.05em] text-white">
+              {title}
+            </h3>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#E8F0FA]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2">
+                <WalletCards className="size-4 text-[#00C2FF]" />
+                {budget}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2">
+                <CalendarDays className="size-4 text-[#00C2FF]" />
+                {season}
+              </span>
+            </div>
           </div>
         </div>
       </div>

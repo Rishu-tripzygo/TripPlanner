@@ -26,6 +26,8 @@ export const metadata: Metadata = {
     "Premium AI-powered travel planning, maps, itineraries, and travel memories.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
