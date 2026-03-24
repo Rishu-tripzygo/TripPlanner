@@ -1,6 +1,7 @@
 "use client";
 
 import DestinationCard from "@/components/destination-card";
+import { demoTripPreview } from "@/lib/demo-content";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
@@ -195,7 +196,7 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
                         variant="outline"
                         className="min-w-[220px] rounded-full border-white/60 bg-white/72 px-7 py-6 text-base text-[#0f3460] backdrop-blur-xl"
                       >
-                        Explore Sample Trips
+                        See Demo Trip
                       </Button>
                     </Link>
                   </div>
@@ -380,6 +381,68 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
                 <p className="mt-2 text-sm leading-7 text-[#61738C]">{item.value}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <div className="app-shell grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="glass-shell rounded-[32px] p-7 sm:p-8">
+            <p className="section-label text-[#14518b]">Try Wandrly before you sign in</p>
+            <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.5rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.2rem]">
+              See the trip outcome before you commit to the workflow.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-[#61738C]">
+              Explore a sample itinerary, preview how the trip workspace comes together, and see
+              the kind of structure Wandrly gives you after one well-written brief.
+            </p>
+            <div className="mt-7 flex flex-col gap-4 sm:flex-row">
+              <Link href="/explore">
+                <Button className="min-w-[220px] rounded-full px-6 py-5">
+                  Explore Sample Trips
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Link>
+              <Link href="/assistant">
+                <Button variant="outline" className="min-w-[220px] rounded-full border-white/55 bg-white/66 px-6 py-5">
+                  Preview the Assistant
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="glass-shell rounded-[32px] p-6 sm:p-8">
+            <div className="rounded-[28px] border border-white/55 bg-white/58 p-5 backdrop-blur-xl">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="section-label text-[#14518b]">Demo trip</p>
+                  <h3 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                    {demoTripPreview.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-[#61738C]">{demoTripPreview.summary}</p>
+                </div>
+                <div className="rounded-full border border-white/55 bg-white/72 px-4 py-2 text-sm text-[#14518b]">
+                  {demoTripPreview.duration}
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {demoTripPreview.days.map((day) => (
+                  <div key={day.label} className="rounded-[22px] bg-[#FAF9F7] p-4 shadow-[0_12px_24px_rgba(20,81,139,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14518b]">
+                        {day.label}
+                      </p>
+                      <span className="rounded-full bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#7A8EA8]">
+                        Demo view
+                      </span>
+                    </div>
+                    <h4 className="mt-2 text-lg font-semibold text-[#0f3460]">{day.title}</h4>
+                    <p className="mt-2 text-sm leading-7 text-[#61738C]">{day.morning[0]}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

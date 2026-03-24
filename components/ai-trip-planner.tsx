@@ -581,6 +581,17 @@ export default function AITripPlanner({
     result?.hidden_gems?.[0] ||
     result?.must_visit_attractions?.[0] ||
     "A signature local moment selected for this route.";
+  const activeTripForResult = lastSavedTrip || selectedTrip;
+  const nextWorkspaceStep = useMemo(() => {
+    if (!activeTripForResult) return null;
+    return {
+      title: "Next, move this trip into the workspace",
+      description:
+        "Your itinerary is already saved. Open the workspace to confirm route suggestions, review the map, and start preparation.",
+      href: `/trips/${activeTripForResult.id}`,
+      label: "Open Workspace",
+    };
+  }, [activeTripForResult]);
 
   return (
     <div className="app-shell space-y-8">
@@ -966,11 +977,13 @@ export default function AITripPlanner({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <Link href={`/trips/${(lastSavedTrip || selectedTrip)?.id}`}>
-                    <Button className="rounded-full px-7 py-6 text-base">
-                      Open Workspace
-                    </Button>
-                  </Link>
+                  {nextWorkspaceStep ? (
+                    <Link href={nextWorkspaceStep.href}>
+                      <Button className="rounded-full px-7 py-6 text-base">
+                        {nextWorkspaceStep.label}
+                      </Button>
+                    </Link>
+                  ) : null}
                   <Button
                     variant="outline"
                     onClick={() => setRefineOpen(true)}
@@ -1009,6 +1022,32 @@ export default function AITripPlanner({
               </div>
             </div>
           </div>
+
+          {nextWorkspaceStep ? (
+            <Card className="glass-shell overflow-hidden rounded-[30px] border-white/45 bg-white/58">
+              <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="max-w-2xl">
+                  <p className="section-label text-[#14518b]">What happens next</p>
+                  <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] leading-[0.98] tracking-[-0.04em] text-[#024785]">
+                    {nextWorkspaceStep.title}
+                  </h2>
+                  <p className="mt-3 text-sm leading-8 text-[#61738C]">
+                    {nextWorkspaceStep.description}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link href={nextWorkspaceStep.href}>
+                    <Button className="rounded-full px-6">
+                      {nextWorkspaceStep.label}
+                    </Button>
+                  </Link>
+                  <Button variant="outline" className="rounded-full px-6" onClick={() => setRefineOpen(true)}>
+                    Refine with AI
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {historyOpen ? (
             <Card className="glass-shell overflow-hidden rounded-[32px] border-white/45 bg-white/56">
@@ -1326,9 +1365,11 @@ export default function AITripPlanner({
                 <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">Trip ready</p>
                 <p className="text-sm font-semibold text-[#0f3460]">{headerDestination}</p>
               </div>
-              <Link href={`/trips/${(lastSavedTrip || selectedTrip)?.id}`}>
-                <Button className="rounded-full">Open Workspace</Button>
-              </Link>
+              {nextWorkspaceStep ? (
+                <Link href={nextWorkspaceStep.href}>
+                  <Button className="rounded-full">Open Workspace</Button>
+                </Link>
+              ) : null}
             </div>
           </div>
         </section>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Location, Trip } from "@/app/generated/prisma";
 import CurrencyConverterWidget from "@/components/currency-converter-widget";
 import DestinationNotesPanel from "@/components/destination-notes-panel";
@@ -13,6 +14,7 @@ import StatusBadge from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DestinationForecast, PersistedItinerary } from "@/lib/phase-one-types";
+import { extractSuggestedStopsFromItinerary } from "@/lib/route-suggestions";
 import { cn } from "@/lib/utils";
 import {
   BookOpenText,
@@ -49,8 +51,11 @@ export default function TripDetailClient({
   trip: TripWithLocation;
   activeItinerary?: PersistedItinerary | null;
 }) {
+  const router = useRouter();
   const [forecasts, setForecasts] = useState<DestinationForecast[]>([]);
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+  const [isConfirmingRoute, setIsConfirmingRoute] = useState(false);
+  const [routeActionError, setRouteActionError] = useState<string | null>(null);
 
   const status = useMemo(() => {
     const now = new Date();
@@ -173,11 +178,11 @@ export default function TripDetailClient({
 
     if (trip.locations.length === 0) {
       return {
-        title: "Review the AI route suggestions",
+        title: "Confirm the AI route suggestions",
         description:
-          "Wandrly already has suggested places from the itinerary. Refine or confirm those first instead of building the route manually.",
+          "Wandrly already has suggested places from the itinerary. Confirm those first so the map, stop count, and prep modules can follow the real route.",
         href: `/ai-trip-planner?tripId=${trip.id}`,
-        label: "Review AI itinerary",
+        label: "Review route",
       };
     }
 
@@ -233,17 +238,34 @@ export default function TripDetailClient({
   const primaryDestination =
     trip.locations[0]?.locationTitle || activeItinerary?.trip_summary.destination || "Destination";
   const suggestedStops = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (activeItinerary?.days ?? [])
-            .flatMap((day) => day.places || [])
-            .map((place) => place.trim())
-            .filter(Boolean)
-        )
-      ).slice(0, 8),
+    () => extractSuggestedStopsFromItinerary(activeItinerary).slice(0, 8),
     [activeItinerary]
   );
+  const routeNeedsConfirmation = Boolean(activeItinerary) && trip.locations.length === 0;
+
+  async function handleConfirmRoute() {
+    setIsConfirmingRoute(true);
+    setRouteActionError(null);
+
+    try {
+      const response = await fetch(`/api/trips/${trip.id}/confirm-route`, {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to confirm AI route suggestions.");
+      }
+
+      router.refresh();
+    } catch (error) {
+      setRouteActionError(
+        error instanceof Error ? error.message : "Failed to confirm AI route suggestions."
+      );
+    } finally {
+      setIsConfirmingRoute(false);
+    }
+  }
 
   return (
     <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -355,9 +377,19 @@ export default function TripDetailClient({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href={nextAction.href}>
-              <Button className="rounded-full px-7">{nextAction.label}</Button>
-            </Link>
+            {routeNeedsConfirmation && suggestedStops.length > 0 ? (
+              <Button
+                className="rounded-full px-7"
+                onClick={handleConfirmRoute}
+                disabled={isConfirmingRoute}
+              >
+                {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+              </Button>
+            ) : (
+              <Link href={nextAction.href}>
+                <Button className="rounded-full px-7">{nextAction.label}</Button>
+              </Link>
+            )}
             <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
               <Button variant="outline" className="rounded-full px-7">
                 Refine with AI
@@ -365,10 +397,62 @@ export default function TripDetailClient({
             </Link>
           </div>
         </div>
+        {routeActionError ? (
+          <p className="mt-4 text-sm text-[#B42318]">{routeActionError}</p>
+        ) : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
+          {routeNeedsConfirmation ? (
+            <Card className="border-[rgba(2,71,133,0.08)] bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(240,247,255,0.92))]">
+              <CardContent className="space-y-5 p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="section-label">Route review</p>
+                    <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#024785]">
+                      The itinerary already contains route suggestions
+                    </h2>
+                    <p className="mt-3 text-sm leading-8 text-[#61738C]">
+                      You do not need to invent the stops manually. Wandrly extracted likely route stops from the AI itinerary. Confirm them once and the map, stop count, and prep flow will update automatically.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    {suggestedStops.length > 0 ? (
+                      <Button className="rounded-full px-6" onClick={handleConfirmRoute} disabled={isConfirmingRoute}>
+                        {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+                      </Button>
+                    ) : null}
+                    <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
+                      <Button variant="outline" className="rounded-full px-6">
+                        Refine itinerary with AI
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                {suggestedStops.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedStops.map((stop) => (
+                      <span
+                        key={stop}
+                        className="rounded-full border border-[#14518b]/10 bg-white px-3 py-1.5 text-sm text-[#46617c]"
+                      >
+                        {stop}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[18px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] px-4 py-4 text-sm leading-7 text-[#61738C]">
+                    This itinerary does not expose clear route stops yet. Open the planner and refine the itinerary first.
+                  </div>
+                )}
+                {routeActionError ? (
+                  <p className="text-sm text-[#B42318]">{routeActionError}</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
             <CardContent className="space-y-6 p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -511,12 +595,23 @@ export default function TripDetailClient({
                     Confirm the stops on the actual route
                   </h2>
                 </div>
-                <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
-                  <Button className="rounded-full">
-                    <Compass className="size-4" />
-                    Refine route with AI
+                {routeNeedsConfirmation && suggestedStops.length > 0 ? (
+                  <Button
+                    className="rounded-full"
+                    onClick={handleConfirmRoute}
+                    disabled={isConfirmingRoute}
+                  >
+                    <Route className="size-4" />
+                    {isConfirmingRoute ? "Confirming..." : "Confirm suggested stops"}
                   </Button>
-                </Link>
+                ) : (
+                  <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
+                    <Button className="rounded-full">
+                      <Compass className="size-4" />
+                      Refine with AI
+                    </Button>
+                  </Link>
+                )}
               </div>
 
               {trip.locations.length > 0 ? (
@@ -524,7 +619,7 @@ export default function TripDetailClient({
               ) : (
                 <div className="space-y-4 rounded-[22px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] p-6">
                   <p className="text-sm leading-7 text-[#61738C]">
-                    No confirmed route stops yet. Wandrly can already see suggestions from the saved AI itinerary, so you do not need to build the route from scratch.
+                    No confirmed route stops yet. Start by reviewing the AI suggestions above, then confirm them once so the route becomes the real map source for this trip.
                   </p>
                   {suggestedStops.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
@@ -537,6 +632,9 @@ export default function TripDetailClient({
                         </span>
                       ))}
                     </div>
+                  ) : null}
+                  {routeActionError ? (
+                    <p className="text-sm text-[#B42318]">{routeActionError}</p>
                   ) : null}
                 </div>
               )}
@@ -600,9 +698,22 @@ export default function TripDetailClient({
                           ))}
                         </div>
                       ) : null}
-                      <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
-                        <Button className="rounded-full">Review AI itinerary</Button>
-                      </Link>
+                      {suggestedStops.length > 0 ? (
+                        <Button
+                          className="rounded-full"
+                          onClick={handleConfirmRoute}
+                          disabled={isConfirmingRoute}
+                        >
+                          {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+                        </Button>
+                      ) : (
+                        <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
+                          <Button className="rounded-full">Review AI itinerary</Button>
+                        </Link>
+                      )}
+                      {routeActionError ? (
+                        <p className="max-w-sm text-sm text-[#B42318]">{routeActionError}</p>
+                      ) : null}
                     </div>
                   )}
                 </div>
