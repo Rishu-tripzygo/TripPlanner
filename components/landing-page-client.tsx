@@ -1,25 +1,24 @@
 "use client";
 
-import AuthButton from "@/components/auth-button";
 import DestinationCard from "@/components/destination-card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  CirclePlay,
+  Clock3,
   Compass,
   MapPinned,
+  ShieldCheck,
   Sparkles,
-  Stars,
-  WalletCards,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const heroImages = [
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=80",
-  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=2000&q=80",
-  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2000&q=80",
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=80",
+  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2200&q=80",
+  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=2200&q=80",
 ];
 
 const featuredDestinations = [
@@ -47,297 +46,100 @@ const featuredDestinations = [
     image:
       "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80",
   },
+  {
+    title: "Marrakech",
+    country: "Morocco",
+    budget: "INR 74k avg",
+    season: "Oct to Apr",
+    image:
+      "https://images.unsplash.com/photo-1597212618440-806262de4f6b?auto=format&fit=crop&w=1200&q=80",
+  },
 ];
 
 const featureCards = [
   {
-    icon: <Sparkles className="size-5" />,
-    title: "AI drafts the first strong route",
-    text: "Destination, hotel zone, pacing, food, and realistic daily structure in one pass.",
+    icon: Sparkles,
+    title: "AI builds the first itinerary draft",
+    text: "Turn one destination brief into a day-wise route with stays, pace, food, and practical flow.",
+    eyebrow: "Draft faster",
   },
   {
-    icon: <MapPinned className="size-5" />,
-    title: "One system for the full journey",
-    text: "Your itinerary, maps, weather, packing, documents, and journals stay connected.",
+    icon: MapPinned,
+    title: "Everything stays connected",
+    text: "Maps, budgets, weather, packing, documents, and notes evolve around the same trip.",
+    eyebrow: "One workspace",
   },
   {
-    icon: <WalletCards className="size-5" />,
-    title: "Planning becomes operational",
-    text: "After the first draft, the trip keeps improving through route shaping and prep tools.",
+    icon: Compass,
+    title: "Refine without losing clarity",
+    text: "Adjust routes, update style, and shape each day while keeping the itinerary usable.",
+    eyebrow: "Stay in control",
   },
 ];
 
-const introMoments = [
+const workflowSteps = [
   {
-    eyebrow: "Orbital feed",
-    title: "Scanning the horizon.",
-    description: "Locking weather bands, route signals, and destination mood.",
+    step: "01",
+    title: "Tell Wandrly where you want to go",
+    text: "Add your destination, dates, travelers, budget, and the style of trip you want.",
   },
   {
-    eyebrow: "Route engine",
-    title: "Charting a cinematic arrival.",
-    description: "Pacing the days, shaping the route, and framing the first reveal.",
+    step: "02",
+    title: "Let AI shape the itinerary",
+    text: "Get a structured plan with route logic, stays, activities, food, and timing.",
   },
   {
-    eyebrow: "Wandrly",
-    title: "Welcome to the next journey.",
-    description: "Your travel workspace is ready to open like a story, not a spreadsheet.",
+    step: "03",
+    title: "Refine details in your workspace",
+    text: "Adjust pacing, map stops, hotel choices, weather planning, and travel prep in one place.",
+  },
+  {
+    step: "04",
+    title: "Manage the full journey beautifully",
+    text: "Budgets, packing, documents, journals, and sharing stay attached to the trip.",
   },
 ];
+
+const trustItems = [
+  { label: "Trips organized in one workspace", value: "Route, budget, docs, and prep" },
+  { label: "Planning time reduced dramatically", value: "From scattered tabs to one system" },
+  { label: "Built for modern travel coordination", value: "AI draft plus real execution tools" },
+];
+
+const testimonials = [
+  {
+    name: "Meera S.",
+    role: "Luxury leisure traveler",
+    quote:
+      "Wandrly feels like having a travel designer and a trip manager in the same calm interface.",
+  },
+  {
+    name: "Julian R.",
+    role: "Frequent city-break planner",
+    quote:
+      "The itinerary starts smart, but what really stands out is how the details stay organized after that.",
+  },
+];
+
+const plannerChips = ["Romantic", "Adventure", "Family", "Luxury", "Food-led", "Slow travel"];
 
 export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [activeImage, setActiveImage] = useState(0);
-  const [showIntro, setShowIntro] = useState(true);
-  const [introStage, setIntroStage] = useState(0);
-  const currentHeroImage = heroImages[activeImage];
 
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem("wandrly-intro-seen") === "1") {
-      setShowIntro(false);
-      return;
-    }
-
     const interval = window.setInterval(() => {
       setActiveImage((current) => (current + 1) % heroImages.length);
     }, 5200);
 
-    const stageOne = window.setTimeout(() => setIntroStage(1), 1800);
-    const stageTwo = window.setTimeout(() => setIntroStage(2), 3900);
-    const introTimeout = window.setTimeout(() => {
-      setShowIntro(false);
-      sessionStorage.setItem("wandrly-intro-seen", "1");
-    }, 6800);
-
-    return () => {
-      window.clearInterval(interval);
-      window.clearTimeout(stageOne);
-      window.clearTimeout(stageTwo);
-      window.clearTimeout(introTimeout);
-    };
+    return () => window.clearInterval(interval);
   }, []);
 
-  function dismissIntro() {
-    setShowIntro(false);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("wandrly-intro-seen", "1");
-    }
-  }
+  const primaryHref = isLoggedIn ? "/ai-trip-planner" : "/ai-trip-planner";
 
   return (
-    <div className="pb-28 md:pb-0">
-      <motion.div
-        initial={{ opacity: 1 }}
-        animate={{
-          opacity: showIntro ? 1 : 0,
-          pointerEvents: showIntro ? "auto" : "none",
-        }}
-        transition={{ duration: 1.25, ease: "easeOut" }}
-        className="fixed inset-0 z-[140] overflow-hidden bg-[radial-gradient(circle_at_center,#103669_0%,#091525_40%,#04070e_100%)]"
-      >
-        <div className="absolute inset-0">
-          <motion.div
-            animate={{
-              scale: introStage === 2 ? 1 : 1.12,
-              opacity: introStage === 2 ? 0.5 : 0.18,
-              filter: introStage === 2 ? "blur(0px)" : "blur(10px)",
-            }}
-            transition={{ duration: 1.4, ease: "easeOut" }}
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${currentHeroImage})` }}
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,12,23,0.72),rgba(5,12,23,0.52)_42%,rgba(5,12,23,0.88)_100%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(157,216,255,0.08),transparent_28%)]" />
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-            className="absolute left-1/2 top-1/2 h-[70vw] w-[70vw] max-h-[900px] max-w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/6"
-          />
-          <motion.div
-            animate={{ rotate: -360 }}
-            transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
-            className="absolute left-1/2 top-1/2 h-[54vw] w-[54vw] max-h-[680px] max-w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#9dd8ff]/10"
-          />
-          <motion.div
-            animate={{ scale: [0.92, 1.04, 0.96], opacity: [0.22, 0.38, 0.24] }}
-            transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-1/2 top-1/2 h-[34vw] w-[34vw] max-h-[420px] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(0,194,255,0.28),rgba(0,194,255,0.02)_58%,transparent_72%)]"
-          />
-          <motion.div
-            animate={{ x: ["-12%", "10%", "-12%"] }}
-            transition={{ duration: 4.4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-[12%] top-[24%] h-[1px] w-[76%] bg-[linear-gradient(90deg,transparent,rgba(157,216,255,0.75),transparent)]"
-          />
-          <motion.div
-            animate={{ y: ["-10%", "14%", "-10%"] }}
-            transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-[50%] top-[14%] h-[72%] w-[1px] bg-[linear-gradient(180deg,transparent,rgba(157,216,255,0.45),transparent)]"
-          />
-          {Array.from({ length: 18 }).map((_, index) => (
-            <motion.span
-              key={index}
-              animate={{ opacity: [0.18, 0.84, 0.18] }}
-              transition={{
-                duration: 2.4 + (index % 4) * 0.35,
-                repeat: Infinity,
-                delay: index * 0.08,
-                ease: "easeInOut",
-              }}
-              className="absolute rounded-full bg-white"
-              style={{
-                top: `${8 + ((index * 11) % 74)}%`,
-                left: `${6 + ((index * 13) % 84)}%`,
-                width: `${index % 3 === 0 ? 3 : 2}px`,
-                height: `${index % 3 === 0 ? 3 : 2}px`,
-              }}
-            />
-          ))}
-          <div className="absolute left-6 top-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:left-10 sm:top-10">
-            43.4674 N / 11.8853 E
-          </div>
-          <div className="absolute right-6 top-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:right-10 sm:top-10">
-            Orbital descent sequence
-          </div>
-          <div className="absolute bottom-6 left-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:bottom-10 sm:left-10">
-            Sky lock / route acquisition / hero reveal
-          </div>
-        </div>
-
-        <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
-          <div className="w-full max-w-5xl">
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={dismissIntro}
-                className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/72 backdrop-blur-xl transition hover:bg-white/10"
-              >
-                Skip intro
-              </button>
-            </div>
-
-            <div className="mt-6 grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -24 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1.05, ease: "easeOut" }}
-                className="space-y-6"
-              >
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#9dd8ff] backdrop-blur-xl">
-                  <Stars className="size-3.5" />
-                  Wandrly cinematic launch
-                </div>
-                <div className="space-y-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.42em] text-white/50">
-                    {introMoments[introStage].eyebrow}
-                  </p>
-                  <h1 className="font-[family-name:var(--font-noto-serif)] text-[3rem] font-bold leading-[0.88] tracking-[-0.08em] text-white sm:text-[4.8rem]">
-                    {introMoments[introStage].title}
-                  </h1>
-                  <p className="max-w-xl text-base leading-8 text-white/72">
-                    {introMoments[introStage].description}
-                  </p>
-                </div>
-                <div className="h-[2px] w-full max-w-[340px] overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    initial={{ x: "-100%" }}
-                    animate={{ x: "0%" }}
-                    transition={{ duration: 5.8, ease: "easeInOut" }}
-                    className="h-full bg-[linear-gradient(90deg,#00C2FF,#ffffff)]"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 24 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 1.15, ease: "easeOut", delay: 0.25 }}
-                className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/6 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl"
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(157,216,255,0.24),transparent_34%)]" />
-                <div className="relative space-y-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.32em] text-white/48">
-                        Mission state
-                      </p>
-                      <p className="mt-2 text-lg font-semibold text-white">Destination lock acquired</p>
-                    </div>
-                    <div className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] uppercase tracking-[0.26em] text-[#9dd8ff]">
-                      Stage {introStage + 1} / 3
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {[
-                      ["Target", "Mediterranean horizon"],
-                      ["Mode", "Concierge route engine"],
-                      ["Reveal", "Premium travel workspace"],
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-[20px] border border-white/10 bg-black/16 p-4">
-                        <p className="text-[10px] uppercase tracking-[0.26em] text-white/42">{label}</p>
-                        <p className="mt-2 text-sm leading-7 text-white/82">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="relative h-[220px] overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(0,194,255,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.06))]">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                      className="absolute left-1/2 top-1/2 h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10"
-                    />
-                    <motion.div
-                      animate={{ rotate: -360 }}
-                      transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-                      className="absolute left-1/2 top-1/2 h-[128px] w-[128px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#9dd8ff]/24"
-                    />
-                    <motion.div
-                      animate={{ x: ["-30%", "44%", "-30%"], y: ["-18%", "28%", "-18%"] }}
-                      transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute left-[26%] top-[38%] h-3 w-3 rounded-full bg-[#9dd8ff] shadow-[0_0_28px_rgba(157,216,255,0.95)]"
-                    />
-                    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" fill="none">
-                      <motion.path
-                        d="M18 68C28 58 34 40 52 38C68 36 70 62 84 50"
-                        stroke="url(#routeLine)"
-                        strokeWidth="1.4"
-                        strokeDasharray="2 3"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                          transition={{ duration: 2.6, ease: "easeOut", delay: 0.7 }}
-                      />
-                      <defs>
-                        <linearGradient id="routeLine" x1="18" y1="68" x2="84" y2="50" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#00C2FF" />
-                          <stop offset="1" stopColor="#FFFFFF" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute left-5 top-5 rounded-full border border-white/10 bg-black/18 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/60">
-                      Orbital view
-                    </div>
-                    <div className="absolute bottom-5 right-5 rounded-full border border-white/10 bg-black/18 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-[#9dd8ff]">
-                      Hero reveal armed
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      <section className="relative overflow-hidden px-4 pt-8 sm:px-6 lg:px-8">
-        <motion.div
-          initial={false}
-          animate={{
-            opacity: showIntro ? 0.55 : 1,
-            scale: showIntro ? 1.02 : 1,
-            y: showIntro ? 36 : 0,
-            filter: showIntro ? "blur(8px)" : "blur(0px)",
-          }}
-          transition={{ duration: 1.6, ease: "easeOut" }}
-          className="app-shell relative overflow-hidden rounded-[44px] border border-[rgba(2,71,133,0.08)] bg-[#ece3d7] shadow-[0_36px_90px_rgba(26,28,27,0.12)]"
-        >
+    <div className="pb-24 md:pb-0">
+      <section className="relative overflow-hidden px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="app-shell relative overflow-hidden rounded-[40px] border border-white/45 bg-[#f7f4ef] shadow-[0_30px_90px_rgba(22,40,64,0.12)]">
           <div className="absolute inset-0">
             {heroImages.map((image, index) => (
               <motion.div
@@ -346,222 +148,472 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
                   opacity: activeImage === index ? 1 : 0,
                   scale: activeImage === index ? 1 : 1.04,
                 }}
-                transition={{ duration: 1.6, ease: "easeOut" }}
+                transition={{ duration: 1.8, ease: "easeOut" }}
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url(${image})` }}
               />
             ))}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(247,241,234,0.18),rgba(247,241,234,0.5)_24%,rgba(247,241,234,0.88)_58%,#faf9f7_100%)]" />
-            <div className="hero-orb left-[-6%] top-[6%] h-[280px] w-[280px] bg-[#83d4ff]" />
-            <div className="hero-orb right-[-10%] top-[12%] h-[320px] w-[320px] bg-[#f2c39f]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(248,244,238,0.7),rgba(248,244,238,0.78)_30%,rgba(248,244,238,0.96)_72%,#f8f6f2_100%)]" />
+            <div className="hero-orb left-[-4%] top-[8%] h-[320px] w-[320px] bg-[rgba(0,194,255,0.24)]" />
+            <div className="hero-orb right-[-8%] top-[20%] h-[360px] w-[360px] bg-[rgba(255,204,170,0.34)]" />
+            <div className="hero-orb bottom-[-12%] left-[26%] h-[300px] w-[300px] bg-[rgba(114,155,255,0.16)]" />
           </div>
 
-          <div className="relative z-10 px-6 pb-12 pt-16 sm:px-10 lg:px-14 lg:pb-18 lg:pt-20">
-            <div className="mx-auto max-w-[1080px]">
-              <motion.div
-                initial={false}
-                animate={{
-                  opacity: showIntro ? 0.35 : 1,
-                  y: showIntro ? 40 : 0,
-                }}
-                transition={{ duration: 1.25, delay: showIntro ? 0 : 0.18 }}
-                className="text-center"
-              >
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/78 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#024785] shadow-[0_12px_28px_rgba(26,28,27,0.06)] backdrop-blur-xl">
-                  <Stars className="size-3.5" />
-                  Signature travel intelligence
-                </div>
-
-                <h1 className="mt-8 font-[family-name:var(--font-noto-serif)] text-[3.7rem] font-bold leading-[0.86] tracking-[-0.08em] text-[#024785] sm:text-[5.4rem] lg:text-[7.3rem]">
-                  Begin like a mission.
-                  <br />
-                  Travel like a story.
-                  <br />
-                  <span className="font-normal italic text-[#1B3A6B]">Keep every detail alive.</span>
-                </h1>
-
-                <p className="mx-auto mt-7 max-w-3xl text-base leading-8 text-[#4b5f79] sm:text-lg">
-                  Wandrly turns one strong destination brief into a cinematic, operational,
-                  premium trip plan you can actually use from the first idea to the final memory.
-                </p>
-
-                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                  <AuthButton
-                    isLoggedIn={isLoggedIn}
-                    className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-8 py-4 text-base font-semibold text-white shadow-[0_26px_54px_rgba(2,71,133,0.2)] transition hover:translate-y-[-1px] hover:brightness-105"
-                  >
-                    Launch planning
-                    <ArrowRight className="size-4" />
-                  </AuthButton>
-                  <Link href="/explore">
-                    <Button
-                      variant="outline"
-                      className="min-w-[220px] rounded-full border-white/60 bg-white/82 px-8 py-6 text-base text-[#024785] backdrop-blur-xl"
-                    >
-                      <CirclePlay className="size-5" />
-                      View journeys
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-
-              <div className="mt-14 grid gap-5 lg:grid-cols-[1.18fr_0.82fr]">
+          <div className="relative z-10 px-6 pb-14 pt-16 sm:px-10 lg:px-14 lg:pb-18 lg:pt-20">
+            <div className="mx-auto max-w-[1160px]">
+              <div className="grid gap-10 lg:grid-cols-[0.94fr_1.06fr] lg:items-center">
                 <motion.div
-                  initial={false}
-                  animate={{
-                    opacity: showIntro ? 0.28 : 1,
-                    y: showIntro ? 48 : 0,
-                  }}
-                  transition={{ duration: 1.3, delay: showIntro ? 0 : 0.28 }}
-                  className="relative overflow-hidden rounded-[34px] border border-white/60 bg-white/60 p-5 shadow-[0_24px_48px_rgba(26,28,27,0.08)] backdrop-blur-xl"
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-120px" }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="max-w-[560px]"
                 >
-                  <div className="absolute -right-10 top-[-24px] h-32 w-32 rounded-full bg-[#9dd8ff]/35 blur-3xl" />
-                  <div className="grid gap-4 lg:grid-cols-[1.35fr_0.95fr_0.8fr_auto]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/58 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#14518b] shadow-[0_10px_28px_rgba(20,81,139,0.08)] backdrop-blur-xl">
+                    <Sparkles className="size-3.5" />
+                    AI-powered travel planning
+                  </div>
+
+                  <h1 className="mt-7 font-[family-name:var(--font-noto-serif)] text-[3.35rem] font-bold leading-[0.9] tracking-[-0.07em] text-[#0f3460] sm:text-[4.55rem] xl:text-[5.8rem]">
+                    Plan dream trips with clarity, beauty, and zero chaos.
+                  </h1>
+
+                  <p className="mt-6 max-w-2xl text-base leading-8 text-[#566b84] sm:text-lg">
+                    Wandrly creates smart itineraries, keeps your route organized, and gives you one
+                    elegant place to manage stays, budgets, packing, documents, and trip details.
+                  </p>
+
+                  <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                    <Link href={primaryHref}>
+                      <Button className="min-w-[220px] rounded-full px-7 py-6 text-base">
+                        Generate My Itinerary
+                        <ArrowRight className="size-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/explore">
+                      <Button
+                        variant="outline"
+                        className="min-w-[220px] rounded-full border-white/60 bg-white/72 px-7 py-6 text-base text-[#0f3460] backdrop-blur-xl"
+                      >
+                        Explore Sample Trips
+                      </Button>
+                    </Link>
+                  </div>
+
+                  <div className="mt-9 flex flex-wrap items-center gap-4 text-sm text-[#566b84]">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 py-2 backdrop-blur-xl">
+                      <Star className="size-4 text-[#ff8b5e]" />
+                      Premium planning experience
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 py-2 backdrop-blur-xl">
+                      <ShieldCheck className="size-4 text-[#14518b]" />
+                      One connected travel workspace
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-120px" }}
+                  transition={{ duration: 0.86, ease: "easeOut", delay: 0.1 }}
+                  className="relative min-h-[420px] lg:min-h-[600px]"
+                >
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="glass-shell absolute inset-x-0 top-0 overflow-hidden rounded-[34px] p-4 sm:p-5"
+                  >
+                    <div className="relative h-[430px] overflow-hidden rounded-[28px] sm:h-[520px]">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{
+                          backgroundImage:
+                            "url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80')",
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,35,68,0.08),rgba(8,35,68,0.18)_24%,rgba(8,35,68,0.68)_100%)]" />
+
+                      <div className="absolute left-5 top-5 rounded-full border border-white/30 bg-white/18 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/92 backdrop-blur-xl">
+                        Featured arrival
+                      </div>
+
+                      <div className="absolute bottom-5 left-5 right-5 rounded-[24px] border border-white/22 bg-[rgba(255,255,255,0.16)] p-5 text-white shadow-[0_18px_50px_rgba(12,28,52,0.2)] backdrop-blur-[24px]">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.28em] text-white/72">
+                              Summer coast escape
+                            </p>
+                            <h2 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[2.2rem] font-bold tracking-[-0.05em] sm:text-[3rem]">
+                              Amalfi Coast
+                            </h2>
+                            <p className="mt-2 max-w-md text-sm leading-7 text-white/84 sm:text-base">
+                              A seven-day route with coastal stays, garden lunches, private boat time,
+                              and a pace that still feels restful.
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-white/24 bg-white/14 px-4 py-2 text-sm font-medium text-white/88">
+                            AI plan ready
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 6.2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+                    className="glass-float absolute left-[-4%] top-[10%] hidden w-[180px] rounded-[24px] p-4 lg:block"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Duration</p>
+                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">7 days</p>
+                    <p className="mt-1 text-sm text-[#61738C]">Balanced pace, coastal luxury</p>
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ duration: 6.8, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+                    className="glass-float absolute right-[-2%] top-[12%] hidden w-[190px] rounded-[24px] p-4 lg:block"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Budget</p>
+                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">Mid to luxe</p>
+                    <p className="mt-1 text-sm text-[#61738C]">Hotels, dining, and transfers aligned</p>
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 6.4, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}
+                    className="glass-float absolute bottom-[18%] left-[4%] hidden w-[210px] rounded-[24px] p-4 md:block"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Travelers</p>
+                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">2 adults</p>
+                    <p className="mt-1 text-sm text-[#61738C]">Romantic route with slow mornings</p>
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ y: [0, 9, 0] }}
+                    transition={{ duration: 6.6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                    className="glass-float absolute bottom-[10%] right-[6%] hidden w-[220px] rounded-[24px] p-4 md:block"
+                  >
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Planning result</p>
+                    <p className="mt-2 text-xl font-semibold text-[#0f3460]">Route, stays, budget, and prep</p>
+                    <p className="mt-1 text-sm text-[#61738C]">Ready to move into the trip workspace</p>
+                  </motion.div>
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-120px" }}
+                transition={{ duration: 0.85, ease: "easeOut", delay: 0.12 }}
+                className="glass-shell relative mt-12 overflow-hidden rounded-[34px] p-6 sm:p-8"
+              >
+                <div className="absolute -left-12 top-10 h-40 w-40 rounded-full bg-[rgba(0,194,255,0.1)] blur-3xl" />
+                <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-[rgba(255,199,163,0.16)] blur-3xl" />
+                <div className="relative">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-2xl">
+                      <p className="section-label text-[#14518b]">Smart trip planner</p>
+                      <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.25rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.15rem]">
+                        Start with a beautiful brief, not a messy form.
+                      </h2>
+                      <p className="mt-4 text-base leading-8 text-[#61738C]">
+                        Give Wandrly the right inputs and get a polished itinerary you can refine,
+                        save, and operate across the rest of the product.
+                      </p>
+                    </div>
+
+                    <div className="inline-flex flex-wrap gap-2">
+                      {plannerChips.map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-full border border-white/55 bg-white/58 px-4 py-2 text-sm text-[#14518b] backdrop-blur-xl"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_0.8fr_0.9fr_auto]">
                     {[
-                      ["Destination", "Amalfi Coast, Italy"],
-                      ["Travel window", "14 Sep - 20 Sep"],
-                      ["Travelers", "2 adults"],
+                      ["Where to?", "Amalfi Coast, Kyoto, Dubai..."],
+                      ["Travel dates", "14 Sep - 20 Sep"],
+                      ["Travelers", "2 travelers"],
+                      ["Style", "Luxury coast escape"],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-[22px] bg-[#f5ede2] px-5 py-5 text-left">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b8ca3]">
+                      <div
+                        key={label}
+                        className="rounded-[24px] border border-white/55 bg-white/56 px-5 py-5 shadow-[0_12px_28px_rgba(20,81,139,0.05)] backdrop-blur-[24px]"
+                      >
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7A8EA8]">
                           {label}
                         </p>
-                        <p className="mt-2 text-sm font-medium text-[#1A1C1B]">{value}</p>
+                        <p className="mt-3 text-[15px] font-medium text-[#1f3550]">{value}</p>
                       </div>
                     ))}
 
                     <Link href="/ai-trip-planner" className="flex">
-                      <Button className="h-full w-full rounded-[22px] px-6">Generate itinerary</Button>
+                      <Button className="h-full w-full rounded-[24px] px-6 text-base">
+                        Plan Your Trip
+                        <ArrowRight className="size-4" />
+                      </Button>
                     </Link>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={false}
-                  animate={{
-                    opacity: showIntro ? 0.24 : 1,
-                    y: showIntro ? 54 : 0,
-                  }}
-                  transition={{ duration: 1.35, delay: showIntro ? 0 : 0.36 }}
-                  className="relative overflow-hidden rounded-[34px] border border-white/60 bg-[#024785] p-6 text-white shadow-[0_26px_54px_rgba(2,71,133,0.16)]"
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(157,216,255,0.26),transparent_36%)]" />
-                  <div className="relative">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/68">
-                      Live planning logic
-                    </p>
-                    <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.1rem] font-bold tracking-[-0.05em]">
-                      One brief. One route. One complete workspace.
-                    </h2>
-                    <div className="mt-6 space-y-3">
-                      {[
-                        "AI drafts the first itinerary",
-                        "Saved plan shapes maps and route stops",
-                        "Dates improve packing and weather logic",
-                        "Trip data powers budgets, docs, and journals",
-                      ].map((item) => (
-                        <div
-                          key={item}
-                          className="flex items-center gap-3 rounded-[18px] bg-white/8 px-4 py-3 text-sm text-white/84 backdrop-blur-xl"
-                        >
-                          <Compass className="size-4 text-[#9dd8ff]" />
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
+                </div>
+              </motion.div>
             </div>
           </div>
-        </motion.div>
+        </div>
+      </section>
+
+      <section className="px-4 py-14 sm:px-6 lg:px-8">
+        <div className="app-shell">
+          <div className="glass-shell grid gap-5 rounded-[32px] p-6 sm:grid-cols-3 sm:p-7">
+            {trustItems.map((item) => (
+              <div key={item.label} className="rounded-[22px] border border-white/40 bg-white/42 p-5 backdrop-blur-xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14518b]">
+                  Trusted by modern travelers
+                </p>
+                <h3 className="mt-3 text-lg font-semibold text-[#0f3460]">{item.label}</h3>
+                <p className="mt-2 text-sm leading-7 text-[#61738C]">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="app-shell">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="section-label">Why Wandrly works</p>
-            <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.8rem] font-bold tracking-[-0.05em] text-[#024785] sm:text-[3.8rem]">
-              Premium planning should feel immersive, not complicated.
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="section-label text-[#14518b]">Why Wandrly works</p>
+            <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.7rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.8rem]">
+              Built for travelers who want elegance, not planning friction.
             </h2>
           </div>
 
           <div className="mt-14 grid gap-6 lg:grid-cols-3">
-            {featureCards.map((item, index) => (
-              <motion.div
-                key={item.title}
-                whileHover={{ y: -6 }}
-                transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                className={`rounded-[30px] p-8 shadow-[0_18px_36px_rgba(26,28,27,0.05)] ${
-                  index === 0 ? "bg-[#024785] text-white" : "bg-white"
-                }`}
-              >
-                <div
-                  className={`inline-flex rounded-2xl p-3 ${
-                    index === 0 ? "bg-white/10 text-white" : "bg-[#edf2f9] text-[#024785]"
-                  }`}
+            {featureCards.map((item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <motion.div
+                  key={item.title}
+                  whileHover={{ y: -8 }}
+                  transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                  className={`glass-shell rounded-[30px] p-7 ${index === 1 ? "lg:translate-y-8" : ""}`}
                 >
-                  {item.icon}
-                </div>
-                <h3
-                  className={`mt-5 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] ${
-                    index === 0 ? "text-white" : "text-[#024785]"
-                  }`}
-                >
-                  {item.title}
-                </h3>
-                <p className={`mt-3 text-sm leading-8 ${index === 0 ? "text-white/82" : "text-[#61738C]"}`}>
-                  {item.text}
-                </p>
-              </motion.div>
-            ))}
+                  <div className="inline-flex rounded-[18px] border border-white/45 bg-white/58 p-3 text-[#14518b] backdrop-blur-xl">
+                    <Icon className="size-5" />
+                  </div>
+                  <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7A8EA8]">
+                    {item.eyebrow}
+                  </p>
+                  <h3 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-8 text-[#61738C]">{item.text}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f4efe8] px-4 py-24 sm:px-6 lg:px-8">
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="app-shell">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
-              <p className="section-label">Signature escapes</p>
-              <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.9rem] font-bold tracking-[-0.05em] text-[#024785] sm:text-[3.9rem]">
-                Routes worth planning properly.
+              <p className="section-label text-[#14518b]">Featured escapes</p>
+              <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.8rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.9rem]">
+                Beautiful routes that deserve more than a notes app.
               </h2>
             </div>
-            <Link href="/ai-trip-planner" className="inline-flex">
-              <Button variant="outline" className="rounded-full">Start your plan</Button>
+            <Link href="/explore" className="inline-flex">
+              <Button variant="outline" className="rounded-full border-white/55 bg-white/68">
+                Explore sample trips
+              </Button>
             </Link>
           </div>
 
-          <div className="mt-14 grid gap-8 lg:grid-cols-3">
-            {featuredDestinations.map((destination) => (
-              <DestinationCard key={destination.title} {...destination} />
-            ))}
+          <div className="mt-14 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-1">
+              <DestinationCard {...featuredDestinations[0]} />
+              <DestinationCard {...featuredDestinations[3]} />
+            </div>
+            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-1">
+              <DestinationCard {...featuredDestinations[1]} />
+              <DestinationCard {...featuredDestinations[2]} />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="app-shell overflow-hidden rounded-[42px] shadow-[0_24px_54px_rgba(26,28,27,0.08)]">
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="app-shell">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div className="glass-shell rounded-[34px] p-7 sm:p-8">
+              <p className="section-label text-[#14518b]">How it works</p>
+              <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.6rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.4rem]">
+                From travel idea to organized trip workspace.
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#61738C]">
+                Wandrly is designed to stay clear at every step: brief the trip, let AI build the
+                structure, refine the plan, and keep the journey operational in one place.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {workflowSteps.map((step) => (
+                <motion.div
+                  key={step.step}
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                  className="glass-shell rounded-[28px] p-6"
+                >
+                  <div className="inline-flex rounded-full border border-white/55 bg-white/58 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#14518b]">
+                    {step.step}
+                  </div>
+                  <h3 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[1.8rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                    {step.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-8 text-[#61738C]">{step.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="app-shell">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="glass-shell rounded-[34px] p-7 sm:p-8">
+              <p className="section-label text-[#14518b]">Trip workspace preview</p>
+              <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.6rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.2rem]">
+                The itinerary is only the beginning.
+              </h2>
+              <div className="mt-7 grid gap-4">
+                {[
+                  ["Route + map sync", "Destinations become route stops and map context automatically."],
+                  ["Travel prep", "Budgets, documents, packing, and weather stay attached to the same trip."],
+                  ["Refinement history", "Iterate on the itinerary without losing previous strong versions."],
+                ].map(([title, text]) => (
+                  <div
+                    key={title}
+                    className="rounded-[24px] border border-white/55 bg-white/48 p-5 backdrop-blur-xl"
+                  >
+                    <h3 className="text-lg font-semibold text-[#0f3460]">{title}</h3>
+                    <p className="mt-2 text-sm leading-7 text-[#61738C]">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass-shell rounded-[34px] p-6 sm:p-8">
+              <div className="rounded-[28px] border border-white/55 bg-white/48 p-5 backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7A8EA8]">
+                      Sample itinerary
+                    </p>
+                    <h3 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                      Amalfi Coast, 7 days
+                    </h3>
+                  </div>
+                  <div className="rounded-full border border-white/55 bg-white/58 px-4 py-2 text-sm text-[#14518b]">
+                    AI generated
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  {[
+                    ["Day 1", "Arrival in Positano", "Hotel check-in, terrace dinner, soft coastal start."],
+                    ["Day 2", "Private waters", "Boat route, hidden coves, and a longer afternoon lunch."],
+                    ["Day 3", "Garden and village rhythm", "Lemon groves, ceramics, and an easy scenic evening."],
+                  ].map(([day, title, text]) => (
+                    <div
+                      key={day}
+                      className="rounded-[22px] border border-white/55 bg-white/62 p-4 shadow-[0_12px_24px_rgba(20,81,139,0.04)]"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#14518b]">
+                          {day}
+                        </p>
+                        <div className="inline-flex items-center gap-2 text-sm text-[#61738C]">
+                          <Clock3 className="size-4 text-[#14518b]" />
+                          Balanced pace
+                        </div>
+                      </div>
+                      <h4 className="mt-2 text-lg font-semibold text-[#0f3460]">{title}</h4>
+                      <p className="mt-2 text-sm leading-7 text-[#61738C]">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="app-shell grid gap-6 lg:grid-cols-2">
+          {testimonials.map((item) => (
+            <div key={item.name} className="glass-shell rounded-[30px] p-7">
+              <div className="inline-flex items-center gap-1 text-[#ff8b5e]">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star key={index} className="size-4 fill-current" />
+                ))}
+              </div>
+              <p className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                “{item.quote}”
+              </p>
+              <div className="mt-5">
+                <p className="text-base font-semibold text-[#0f3460]">{item.name}</p>
+                <p className="text-sm text-[#61738C]">{item.role}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="app-shell overflow-hidden rounded-[38px] border border-white/45 bg-[#0f3460] shadow-[0_30px_90px_rgba(15,52,96,0.22)]">
           <div
-            className="flex min-h-[360px] items-center justify-center bg-cover bg-center px-8 text-center"
+            className="relative overflow-hidden px-8 py-16 sm:px-12 lg:px-16 lg:py-20"
             style={{
               backgroundImage:
-                "linear-gradient(180deg,rgba(2,71,133,0.18),rgba(2,71,133,0.5)),url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1600&q=80')",
+                "linear-gradient(120deg,rgba(15,52,96,0.9),rgba(15,52,96,0.62)),url('https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=1800&q=80')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
           >
-            <div className="max-w-3xl">
-              <h2 className="font-[family-name:var(--font-noto-serif)] text-[3rem] font-bold tracking-[-0.05em] text-white sm:text-[4.3rem]">
-                Your trip deserves a better opening move.
-              </h2>
-              <p className="mt-5 text-base leading-8 text-white/86">
-                Start with one idea, turn it into a route you trust, and keep every practical
-                detail in one beautifully managed system.
+            <div className="hero-orb right-[-4%] top-[6%] h-[260px] w-[260px] bg-[rgba(0,194,255,0.22)]" />
+            <div className="relative z-10 max-w-3xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/66">
+                Start beautifully
               </p>
-              <div className="mt-8">
-                <Link href={isLoggedIn ? "/trips" : "/ai-trip-planner"}>
-                  <Button variant="outline" className="rounded-full border-white/60 bg-white text-[#024785]">
-                    Open Wandrly
+              <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.9rem] font-bold tracking-[-0.05em] text-white sm:text-[4.2rem]">
+                Build the trip, then keep the whole journey under control.
+              </h2>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-white/82 sm:text-lg">
+                Generate your first itinerary in minutes and move straight into the trip workspace
+                where routes, stays, budgets, weather, and prep all stay connected.
+              </p>
+              <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+                <Link href={primaryHref}>
+                  <Button className="min-w-[210px] rounded-full bg-white px-7 py-6 text-base text-[#0f3460] shadow-[0_18px_40px_rgba(255,255,255,0.14)] hover:bg-white">
+                    Start Planning
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </Link>
+                <Link href="/explore">
+                  <Button
+                    variant="outline"
+                    className="min-w-[210px] rounded-full border-white/32 bg-white/10 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/16"
+                  >
+                    See sample trips
                   </Button>
                 </Link>
               </div>

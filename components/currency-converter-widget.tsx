@@ -4,11 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRightLeft, Coins, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  CURRENCY_META,
-  SUPPORTED_CURRENCIES,
-  formatCurrency,
-} from "@/lib/currency";
+import { CURRENCY_META, SUPPORTED_CURRENCIES, formatCurrency } from "@/lib/currency";
 import { CurrencyConversionRecord, SupportedCurrency } from "@/lib/phase-one-types";
 
 interface CurrencyConverterWidgetProps {
@@ -103,34 +99,39 @@ export default function CurrencyConverterWidget({
   }
 
   return (
-    <Card className={compact ? "gap-4" : undefined}>
+    <Card
+      className={`border-[rgba(2,71,133,0.08)] bg-white/96 shadow-[0_16px_40px_rgba(26,28,27,0.05)] ${
+        compact ? "gap-4" : ""
+      }`}
+    >
       <CardHeader className={compact ? "px-5 pt-5" : undefined}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="section-label">Currency</p>
-            <CardTitle className="text-2xl text-white">{title}</CardTitle>
-            <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+            <CardTitle className="text-2xl text-[#024785]">{title}</CardTitle>
+            <p className="mt-2 text-sm leading-7 text-[#61738C]">
               {destinationLabel
                 ? `Auto-detecting the likely local currency for ${destinationLabel}.`
                 : "Compare your trip budget with the likely local currency."}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+          <div className="rounded-2xl border border-[rgba(2,71,133,0.08)] bg-[#EEF7FD] p-3 text-[#14518b]">
             <Coins className="size-5" />
           </div>
         </div>
       </CardHeader>
+
       <CardContent className={`space-y-5 ${compact ? "px-5 pb-5" : ""}`}>
         <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr]">
           <label className="space-y-2">
-            <span className="text-sm text-[#D8E2F1]">From</span>
+            <span className="text-sm text-[#46617c]">From</span>
             <select
               value={from}
               onChange={(event) => setFrom(event.target.value as SupportedCurrency)}
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] px-4 py-3 text-sm text-[#1A1C1B]"
             >
               {SUPPORTED_CURRENCIES.map((currency) => (
-                <option key={currency} value={currency} className="bg-[#0F1117]">
+                <option key={currency} value={currency} className="bg-white">
                   {currency} · {CURRENCY_META[currency].label}
                 </option>
               ))}
@@ -144,14 +145,14 @@ export default function CurrencyConverterWidget({
           </div>
 
           <label className="space-y-2">
-            <span className="text-sm text-[#D8E2F1]">To</span>
+            <span className="text-sm text-[#46617c]">To</span>
             <select
               value={to}
               onChange={(event) => setTo(event.target.value as SupportedCurrency)}
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] px-4 py-3 text-sm text-[#1A1C1B]"
             >
               {SUPPORTED_CURRENCIES.map((currency) => (
-                <option key={currency} value={currency} className="bg-[#0F1117]">
+                <option key={currency} value={currency} className="bg-white">
                   {currency} · {CURRENCY_META[currency].label}
                 </option>
               ))}
@@ -160,28 +161,28 @@ export default function CurrencyConverterWidget({
         </div>
 
         <label className="space-y-2">
-          <span className="text-sm text-[#D8E2F1]">Amount</span>
+          <span className="text-sm text-[#46617c]">Amount</span>
           <input
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
             type="number"
             min="1"
-            className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+            className="w-full rounded-[12px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] px-4 py-3 text-sm text-[#1A1C1B]"
           />
         </label>
 
-        <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
+        <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-5">
           {isLoading ? (
             <div className="space-y-3">
-              <div className="h-4 w-32 animate-pulse rounded bg-white/[0.08]" />
-              <div className="h-8 w-56 animate-pulse rounded bg-white/[0.08]" />
-              <div className="h-4 w-40 animate-pulse rounded bg-white/[0.08]" />
+              <div className="h-4 w-32 animate-pulse rounded bg-[#E5EBF3]" />
+              <div className="h-8 w-56 animate-pulse rounded bg-[#E5EBF3]" />
+              <div className="h-4 w-40 animate-pulse rounded bg-[#E5EBF3]" />
             </div>
           ) : error ? (
-            <p className="text-sm text-[#FFB4B4]">{error}</p>
+            <p className="text-sm text-[#B42318]">{error}</p>
           ) : result ? (
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#D8E2F1]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#14518b]/12 bg-[#EEF7FD] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#14518b]">
                 <Sparkles className="size-3.5" />
                 {result.source === "live"
                   ? "Live rate"
@@ -190,19 +191,19 @@ export default function CurrencyConverterWidget({
                     : "Same currency"}
               </div>
               <div>
-                <p className="text-sm text-[#8B9BB4]">
+                <p className="text-sm text-[#61738C]">
                   {formatCurrency(result.amount, result.from)} is about
                 </p>
-                <p className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-white">
+                <p className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[#024785]">
                   {formatCurrency(result.convertedAmount, result.to)}
                 </p>
               </div>
-              <p className="text-sm text-[#8B9BB4]">
+              <p className="text-sm text-[#61738C]">
                 1 {result.from} = {result.rate.toFixed(3)} {result.to}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-[#8B9BB4]">Enter an amount to see the local value.</p>
+            <p className="text-sm text-[#61738C]">Enter an amount to see the local value.</p>
           )}
         </div>
       </CardContent>

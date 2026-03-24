@@ -4,7 +4,11 @@ import {
   ItineraryVersionRecord,
   PersistedItinerary,
 } from "@/lib/phase-one-types";
-import { buildSeasonBadge, estimateTripWeatherContext } from "@/lib/weather-utils";
+import {
+  buildSeasonBadge,
+  estimateTripWeatherContext,
+  parseTravelDateRange,
+} from "@/lib/weather-utils";
 
 export function estimateDayCost(
   request: AITripPlannerRequest,
@@ -106,5 +110,30 @@ export function serializeVersionRecord(record: {
     isActive: record.isActive,
     createdAt: record.createdAt.toISOString(),
     itineraryData: record.itineraryData as PersistedItinerary,
+  };
+}
+
+export function buildTripSeedFromPlanner(
+  request: AITripPlannerRequest,
+  itinerary: PersistedItinerary
+) {
+  const { start, end } = parseTravelDateRange(request.travelDates, request.days);
+  const titleBase = itinerary.trip_summary.destination || request.destination;
+  const purposeLabel = request.purpose.toLowerCase();
+  const title =
+    request.purpose === "Honeymoon"
+      ? `${titleBase} Honeymoon`
+      : request.purpose === "Business"
+        ? `${titleBase} Business Trip`
+        : `${titleBase} ${purposeLabel === "vacation" ? "Escape" : "Trip"}`;
+
+  return {
+    title,
+    description:
+      itinerary.trip_overview ||
+      `A ${request.travelStyle.toLowerCase()} ${request.purpose.toLowerCase()} planned for ${request.destination}.`,
+    imageUrl: null as string | null,
+    startDate: start,
+    endDate: end,
   };
 }

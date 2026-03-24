@@ -123,6 +123,42 @@ export function parseTravelDateInput(input?: string) {
   return new Date();
 }
 
+export function parseTravelDateRange(input?: string, fallbackDays = 1) {
+  const start = parseTravelDateInput(input);
+  const safeDays = Math.max(1, fallbackDays);
+
+  if (!input?.trim()) {
+    const end = new Date(start);
+    end.setDate(start.getDate() + safeDays - 1);
+    return { start, end };
+  }
+
+  const trimmed = input.trim();
+  const normalizedRange = trimmed
+    .replace(/\s+to\s+/gi, " - ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const parts = normalizedRange.split(" - ").map((part) => part?.trim()).filter(Boolean);
+
+  if (parts.length >= 2) {
+    const startPart = parts[0];
+    const endPart = parts[1];
+    const startYearMatch = startPart.match(/\b(\d{4})\b/);
+    const endYearMatch = endPart.match(/\b(\d{4})\b/);
+    const inferredEnd = !endYearMatch && startYearMatch ? `${endPart} ${startYearMatch[1]}` : endPart;
+    const parsedEnd = new Date(inferredEnd);
+
+    if (!Number.isNaN(parsedEnd.getTime()) && parsedEnd >= start) {
+      return { start, end: parsedEnd };
+    }
+  }
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + safeDays - 1);
+  return { start, end };
+}
+
 export function estimateTripWeatherContext(days: number, startDate?: string) {
   const anchor = parseTravelDateInput(startDate);
   const monthIndex = anchor.getMonth();

@@ -103,22 +103,24 @@ export default function NotificationBell({ className }: NotificationBellProps) {
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="relative inline-flex size-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-1)] text-[var(--foreground)] transition hover:bg-[var(--surface-2)]"
+        className="relative inline-flex size-11 items-center justify-center rounded-full border border-white/55 bg-[rgba(255,255,255,0.58)] text-[#0f3460] shadow-[0_12px_28px_rgba(22,40,64,0.08)] backdrop-blur-[22px] transition hover:bg-[rgba(255,255,255,0.74)]"
       >
         <Bell className="size-4" />
         {unreadCount > 0 ? (
-          <span className="absolute right-2 top-2 inline-flex min-w-5 items-center justify-center rounded-full bg-[#00C2FF] px-1.5 py-0.5 text-[10px] font-semibold text-[#08090E]">
+          <span className="absolute right-2 top-2 inline-flex min-w-5 items-center justify-center rounded-full bg-[#14518b] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_6px_14px_rgba(20,81,139,0.24)]">
             {Math.min(unreadCount, 9)}
           </span>
         ) : null}
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-14 z-50 w-[360px] max-w-[calc(100vw-2rem)] rounded-[20px] border border-[var(--border)] bg-[var(--surface-1)] p-4 shadow-[0_16px_60px_rgba(0,0,0,0.45)]">
+        <div className="absolute right-0 top-14 z-50 w-[380px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[28px] border border-white/55 bg-[rgba(255,255,255,0.74)] p-4 shadow-[0_28px_60px_rgba(22,40,64,0.14)] backdrop-blur-[28px]">
+          <div className="absolute -right-6 top-2 h-24 w-24 rounded-full bg-[rgba(0,194,255,0.12)] blur-3xl" />
+          <div className="relative">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <p className="section-label">Notifications</p>
-              <h3 className="mt-2 text-lg font-semibold text-[var(--foreground)]">
+              <p className="section-label text-[#14518b]">Notifications</p>
+              <h3 className="mt-2 text-lg font-semibold text-[#0f3460]">
                 Reminder center
               </h3>
             </div>
@@ -137,8 +139,8 @@ export default function NotificationBell({ className }: NotificationBellProps) {
           <div className="space-y-3">
             {isLoading ? (
               <>
-                <div className="h-20 animate-pulse rounded-[16px] bg-white/[0.05]" />
-                <div className="h-20 animate-pulse rounded-[16px] bg-white/[0.05]" />
+                <div className="h-20 animate-pulse rounded-[18px] bg-white/45" />
+                <div className="h-20 animate-pulse rounded-[18px] bg-white/45" />
               </>
             ) : notifications.length > 0 ? (
               notifications.map((notification) => (
@@ -147,26 +149,26 @@ export default function NotificationBell({ className }: NotificationBellProps) {
                   type="button"
                   onClick={() => void markAsRead(notification.id)}
                   className={cn(
-                    "block w-full rounded-[16px] border p-4 text-left transition",
+                    "block w-full rounded-[20px] border p-4 text-left transition",
                     notification.read
-                      ? "border-white/6 bg-white/[0.025]"
-                      : "border-[#00C2FF]/20 bg-[#00C2FF]/8"
+                      ? "border-white/50 bg-white/44"
+                      : "border-[#14518b]/18 bg-[rgba(20,81,139,0.08)]"
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm leading-7 text-[var(--foreground)]">
+                    <p className="text-sm leading-7 text-[#30465f]">
                       {notification.message}
                     </p>
                     {!notification.read ? (
-                      <span className="mt-1 size-2 rounded-full bg-[#00C2FF]" />
+                      <span className="mt-1 size-2.5 shrink-0 rounded-full bg-[#14518b]" />
                     ) : null}
                   </div>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted-foreground)]">
+                  <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[#7A8EA8]">
                     <span>{formatRelativeDate(notification.createdAt)}</span>
                     {notification.tripId ? (
                       <Link
                         href={`/trips/${notification.tripId}`}
-                        className="text-[#00C2FF] hover:underline"
+                        className="font-medium text-[#14518b] hover:underline"
                         onClick={() => setIsOpen(false)}
                       >
                         Open trip
@@ -176,11 +178,12 @@ export default function NotificationBell({ className }: NotificationBellProps) {
                 </button>
               ))
             ) : (
-              <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[var(--muted-foreground)]">
+              <div className="rounded-[20px] border border-dashed border-white/55 bg-white/34 p-5 text-sm leading-7 text-[#61738C]">
                 No reminders yet. Once a trip gets closer, countdown alerts and prep prompts will
                 show up here.
               </div>
             )}
+          </div>
           </div>
         </div>
       ) : null}

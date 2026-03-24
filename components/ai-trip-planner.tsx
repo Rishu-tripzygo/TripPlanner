@@ -2,12 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import AITypingEffect from "@/components/ai-typing-effect";
-import GlassWidget from "@/components/ui/glass-widget";
-import SkeletonCard from "@/components/ui/skeleton-card";
-import StatusBadge from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   AITripPlannerRequest,
   hotelCategoryOptions,
@@ -24,16 +20,17 @@ import { cn } from "@/lib/utils";
 import {
   BedDouble,
   CalendarRange,
-  ChefHat,
-  Copy,
-  History,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  Compass,
   MapPinned,
   MessageSquareText,
-  RefreshCw,
-  Send,
-  Share2,
   Sparkles,
+  Star,
+  SunMedium,
   Users,
+  WalletCards,
 } from "lucide-react";
 
 interface PlannerTripOption {
@@ -44,6 +41,14 @@ interface PlannerTripOption {
   destinationHint?: string | null;
 }
 
+interface CompletedTripPayload {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  wasAutoCreated: boolean;
+}
+
 interface AITripPlannerProps {
   trips: PlannerTripOption[];
   initialTripId?: string;
@@ -52,7 +57,7 @@ interface AITripPlannerProps {
 type StreamEvent =
   | { type: "status"; stage: string; message: string }
   | { type: "overview_chunk"; text: string }
-  | { type: "complete"; version: ItineraryVersionRecord }
+  | { type: "complete"; version: ItineraryVersionRecord; trip: CompletedTripPayload }
   | { type: "error"; error: string };
 
 const emptyForm: AITripPlannerRequest = {
@@ -67,18 +72,60 @@ const emptyForm: AITripPlannerRequest = {
   travelDates: "",
 };
 
-function FormLabel({
-  icon,
-  children,
+function formatTripWindow(trip: PlannerTripOption) {
+  return `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(
+    trip.endDate
+  ).toLocaleDateString()}`;
+}
+
+function destinationImage(destination?: string) {
+  const query = encodeURIComponent(destination || "luxury travel destination");
+  return `https://source.unsplash.com/1600x900/?${query}`;
+}
+
+function StepBadge({ step, title }: { step: string; title: string }) {
+  return (
+    <div className="inline-flex items-center gap-3 rounded-full border border-white/45 bg-white/46 px-4 py-2 text-sm text-[#56728f] backdrop-blur-xl">
+      <span className="inline-flex size-7 items-center justify-center rounded-full bg-[#14518b] text-xs font-semibold text-white">
+        {step}
+      </span>
+      <span>{title}</span>
+    </div>
+  );
+}
+
+function SectionTitle({
+  eyebrow,
+  title,
+  description,
 }: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
+  eyebrow: string;
+  title: string;
+  description?: string;
 }) {
   return (
-    <label className="mb-2 flex items-center gap-2 text-sm font-medium text-[#3E536F]">
-      <span className="text-[#024785]">{icon}</span>
-      {children}
-    </label>
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#14518b]">
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2.3rem] font-bold leading-[0.95] tracking-[-0.05em] text-[#0f3460] sm:text-[3rem]">
+        {title}
+      </h2>
+      {description ? (
+        <p className="mt-4 max-w-2xl text-sm leading-8 text-[#61738C] sm:text-base">
+          {description}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function DetailPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full border border-white/45 bg-white/54 px-4 py-2 text-sm text-[#46617c] backdrop-blur-xl">
+      <span className="font-medium text-[#0f3460]">{value}</span>
+      <span className="ml-2 text-[#7a8ea8]">{label}</span>
+    </div>
   );
 }
 
@@ -86,8 +133,8 @@ function OutputList({ items }: { items: string[] }) {
   return (
     <ul className="space-y-2">
       {items.map((item) => (
-        <li key={item} className="flex gap-3 text-sm leading-7 text-[#3E536F]">
-          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#024785]" />
+        <li key={item} className="flex gap-3 text-sm leading-7 text-[#46617c]">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#14518b]" />
           <span>{item}</span>
         </li>
       ))}
@@ -95,39 +142,80 @@ function OutputList({ items }: { items: string[] }) {
   );
 }
 
-function formatTripWindow(trip: PlannerTripOption) {
-  return `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(
-    trip.endDate
-  ).toLocaleDateString()}`;
+function TimelineBlock({
+  label,
+  icon,
+  window,
+  items,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  window: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/45 bg-white/48 p-4 shadow-[0_12px_28px_rgba(20,81,139,0.05)] backdrop-blur-xl">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#eef4fb] text-[#14518b]">
+            {icon}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#0f3460]">{label}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#7a8ea8]">{window}</p>
+          </div>
+        </div>
+        <div className="rounded-full border border-white/45 bg-white/58 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#6c819a]">
+          {items.length} items
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <div key={`${label}-${item}`} className="rounded-[16px] bg-[#f8f5ef] px-4 py-3 text-sm leading-7 text-[#46617c]">
+              {item}
+            </div>
+          ))
+        ) : (
+          <div className="rounded-[16px] bg-[#f8f5ef] px-4 py-3 text-sm leading-7 text-[#7a8ea8]">
+            No activities planned yet for this part of the day.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function AITripPlanner({
   trips,
   initialTripId,
 }: AITripPlannerProps) {
+  const [tripOptions, setTripOptions] = useState<PlannerTripOption[]>(trips);
+  const [plannerMode, setPlannerMode] = useState<"autocreate" | "existing">(
+    initialTripId && trips.some((trip) => trip.id === initialTripId) ? "existing" : "autocreate"
+  );
+  const [selectedTripId, setSelectedTripId] = useState(
+    initialTripId && trips.some((trip) => trip.id === initialTripId) ? initialTripId : ""
+  );
   const [form, setForm] = useState<AITripPlannerRequest>(emptyForm);
   const [result, setResult] = useState<PersistedItinerary | null>(null);
   const [versions, setVersions] = useState<ItineraryVersionRecord[]>([]);
   const [messages, setMessages] = useState<RefinementMessage[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-  const [selectedTripId, setSelectedTripId] = useState(
-    initialTripId && trips.some((trip) => trip.id === initialTripId)
-      ? initialTripId
-      : trips[0]?.id || ""
-  );
   const [providerLabel, setProviderLabel] = useState<string | null>(null);
+  const [lastSavedTrip, setLastSavedTrip] = useState<CompletedTripPayload | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isVersionsLoading, setIsVersionsLoading] = useState(false);
   const [isRestoringVersion, setIsRestoringVersion] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [refineOpen, setRefineOpen] = useState(false);
   const [refinePrompt, setRefinePrompt] = useState("");
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const [streamingOverview, setStreamingOverview] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const selectedTrip = trips.find((trip) => trip.id === selectedTripId) || null;
-  const selectedVersion =
-    versions.find((version) => version.id === selectedVersionId) || null;
 
   function updateField<K extends keyof AITripPlannerRequest>(
     field: K,
@@ -147,7 +235,9 @@ export default function AITripPlanner({
   }
 
   function validateForm() {
-    if (!selectedTripId) return "Select a trip before generating an itinerary.";
+    if (plannerMode === "existing" && !selectedTripId) {
+      return "Select an existing trip or switch to auto-create mode.";
+    }
     if (!form.destination.trim()) return "Destination is required.";
     if (form.days < 1 || form.days > 21) return "Days must be between 1 and 21.";
     if (form.travelers < 1 || form.travelers > 20) {
@@ -209,7 +299,7 @@ export default function AITripPlanner({
   async function submitPlanner() {
     const requestPayload: AITripPlannerRequest = {
       ...form,
-      tripId: selectedTripId,
+      tripId: plannerMode === "existing" ? selectedTripId : undefined,
     };
 
     const response = await fetch("/api/ai-trip-planner/stream", {
@@ -231,6 +321,7 @@ export default function AITripPlanner({
     const decoder = new TextDecoder();
     let buffer = "";
     let completedVersion: ItineraryVersionRecord | null = null;
+    let completedTrip: CompletedTripPayload | null = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -250,17 +341,18 @@ export default function AITripPlanner({
           setStreamingOverview((current) => current + event.text);
         } else if (event.type === "complete") {
           completedVersion = event.version;
+          completedTrip = event.trip;
         } else if (event.type === "error") {
           throw new Error(event.error);
         }
       }
     }
 
-    if (!completedVersion) {
+    if (!completedVersion || !completedTrip) {
       throw new Error("Streaming completed without a saved itinerary version.");
     }
 
-    return completedVersion;
+    return { version: completedVersion, trip: completedTrip };
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -273,11 +365,42 @@ export default function AITripPlanner({
 
     setError(null);
     setIsLoading(true);
-    setStreamStatus("Preparing your trip brief");
+    setStreamStatus("Designing your itinerary...");
     setStreamingOverview("");
 
     try {
-      const savedVersion = await submitPlanner();
+      const { version: savedVersion, trip } = await submitPlanner();
+      setLastSavedTrip(trip);
+      setPlannerMode("existing");
+      setSelectedTripId(trip.id);
+      setTripOptions((current) => {
+        const existing = current.find((item) => item.id === trip.id);
+        if (existing) {
+          return current.map((item) =>
+            item.id === trip.id
+              ? {
+                  ...item,
+                  id: trip.id,
+                  title: trip.title,
+                  startDate: trip.startDate,
+                  endDate: trip.endDate,
+                  destinationHint: form.destination,
+                }
+              : item
+          );
+        }
+        return [
+          {
+            id: trip.id,
+            title: trip.title,
+            startDate: trip.startDate,
+            endDate: trip.endDate,
+            destinationHint: form.destination,
+          },
+          ...current,
+        ];
+      });
+
       setVersions((current) => [
         savedVersion,
         ...current
@@ -319,9 +442,7 @@ export default function AITripPlanner({
       const nextVersion = updated as ItineraryVersionRecord;
       setVersions((current) =>
         current.map((version) =>
-          version.id === nextVersion.id
-            ? nextVersion
-            : { ...version, isActive: false }
+          version.id === nextVersion.id ? nextVersion : { ...version, isActive: false }
         )
       );
       setSelectedVersionId(nextVersion.id);
@@ -414,16 +535,23 @@ export default function AITripPlanner({
   }
 
   useEffect(() => {
-    if (!selectedTripId) {
+    setTripOptions(trips);
+  }, [trips]);
+
+  useEffect(() => {
+    if (plannerMode !== "existing" || !selectedTripId) {
       setVersions([]);
       setMessages([]);
       setSelectedVersionId(null);
       setProviderLabel(null);
-      setResult(null);
+      if (plannerMode !== "existing") {
+        setResult(null);
+        setLastSavedTrip(null);
+      }
       return;
     }
 
-    const trip = trips.find((item) => item.id === selectedTripId);
+    const trip = tripOptions.find((item) => item.id === selectedTripId);
     if (trip) {
       setForm((current) => ({
         ...current,
@@ -438,310 +566,309 @@ export default function AITripPlanner({
 
     void loadVersions(selectedTripId);
     void loadMessages(selectedTripId);
-  }, [selectedTripId, trips]);
+  }, [plannerMode, selectedTripId, tripOptions]);
 
+  const selectedTrip = tripOptions.find((trip) => trip.id === selectedTripId) || null;
   const actionSummary = useMemo(() => {
     if (!result) return "";
-    return [
-      result.trip_overview,
-      ...result.days.map((day) => `Day ${day.day}: ${day.title}`),
-    ].join("\n");
+    return [result.trip_overview, ...result.days.map((day) => `Day ${day.day}: ${day.title}`)].join(
+      "\n"
+    );
   }, [result]);
 
-  const plannerSteps = [
-    {
-      label: "Brief",
-      title: "Shape the trip brief",
-      description: "Choose the right trip shell, destination, pace, and guest profile.",
-    },
-    {
-      label: "Draft",
-      title: "Generate a structured route",
-      description: "Create a full saved itinerary with hotels, food cues, and day cards.",
-    },
-    {
-      label: "Refine",
-      title: "Iterate without losing history",
-      description: "Preview older drafts, restore a favorite, or ask AI for precise changes.",
-    },
-  ];
+  const headerDestination = result?.trip_summary.destination || form.destination || "Your next trip";
+  const dayHighlight =
+    result?.hidden_gems?.[0] ||
+    result?.must_visit_attractions?.[0] ||
+    "A signature local moment selected for this route.";
 
   return (
     <div className="app-shell space-y-8">
-      <section className="relative overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,251,0.92))] p-6 shadow-[0_28px_70px_rgba(26,28,27,0.08)] sm:p-8">
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[42%] bg-[radial-gradient(circle_at_top,rgba(0,194,255,0.16),transparent_50%),radial-gradient(circle_at_bottom,rgba(2,71,133,0.12),transparent_46%)]" />
-        <div className="relative grid gap-8 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
-          <div className="space-y-6">
-            <p className="section-label">AI Trip Planner</p>
-            <div className="space-y-4">
-              <h1 className="max-w-4xl font-[family-name:var(--font-noto-serif)] text-[44px] leading-[0.95] tracking-[-0.05em] text-[#024785] sm:text-[58px] xl:text-[72px]">
-                Plan the route beautifully, then keep refining it like a real travel workspace.
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-[#5C6F89]">
-                Wandrly turns one destination brief into a saved itinerary version with daily pacing,
-                hotel recommendations, food suggestions, and version history your trip can grow from.
-              </p>
-            </div>
-            <div className="grid gap-3 lg:grid-cols-3">
-              {plannerSteps.map((step) => (
-                <div
-                  key={step.label}
-                  className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-white/88 p-5 shadow-[0_14px_28px_rgba(26,28,27,0.05)] backdrop-blur-sm"
+      {/* step 1 */}
+      {!result && !isLoading ? (
+        <section className="space-y-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <StepBadge step="01" title="Trip input" />
+            <SectionTitle
+              eyebrow="AI Trip Planner"
+              title="Tell Wandrly where you want to go, and we’ll shape the first great version."
+              description="A cleaner brief creates a better trip. Start with the essentials, then open advanced preferences only if you want more control."
+            />
+          </div>
+
+          <Card className="glass-shell mx-auto max-w-4xl overflow-hidden rounded-[34px] border-white/45 bg-[rgba(255,255,255,0.6)]">
+            <CardContent className="space-y-8 p-6 sm:p-8 lg:p-10">
+              <div className="grid gap-4 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setPlannerMode("autocreate")}
+                  className={cn(
+                    "rounded-[24px] border p-5 text-left transition",
+                    plannerMode === "autocreate"
+                      ? "border-[#14518b]/20 bg-[#eef4fb]"
+                      : "border-white/45 bg-white/44 hover:bg-white/58"
+                  )}
                 >
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">
-                    {step.label}
+                  <p className="text-sm font-semibold text-[#0f3460]">Create trip from this plan</p>
+                  <p className="mt-2 text-sm leading-7 text-[#61738C]">
+                    Perfect for a fresh idea. Wandrly creates the trip and saves the itinerary automatically.
                   </p>
-                  <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[28px] leading-[1.02] tracking-[-0.04em] text-[#1A1C1B]">
-                    {step.title}
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[#61738C]">
-                    {step.description}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlannerMode("existing")}
+                  className={cn(
+                    "rounded-[24px] border p-5 text-left transition",
+                    plannerMode === "existing"
+                      ? "border-[#14518b]/20 bg-[#eef4fb]"
+                      : "border-white/45 bg-white/44 hover:bg-white/58"
+                  )}
+                >
+                  <p className="text-sm font-semibold text-[#0f3460]">Use an existing trip</p>
+                  <p className="mt-2 text-sm leading-7 text-[#61738C]">
+                    Attach this AI itinerary to a trip you already created and keep the same workspace.
                   </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4 rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white/84 p-5 shadow-[0_18px_40px_rgba(26,28,27,0.07)] backdrop-blur-sm sm:grid-cols-3 xl:grid-cols-1">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Saved versions</p>
-              <p className="mt-3 font-[family-name:var(--font-noto-serif)] text-[42px] leading-none tracking-[-0.05em] text-[#024785]">
-                {versions.length}
-              </p>
-              <p className="mt-2 text-sm text-[#61738C]">
-                Each generated draft stays recoverable instead of being overwritten.
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Active trip</p>
-              <p className="mt-3 text-lg font-semibold text-[#1A1C1B]">
-                {selectedTrip?.title || "Choose a trip"}
-              </p>
-              <p className="mt-2 text-sm text-[#61738C]">
-                {selectedTrip ? formatTripWindow(selectedTrip) : "Attach the planner to a trip shell first."}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">Current state</p>
-              <p className="mt-3 text-lg font-semibold text-[#1A1C1B]">
-                {isLoading ? "Generating..." : result ? "Ready to refine" : "Waiting for brief"}
-              </p>
-              <p className="mt-2 text-sm text-[#61738C]">
-                {isLoading
-                  ? streamStatus || "The planner is shaping your route."
-                  : result
-                    ? "Preview the active itinerary, compare versions, and refine with AI."
-                    : "Complete the form to create your first saved itinerary."}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
-        <Card className="h-fit border-[rgba(2,71,133,0.08)] bg-white/96 xl:sticky xl:top-24">
-          <CardHeader>
-            <p className="section-label">Trip Brief</p>
-            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] text-[#024785]">
-              Give the planner the right context
-            </CardTitle>
-            <p className="max-w-lg text-sm leading-7 text-[#61738C]">
-              The better the brief is here, the more useful the saved itinerary becomes across
-              budget, weather, packing, and trip prep later.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {trips.length === 0 ? (
-              <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#F6F4EF] p-6">
-                <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.03em] text-[#024785]">
-                  Create a trip first
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-[#61738C]">
-                  Saved AI versions attach to real trips. Create a trip shell first, then come
-                  back here to generate and manage itinerary drafts cleanly.
-                </p>
-                <Link href="/trips/new" className="mt-5 inline-flex">
-                  <Button>Create New Trip</Button>
-                </Link>
+                </button>
               </div>
-            ) : (
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                  <FormLabel icon={<History className="size-4" />}>Attach to trip</FormLabel>
-                  <select
-                    value={selectedTripId}
-                    onChange={(event) => setSelectedTripId(event.target.value)}
-                    className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
-                  >
-                    {trips.map((trip) => (
-                      <option key={trip.id} value={trip.id} className="bg-white text-[#1A1C1B]">
-                        {trip.title}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedTrip ? (
-                    <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
-                      {formatTripWindow(selectedTrip)}
-                    </p>
-                  ) : null}
-                </div>
 
-                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                  <FormLabel icon={<MapPinned className="size-4" />}>Destination</FormLabel>
-                  <input
-                    value={form.destination}
-                    onChange={(event) => updateField("destination", event.target.value)}
-                    placeholder="Kyoto, Japan"
-                    className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#024785]/30 focus:ring-2 focus:ring-[#024785]/10"
-                  />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                    <FormLabel icon={<Sparkles className="size-4" />}>Purpose</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {tripPurposeOptions.map((purpose) => {
-                        const active = form.purpose === purpose;
-                        return (
-                          <button
-                            key={purpose}
-                            type="button"
-                            onClick={() => updateField("purpose", purpose)}
-                            className={cn(
-                              "rounded-full border px-3 py-2 text-sm transition",
-                              active
-                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
-                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C] hover:text-[#024785]"
-                            )}
-                          >
-                            {purpose}
-                          </button>
-                        );
-                      })}
-                    </div>
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                {plannerMode === "existing" ? (
+                  <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl">
+                    <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                      <Compass className="size-4 text-[#14518b]" />
+                      Select trip
+                    </label>
+                    {tripOptions.length > 0 ? (
+                      <>
+                        <select
+                          value={selectedTripId}
+                          onChange={(event) => setSelectedTripId(event.target.value)}
+                          className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
+                        >
+                          <option value="">Choose a trip</option>
+                          {tripOptions.map((trip) => (
+                            <option key={trip.id} value={trip.id}>
+                              {trip.title}
+                            </option>
+                          ))}
+                        </select>
+                        {selectedTrip ? (
+                          <p className="mt-3 text-sm text-[#61738C]">{formatTripWindow(selectedTrip)}</p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="rounded-[18px] border border-white/45 bg-white/58 px-4 py-4 text-sm leading-7 text-[#61738C]">
+                        No trips exist yet. Switch back to auto-create mode and let Wandrly save the trip for you.
+                      </div>
+                    )}
                   </div>
+                ) : null}
 
-                  <div className="grid gap-4 rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4 sm:grid-cols-2">
-                    <div>
-                      <FormLabel icon={<CalendarRange className="size-4" />}>Days</FormLabel>
-                      <input
-                        type="number"
-                        min={1}
-                        max={21}
-                        value={form.days}
-                        onChange={(event) => updateField("days", Number(event.target.value))}
-                        className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
-                      />
-                    </div>
-                    <div>
-                      <FormLabel icon={<Users className="size-4" />}>Travelers</FormLabel>
-                      <input
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={form.travelers}
-                        onChange={(event) =>
-                          updateField("travelers", Number(event.target.value))
-                        }
-                        className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                    <FormLabel icon={<Sparkles className="size-4" />}>Travel style</FormLabel>
-                    <div className="grid grid-cols-3 gap-2">
-                      {travelStyleOptions.map((style) => {
-                        const active = form.travelStyle === style;
-                        return (
-                          <button
-                            key={style}
-                            type="button"
-                            onClick={() => updateField("travelStyle", style)}
-                            className={cn(
-                              "rounded-[14px] border px-3 py-3 text-sm transition",
-                              active
-                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
-                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
-                            )}
-                          >
-                            {style}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                    <FormLabel icon={<BedDouble className="size-4" />}>Hotel</FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                      {hotelCategoryOptions.map((category) => {
-                        const active = form.hotelCategory === category;
-                        return (
-                          <button
-                            key={category}
-                            type="button"
-                            onClick={() => updateField("hotelCategory", category)}
-                            className={cn(
-                              "rounded-[14px] border px-3 py-3 text-sm transition",
-                              active
-                                ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
-                                : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
-                            )}
-                          >
-                            {category}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                    <FormLabel icon={<ChefHat className="size-4" />}>Budget range</FormLabel>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl md:col-span-2">
+                    <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                      <MapPinned className="size-4 text-[#14518b]" />
+                      Destination
+                    </label>
                     <input
-                      value={form.budgetRange}
-                      onChange={(event) => updateField("budgetRange", event.target.value)}
-                      placeholder="INR 40,000 - INR 80,000"
-                      className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
+                      value={form.destination}
+                      onChange={(event) => updateField("destination", event.target.value)}
+                      placeholder="Tokyo and Hakone"
+                      className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
                     />
                   </div>
-                  <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                    <FormLabel icon={<CalendarRange className="size-4" />}>Travel dates</FormLabel>
+
+                  <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl">
+                    <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                      <CalendarRange className="size-4 text-[#14518b]" />
+                      Dates
+                    </label>
                     <input
                       value={form.travelDates}
                       onChange={(event) => updateField("travelDates", event.target.value)}
-                      placeholder="12 Aug - 16 Aug 2026"
-                      className="w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
+                      placeholder="12 Aug - 18 Aug 2026"
+                      className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
+                    />
+                  </div>
+
+                  <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl">
+                    <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                      <Users className="size-4 text-[#14518b]" />
+                      Travelers
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={form.travelers}
+                      onChange={(event) => updateField("travelers", Number(event.target.value))}
+                      className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                  <FormLabel icon={<Sparkles className="size-4" />}>Interests</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {interestOptions.map((interest) => {
-                      const active = form.interests.includes(interest);
+                <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl">
+                  <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                    <Sparkles className="size-4 text-[#14518b]" />
+                    Travel style
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {travelStyleOptions.map((style) => {
+                      const active = form.travelStyle === style;
                       return (
                         <button
-                          key={interest}
+                          key={style}
                           type="button"
-                          onClick={() => toggleInterest(interest)}
+                          onClick={() => updateField("travelStyle", style)}
                           className={cn(
-                            "rounded-full border px-4 py-2 text-sm transition",
+                            "rounded-full border px-5 py-3 text-sm transition",
                             active
-                              ? "border-[#024785]/20 bg-[#EEF2F8] text-[#024785]"
-                              : "border-[rgba(2,71,133,0.08)] bg-white text-[#61738C]"
+                              ? "border-[#14518b]/18 bg-[#eef4fb] text-[#14518b]"
+                              : "border-white/55 bg-white/72 text-[#61738C] hover:text-[#14518b]"
                           )}
                         >
-                          {interest}
+                          {style}
                         </button>
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="rounded-[26px] border border-white/45 bg-white/44 p-5 backdrop-blur-xl">
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedOpen((value) => !value)}
+                    className="flex w-full items-center justify-between gap-3 text-left"
+                  >
+                    <div>
+                      <p className="text-base font-semibold text-[#0f3460]">Advanced preferences</p>
+                      <p className="mt-1 text-sm text-[#61738C]">
+                        Budget, purpose, hotel category, and interests
+                      </p>
+                    </div>
+                    {advancedOpen ? (
+                      <ChevronDown className="size-5 text-[#14518b]" />
+                    ) : (
+                      <ChevronRight className="size-5 text-[#14518b]" />
+                    )}
+                  </button>
+
+                  {advancedOpen ? (
+                    <div className="mt-5 space-y-5 border-t border-white/45 pt-5">
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                            <Sparkles className="size-4 text-[#14518b]" />
+                            Purpose
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {tripPurposeOptions.map((purpose) => {
+                              const active = form.purpose === purpose;
+                              return (
+                                <button
+                                  key={purpose}
+                                  type="button"
+                                  onClick={() => updateField("purpose", purpose)}
+                                  className={cn(
+                                    "rounded-full border px-4 py-2 text-sm transition",
+                                    active
+                                      ? "border-[#14518b]/18 bg-[#eef4fb] text-[#14518b]"
+                                      : "border-white/55 bg-white/72 text-[#61738C]"
+                                  )}
+                                >
+                                  {purpose}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                            <BedDouble className="size-4 text-[#14518b]" />
+                            Hotel category
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {hotelCategoryOptions.map((category) => {
+                              const active = form.hotelCategory === category;
+                              return (
+                                <button
+                                  key={category}
+                                  type="button"
+                                  onClick={() => updateField("hotelCategory", category)}
+                                  className={cn(
+                                    "rounded-[16px] border px-4 py-3 text-sm transition",
+                                    active
+                                      ? "border-[#14518b]/18 bg-[#eef4fb] text-[#14518b]"
+                                      : "border-white/55 bg-white/72 text-[#61738C]"
+                                  )}
+                                >
+                                  {category}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                            <WalletCards className="size-4 text-[#14518b]" />
+                            Budget range
+                          </label>
+                          <input
+                            value={form.budgetRange}
+                            onChange={(event) => updateField("budgetRange", event.target.value)}
+                            placeholder="INR 80,000 - INR 140,000"
+                            className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B] placeholder:text-[#8A96A8]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                            <Clock3 className="size-4 text-[#14518b]" />
+                            Days
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={21}
+                            value={form.days}
+                            onChange={(event) => updateField("days", Number(event.target.value))}
+                            className="w-full rounded-[18px] border border-white/55 bg-white/80 px-4 py-4 text-base text-[#1A1C1B]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#46617c]">
+                          <Star className="size-4 text-[#14518b]" />
+                          Interests
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {interestOptions.map((interest) => {
+                            const active = form.interests.includes(interest);
+                            return (
+                              <button
+                                key={interest}
+                                type="button"
+                                onClick={() => toggleInterest(interest)}
+                                className={cn(
+                                  "rounded-full border px-4 py-2 text-sm transition",
+                                  active
+                                    ? "border-[#14518b]/18 bg-[#eef4fb] text-[#14518b]"
+                                    : "border-white/55 bg-white/72 text-[#61738C]"
+                                )}
+                              >
+                                {interest}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {error ? (
@@ -750,147 +877,192 @@ export default function AITripPlanner({
                   </div>
                 ) : null}
 
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-14 w-full rounded-full text-base"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Generating and saving..." : "Generate AI Itinerary"}
-                </Button>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm leading-7 text-[#61738C]">
+                    {plannerMode === "autocreate"
+                      ? "Your trip will be created automatically as soon as the itinerary is ready."
+                      : "The new itinerary version will be saved into the selected trip."}
+                  </p>
+                  <Button type="submit" size="lg" className="h-14 rounded-full px-8 text-base" disabled={isLoading}>
+                    Generate My Trip
+                  </Button>
+                </div>
               </form>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
+      {/* step 2 */}
+      {isLoading ? (
+        <section className="space-y-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <StepBadge step="02" title="AI generation" />
+            <SectionTitle
+              eyebrow="Designing your itinerary"
+              title={streamStatus || "Finding the best route, stays, and experiences for your trip."}
+              description="Wandrly is building a structured itinerary, balancing pace, destination highlights, hotel logic, and travel practicality."
+            />
+          </div>
 
-        <div className="space-y-6">
-          <GlassWidget className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-white/80 p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="section-label">Live Output</p>
-                <h2 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] font-bold tracking-[-0.03em] text-[#024785]">
-                  {isLoading ? "Thinking through your route..." : "Saved itinerary workspace"}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-[#61738C]">
-                  {isLoading
-                    ? streamStatus || "The planner is shaping your route, pace, and hotel logic."
-                    : "Review the active itinerary, compare saved versions, and keep refining the plan without losing history."}
-                </p>
+          <div className="glass-shell overflow-hidden rounded-[34px] p-6 sm:p-8">
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-5">
+                <div className="h-6 w-40 animate-pulse rounded-full bg-white/55" />
+                <div className="h-16 w-full animate-pulse rounded-[24px] bg-white/55" />
+                <div className="h-16 w-[84%] animate-pulse rounded-[24px] bg-white/48" />
+                <div className="rounded-[28px] border border-white/45 bg-white/38 p-5 backdrop-blur-xl">
+                  <p className="text-sm leading-8 text-[#61738C]">
+                    {streamingOverview || "Designing your itinerary… finding best routes, stays, and experiences…"}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+
+              <div className="space-y-4">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="rounded-[26px] border border-white/45 bg-white/42 p-5 backdrop-blur-xl">
+                    <div className="h-5 w-28 animate-pulse rounded-full bg-white/55" />
+                    <div className="mt-4 h-5 w-2/3 animate-pulse rounded-full bg-white/48" />
+                    <div className="mt-4 space-y-3">
+                      <div className="h-14 animate-pulse rounded-[18px] bg-white/48" />
+                      <div className="h-14 animate-pulse rounded-[18px] bg-white/42" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {/* step 3 */}
+      {result ? (
+        <section className="space-y-8">
+          <div className="rounded-[36px] border border-white/45 bg-white/60 shadow-[0_30px_70px_rgba(20,81,139,0.1)] backdrop-blur-[24px]">
+            <div
+              className="relative overflow-hidden rounded-t-[36px] px-6 py-8 sm:px-8 sm:py-10"
+              style={{
+                backgroundImage: `linear-gradient(180deg,rgba(15,52,96,0.16),rgba(15,52,96,0.58)),url('${destinationImage(
+                  headerDestination
+                )}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,194,255,0.2),transparent_32%)]" />
+              <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-3xl text-white">
+                  <StepBadge step="03" title="Trip reveal" />
+                  <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[3rem] font-bold leading-[0.92] tracking-[-0.06em] sm:text-[4.3rem]">
+                    {headerDestination}
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-sm leading-8 text-white/84 sm:text-base">
+                    {result.trip_overview}
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <DetailPill label="days" value={`${result.trip_summary.duration_days}`} />
+                    <DetailPill label="travelers" value={`${result.trip_summary.travelers}`} />
+                    <DetailPill label="budget" value={result.trip_summary.budget_range} />
+                    <DetailPill label="style" value={result.trip_summary.travel_style} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link href={`/trips/${(lastSavedTrip || selectedTrip)?.id}`}>
+                    <Button className="rounded-full px-7 py-6 text-base">
+                      Open Workspace
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={() => setRefineOpen(true)}
+                    className="rounded-full border-white/35 bg-white/15 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/22"
+                  >
+                    Refine with AI
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-white/45 bg-white/46 px-6 py-5 sm:px-8">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#14518b]">
+                  Saved to {(lastSavedTrip || selectedTrip)?.title || "trip"}
+                </div>
+                {providerLabel ? (
+                  <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]">
+                    {providerLabel}
+                  </div>
+                ) : null}
                 <button
                   type="button"
-                  disabled={!result}
+                  onClick={() => setHistoryOpen((value) => !value)}
+                  className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]"
+                >
+                  {historyOpen ? "Hide version history" : "View version history"}
+                </button>
+                <button
+                  type="button"
                   onClick={() => navigator.clipboard.writeText(actionSummary)}
-                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
+                  className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]"
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <Copy className="size-4" />
-                    Copy brief
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  disabled={!result}
-                  onClick={() =>
-                    window.alert(
-                      "PDF export will fit naturally once versioned itinerary editing is in place."
-                    )
-                  }
-                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
-                >
-                  PDF
-                </button>
-                <button
-                  type="button"
-                  disabled={!result}
-                  onClick={() => {
-                    if (navigator.share && result) {
-                      void navigator.share({
-                        title: "AI Travel Planner Itinerary",
-                        text: result.trip_overview,
-                      });
-                    }
-                  }}
-                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Share2 className="size-4" />
-                    Share
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedTripId || isLoading}
-                  onClick={() => {
-                    if (selectedTripId) {
-                      void loadVersions(selectedTripId);
-                    }
-                  }}
-                  className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#024785]/15 disabled:opacity-40"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <RefreshCw className="size-4" />
-                    Refresh
-                  </span>
+                  Copy summary
                 </button>
               </div>
             </div>
-          </GlassWidget>
-          {selectedTripId ? (
-            <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="section-label">Version History</p>
-                    <CardTitle className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] text-[#024785]">
-                      {selectedTrip?.title || "Saved itinerary drafts"}
-                    </CardTitle>
-                  </div>
-                  <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
-                    {versions.length} saved
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
+          </div>
+
+          {historyOpen ? (
+            <Card className="glass-shell overflow-hidden rounded-[32px] border-white/45 bg-white/56">
+              <CardContent className="space-y-4 p-6">
+                <SectionTitle
+                  eyebrow="Version history"
+                  title="Saved itinerary drafts"
+                  description="Version history stays out of the way until you need it. Preview older drafts or restore one as the active itinerary."
+                />
+
                 {isVersionsLoading ? (
-                  <div className="space-y-3">
-                    <SkeletonCard className="h-[92px]" />
-                    <SkeletonCard className="h-[92px]" />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="h-28 animate-pulse rounded-[24px] bg-white/50" />
+                    <div className="h-28 animate-pulse rounded-[24px] bg-white/50" />
                   </div>
                 ) : versions.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {versions.map((version) => {
                       const previewing = version.id === selectedVersionId;
                       return (
                         <div
                           key={version.id}
                           className={cn(
-                            "rounded-[18px] border p-4 transition",
+                            "rounded-[24px] border p-5",
                             previewing
-                              ? "border-[#024785]/18 bg-[#EEF2F8]"
-                              : "border-[rgba(2,71,133,0.08)] bg-[#FAF9F7]"
+                              ? "border-[#14518b]/18 bg-[#eef4fb]"
+                              : "border-white/45 bg-white/48"
                           )}
                         >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-medium text-[#1A1C1B]">
+                              <p className="text-sm font-semibold text-[#0f3460]">
                                 Version {version.versionNumber}
                               </p>
-                              <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[#4A5568]">
-                                {version.sourceProvider} / {new Date(version.createdAt).toLocaleString()}
+                              <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">
+                                {new Date(version.createdAt).toLocaleString()}
                               </p>
                             </div>
-                            {version.isActive ? <StatusBadge status="upcoming" /> : null}
+                            {version.isActive ? (
+                              <span className="rounded-full bg-white/80 px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#14518b]">
+                                Active
+                              </span>
+                            ) : null}
                           </div>
+
                           <p className="mt-3 text-sm leading-7 text-[#61738C]">
                             {version.title || version.itineraryData.trip_summary.destination}
                           </p>
+
                           <div className="mt-4 flex flex-wrap gap-2">
                             <Button
                               type="button"
                               variant={previewing ? "default" : "outline"}
-                              className="h-9"
+                              className="h-9 rounded-full"
                               onClick={() => {
                                 setSelectedVersionId(version.id);
                                 setProviderLabel(version.sourceProvider);
@@ -903,7 +1075,7 @@ export default function AITripPlanner({
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="h-9"
+                                className="h-9 rounded-full"
                                 disabled={isRestoringVersion}
                                 onClick={() => void restoreVersion(version.id)}
                               >
@@ -916,325 +1088,177 @@ export default function AITripPlanner({
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-5 text-sm leading-7 text-[#61738C]">
-                    No saved versions yet for this trip. Generate the first itinerary draft and
-                    it will appear here automatically.
+                  <div className="rounded-[22px] border border-white/45 bg-white/48 p-5 text-sm leading-7 text-[#61738C]">
+                    No saved versions yet beyond the active itinerary.
                   </div>
                 )}
               </CardContent>
             </Card>
           ) : null}
 
-          {isLoading ? (
-            <div className="space-y-4">
-              <div className="rounded-[28px] border border-[rgba(2,71,133,0.08)] bg-[#F6F4EF] px-6 py-8">
-                <p className="mb-4 text-sm uppercase tracking-[0.24em] text-[#00C2FF]">
-                  Live generation
-                </p>
-                <div className="rounded-[22px] border border-[rgba(2,71,133,0.08)] bg-white p-5">
-                  <p className="text-sm font-medium text-[#1A1C1B]">
-                    {streamStatus || "Generating your itinerary"}
-                  </p>
-                  <div className="mt-4 min-h-[108px] rounded-[18px] bg-[#FAF9F7] p-4">
-                    {streamingOverview ? (
-                      <p className="text-sm leading-7 text-[#3E536F]">
-                        {streamingOverview}
-                        <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-[#024785]" />
-                      </p>
-                    ) : (
-                      <p className="text-sm leading-7 text-[#61738C]">
-                        Thinking through pace, neighborhoods, hotels, and daily flow...
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  <SkeletonCard className="h-[180px]" />
-                  <SkeletonCard className="h-[180px]" />
-                </div>
-              </div>
-              <SkeletonCard className="h-[220px]" />
-              <SkeletonCard className="h-[220px]" />
-            </div>
-          ) : result ? (
-            <div className="space-y-6">
-              <Card className="overflow-hidden border-[rgba(2,71,133,0.08)] bg-white/96">
-                <div className="h-1 bg-[linear-gradient(135deg,#024785,#3b79b6)]" />
-                <CardHeader>
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <p className="section-label">Trip Overview</p>
-                      <CardTitle className="mt-2 text-3xl text-[#024785]">
-                        {result.trip_summary.destination}
-                      </CardTitle>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {selectedVersion?.isActive ? <StatusBadge status="upcoming" /> : null}
-                      {providerLabel ? (
-                        <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
-                          {providerLabel}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <AITypingEffect
-                    text={result.trip_overview}
-                    className="max-w-3xl text-base leading-8 text-[#3E536F]"
-                  />
-                  <div className="grid gap-4 md:grid-cols-4">
-                    {[
-                      [
-                        "Trip profile",
-                        `${result.trip_summary.purpose} / ${result.trip_summary.travel_style}`,
-                      ],
-                      [
-                        "Duration",
-                        `${result.trip_summary.duration_days} days / ${result.trip_summary.travelers} travelers`,
-                      ],
-                      ["Stay zone", result.trip_summary.ideal_area_to_stay],
-                      ["Budget", result.trip_summary.budget_range],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label as string}
-                        className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
-                      >
-                        <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
-                          {label}
+          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-5">
+              {result.days.map((day) => (
+                <Card key={day.day} className="glass-shell overflow-hidden rounded-[30px] border-white/45 bg-white/56">
+                  <CardContent className="space-y-5 p-6 sm:p-7">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#14518b]">
+                          Day {day.day}
                         </p>
-                        <p className="mt-3 text-sm leading-7 text-[#1A1C1B]">{value}</p>
+                        <h3 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
+                          {day.title}
+                        </h3>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {day.weather ? (
+                          <div className="rounded-full border border-white/45 bg-white/60 px-4 py-2 text-sm text-[#61738C]">
+                            {day.weather.summary} · {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
+                          </div>
+                        ) : null}
+                        {day.estimatedCost ? (
+                          <div className="rounded-full border border-white/45 bg-[#eef4fb] px-4 py-2 text-sm text-[#14518b]">
+                            {day.estimatedCost.currency} {day.estimatedCost.total.toLocaleString()}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <TimelineBlock label="Morning" icon={<SunMedium className="size-4" />} window="08:00 - 12:00" items={day.morning} />
+                      <TimelineBlock label="Afternoon" icon={<Compass className="size-4" />} window="12:00 - 17:00" items={day.afternoon} />
+                      <TimelineBlock label="Evening" icon={<Star className="size-4" />} window="17:00 onward" items={day.evening} />
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-[22px] border border-white/45 bg-white/48 p-5">
+                        <p className="text-sm font-semibold text-[#0f3460]">Attractions</p>
+                        <div className="mt-3">
+                          <OutputList items={day.places} />
+                        </div>
+                      </div>
+                      <div className="rounded-[22px] border border-white/45 bg-white/48 p-5">
+                        <p className="text-sm font-semibold text-[#0f3460]">Food and recharge</p>
+                        <div className="mt-3">
+                          <OutputList items={[...day.food_recommendations, ...day.relaxation_suggestions]} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[22px] border border-white/45 bg-[linear-gradient(135deg,rgba(20,81,139,0.08),rgba(0,194,255,0.08))] p-5">
+                      <p className="text-sm font-semibold text-[#0f3460]">Highlight</p>
+                      <p className="mt-2 text-sm leading-7 text-[#46617c]">
+                        {day.activity_alternatives[0] || day.travel_time_notes[0] || dayHighlight}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+              <Card className="glass-shell rounded-[30px] border-white/45 bg-white/56">
+                <CardContent className="space-y-5 p-6">
+                  <SectionTitle
+                    eyebrow="Stay beautifully"
+                    title="Hotel recommendations"
+                    description="Curated stays matched to your trip style, budget, and the area that makes the route smoother."
+                  />
+                  <div className="space-y-4">
+                    {result.hotel_recommendations.map((hotel) => (
+                      <div key={hotel.name} className="rounded-[22px] border border-white/45 bg-white/50 p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-lg font-semibold text-[#0f3460]">{hotel.name}</h3>
+                          <span className="rounded-full bg-[#eef4fb] px-3 py-1 text-xs uppercase tracking-[0.18em] text-[#14518b]">
+                            {hotel.price_range}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm leading-7 text-[#61738C]">{hotel.description}</p>
+                        <p className="mt-3 text-sm leading-7 text-[#46617c]">{hotel.recommendation_reason}</p>
                       </div>
                     ))}
                   </div>
-                  {result.trip_summary.best_time_windows.length > 0 ? (
-                    <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                      <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
-                        Best time windows
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {result.trip_summary.best_time_windows.map((window) => (
-                          <span
-                            key={window}
-                            className="rounded-full border border-[#024785]/12 bg-[#EEF2F8] px-3 py-1 text-sm text-[#024785]"
-                          >
-                            {window}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
                 </CardContent>
               </Card>
 
-              <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-                <div className="space-y-6">
-                  {result.days.map((day) => (
-                    <Card key={day.day} className="overflow-hidden border-[rgba(2,71,133,0.08)] bg-white/96">
-                      <div className="h-1 bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]" />
-                      <CardContent className="space-y-5 pt-6">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                          <div>
-                            <p className="section-label">Day {day.day}</p>
-                            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#024785]">
-                              {day.title}
-                            </h3>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {day.destinationSeason ? (
-                              <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C]">
-                                {day.destinationSeason.label} / {Math.round(day.destinationSeason.confidenceScore * 100)}%
-                              </span>
-                            ) : null}
-                            <div className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C]">
-                              {day.travel_time_notes[0] || "Comfortable pacing"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {day.weather ? (
-                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                            <p className="text-sm font-medium text-[#1A1C1B]">Weather outlook</p>
-                            <p className="mt-2 text-sm leading-7 text-[#61738C]">
-                              {day.weather.summary} / {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
-                            </p>
-                          </div>
-                        ) : null}
-
-                        <div className="rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-[#F8F6F2] p-4 sm:p-5">
-                          <div className="flex flex-col gap-3 border-b border-[rgba(2,71,133,0.08)] pb-4 sm:flex-row sm:items-end sm:justify-between">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
-                                Daily Schedule
-                              </p>
-                              <p className="mt-2 text-sm leading-7 text-[#61738C]">
-                                A cleaner day flow with enough room for real activity detail.
-                              </p>
-                            </div>
-                            <div className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#61738C]">
-                              {day.morning.length + day.afternoon.length + day.evening.length} moments
-                            </div>
-                          </div>
-
-                          <div className="mt-5 space-y-4">
-                            {[
-                              ["Morning", day.morning, "08:00 - 12:00"],
-                              ["Afternoon", day.afternoon, "12:00 - 17:00"],
-                              ["Evening", day.evening, "17:00 onward"],
-                            ].map(([label, items, window]) => (
-                              <div
-                                key={label as string}
-                                className="grid gap-4 rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white p-4 md:grid-cols-[180px_1fr]"
-                              >
-                                <div className="border-b border-[rgba(2,71,133,0.08)] pb-3 md:border-b-0 md:border-r md:pb-0 md:pr-4">
-                                  <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">
-                                    {label}
-                                  </p>
-                                  <p className="mt-2 font-[family-name:var(--font-noto-serif)] text-[28px] leading-none tracking-[-0.04em] text-[#024785]">
-                                    {Array.isArray(items) ? items.length : 0}
-                                  </p>
-                                  <p className="mt-2 text-sm text-[#61738C]">{window as string}</p>
-                                </div>
-
-                                <div className="space-y-3">
-                                  {(items as string[]).length > 0 ? (
-                                    (items as string[]).map((item) => (
-                                      <div
-                                        key={`${label as string}-${item}`}
-                                        className="rounded-[14px] bg-[#FAF9F7] px-4 py-3 text-sm leading-7 text-[#3E536F]"
-                                      >
-                                        <div className="flex gap-3">
-                                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#024785]" />
-                                          <span>{item}</span>
-                                        </div>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="rounded-[14px] bg-[#FAF9F7] px-4 py-3 text-sm leading-7 text-[#61738C]">
-                                      No activities planned yet for this part of the day.
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 xl:grid-cols-2">
-                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                            <p className="text-sm font-medium text-[#1A1C1B]">Attractions</p>
-                            <div className="mt-3">
-                              <OutputList items={day.places} />
-                            </div>
-                          </div>
-                          <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
-                            <p className="text-sm font-medium text-[#1A1C1B]">Food and recharge</p>
-                            <div className="mt-3">
-                              <OutputList
-                                items={[...day.food_recommendations, ...day.relaxation_suggestions]}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {day.estimatedCost ? (
-                          <div className="rounded-[18px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 p-4">
-                            <p className="text-sm font-medium text-[#024785]">Estimated day cost</p>
-                            <p className="mt-2 text-sm leading-7 text-[#3E536F]">
-                              {day.estimatedCost.currency} {day.estimatedCost.total.toLocaleString()}
-                            </p>
-                          </div>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  ))}
+              <details className="rounded-[30px] border border-white/45 bg-white/56 p-6 backdrop-blur-[24px] xl:hidden">
+                <summary className="cursor-pointer text-lg font-semibold text-[#0f3460]">
+                  Attractions, foods, and tips
+                </summary>
+                <div className="mt-5 space-y-5">
+                  <div>
+                    <p className="text-sm font-semibold text-[#0f3460]">Key attractions</p>
+                    <div className="mt-3"><OutputList items={result.must_visit_attractions} /></div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0f3460]">Local foods</p>
+                    <div className="mt-3"><OutputList items={result.local_foods} /></div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0f3460]">Travel tips</p>
+                    <div className="mt-3"><OutputList items={result.travel_tips} /></div>
+                  </div>
                 </div>
+              </details>
 
-                <div className="space-y-6">
-                  <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
-                    <CardHeader>
-                      <CardTitle className="text-2xl text-[#024785]">
-                        Hotel Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {result.hotel_recommendations.map((hotel) => (
-                        <div
-                          key={hotel.name}
-                          className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-lg font-semibold text-[#1A1C1B]">{hotel.name}</h3>
-                            <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
-                              {hotel.price_range}
-                            </span>
-                          </div>
-                          <p className="mt-3 text-sm leading-7 text-[#61738C]">
-                            {hotel.description}
-                          </p>
-                          <p className="mt-3 text-sm text-[#3E536F]">
-                            {hotel.recommendation_reason}
-                          </p>
-                        </div>
-                      ))}
+              <div className="hidden space-y-5 xl:block">
+                {[
+                  ["Key attractions", result.must_visit_attractions],
+                  ["Food suggestions", result.local_foods],
+                  ["Travel tips", result.travel_tips],
+                ].map(([title, items]) => (
+                  <Card key={title as string} className="glass-shell rounded-[30px] border-white/45 bg-white/56">
+                    <CardContent className="p-6">
+                      <p className="text-lg font-semibold text-[#0f3460]">{title}</p>
+                      <div className="mt-4">
+                        <OutputList items={items as string[]} />
+                      </div>
                     </CardContent>
                   </Card>
-
-                  {[
-                    ["Local Foods", result.local_foods],
-                    ["Must-Visit Attractions", result.must_visit_attractions],
-                    ["Hidden Gems", result.hidden_gems],
-                    ["Transportation Suggestions", result.transportation_suggestions],
-                    ["Travel Tips", result.travel_tips],
-                  ].map(([title, items]) => (
-                    <Card key={title as string} className="border-[rgba(2,71,133,0.08)] bg-white/96">
-                      <CardHeader>
-                        <CardTitle className="text-xl text-[#024785]">{title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <OutputList items={items as string[]} />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                ))}
               </div>
+            </div>
+          </div>
 
-              <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
-                <CardHeader>
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <p className="section-label">Refine With AI</p>
-                      <CardTitle className="mt-2 flex items-center gap-2 text-2xl text-[#024785]">
-                        <MessageSquareText className="size-5 text-[#00C2FF]" />
-                        Adjust the plan in natural language
-                      </CardTitle>
-                    </div>
-                    {selectedVersion ? (
-                      <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-[#F4F3F1] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
-                        Based on v{selectedVersion.versionNumber}
-                      </span>
-                    ) : null}
+          {refineOpen ? (
+            <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgba(8,18,38,0.35)] p-4 backdrop-blur-md sm:items-center sm:p-6">
+              <div className="absolute inset-0" onClick={() => setRefineOpen(false)} />
+              <Card className="glass-shell relative max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-[32px] border-white/45 bg-white/78 shadow-[0_30px_80px_rgba(14,55,94,0.22)]">
+                <CardContent className="space-y-5 overflow-y-auto p-6 sm:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <SectionTitle
+                      eyebrow="Refine with AI"
+                      title="Adjust this trip like a conversation"
+                      description="Ask for changes naturally and Wandrly will create a new itinerary version instead of overwriting the current one."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRefineOpen(false)}
+                      className="rounded-full border border-white/45 bg-white/70 px-4 py-2 text-sm text-[#61738C] transition hover:bg-white/90"
+                    >
+                      Close
+                    </button>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
+
                   <div className="grid gap-3 md:grid-cols-3">
                     {[
-                      "Make day 2 more budget-friendly",
-                      "Add a beach sunset plan on day 3",
-                      "Replace nightlife with family-friendly options",
+                      "Make this trip more budget-friendly",
+                      "Add one scenic day trip",
+                      "Make the pacing slower and more luxurious",
                     ].map((suggestion) => (
                       <button
                         key={suggestion}
                         type="button"
                         onClick={() => setRefinePrompt(suggestion)}
-                        className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4 text-left text-sm leading-7 text-[#3E536F] transition hover:border-[#00C2FF]/20 hover:bg-[#EEF7FD]"
+                        className="rounded-[18px] border border-white/45 bg-white/62 p-4 text-left text-sm leading-7 text-[#46617c] transition hover:bg-white/88"
                       >
                         {suggestion}
                       </button>
                     ))}
                   </div>
 
-                  <div className="space-y-3 rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
+                  <div className="rounded-[24px] border border-white/45 bg-white/56 p-4">
                     {messages.length > 0 ? (
                       <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
                         {messages.map((message) => {
@@ -1245,47 +1269,42 @@ export default function AITripPlanner({
                               className={cn(
                                 "rounded-[18px] border p-4",
                                 isUser
-                                  ? "ml-auto max-w-[88%] border-[#00C2FF]/20 bg-[#00C2FF]/10"
-                                  : "mr-auto max-w-[92%] border-[rgba(2,71,133,0.08)] bg-white"
+                                  ? "ml-auto max-w-[88%] border-[#14518b]/18 bg-[#eef4fb]"
+                                  : "mr-auto max-w-[92%] border-white/45 bg-white/72"
                               )}
                             >
-                              <p className="text-xs uppercase tracking-[0.2em] text-[#4A5568]">
-                                {isUser ? "You" : "AI Planner"}
+                              <p className="text-xs uppercase tracking-[0.2em] text-[#7a8ea8]">
+                                {isUser ? "You" : "Wandrly AI"}
                               </p>
-                              <p className="mt-2 text-sm leading-7 text-[#3E536F]">
-                                {message.content}
-                              </p>
+                              <p className="mt-2 text-sm leading-7 text-[#46617c]">{message.content}</p>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="rounded-[18px] border border-dashed border-[rgba(2,71,133,0.12)] bg-white p-4 text-sm leading-7 text-[#61738C]">
-                        No refinement history yet. Ask for a focused change like slowing one day
-                        down, making the route cheaper, or swapping activities.
+                      <div className="rounded-[18px] border border-dashed border-white/45 bg-white/64 p-4 text-sm leading-7 text-[#61738C]">
+                        No refinement history yet. Ask Wandrly to slow the pace, change the budget feel, or reshape specific days.
                       </div>
                     )}
 
-                    <form className="space-y-3" onSubmit={handleRefineSubmit}>
+                    <form className="mt-4 space-y-3" onSubmit={handleRefineSubmit}>
                       <textarea
                         value={refinePrompt}
                         onChange={(event) => setRefinePrompt(event.target.value)}
-                        placeholder="Try: make day 2 slower-paced and add one vegetarian dinner option."
-                        className="min-h-[120px] w-full rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm leading-7 text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#00C2FF]/40 focus:ring-2 focus:ring-[#00C2FF]/20"
+                        placeholder="Make day 2 more budget-friendly and add one quieter dinner recommendation."
+                        className="min-h-[130px] w-full rounded-[18px] border border-white/55 bg-white/88 px-4 py-4 text-sm leading-7 text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
                       />
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm text-[#61738C]">
-                          Each refinement creates a new saved itinerary version.
+                          Every refinement creates a new saved itinerary version.
                         </p>
                         <Button
                           type="submit"
                           disabled={isRefining || !selectedVersionId}
-                          className="min-w-[190px]"
+                          className="rounded-full px-6"
                         >
-                          <span className="inline-flex items-center gap-2">
-                            <Send className="size-4" />
-                            {isRefining ? "Refining..." : "Apply refinement"}
-                          </span>
+                          <MessageSquareText className="size-4" />
+                          {isRefining ? "Refining..." : "Refine itinerary"}
                         </Button>
                       </div>
                     </form>
@@ -1294,23 +1313,26 @@ export default function AITripPlanner({
               </Card>
             </div>
           ) : (
-            <Card className="min-h-[620px] border-[rgba(2,71,133,0.08)] bg-white/96">
-              <CardContent className="flex h-full flex-col items-center justify-center py-20 text-center">
-                <div className="mb-5 inline-flex rounded-full border border-[rgba(2,71,133,0.08)] bg-[#EEF7FD] p-4 text-[#00C2FF]">
-                  <Sparkles className="size-7" />
-                </div>
-                <h2 className="text-3xl font-semibold text-[#024785]">
-                  Your saved itinerary will appear here
-                </h2>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-[#61738C]">
-                  Generate a trip draft to create the first saved version, then preview and
-                  restore itinerary history from this panel.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="xl:hidden">
+              <Button variant="outline" onClick={() => setRefineOpen(true)} className="w-full rounded-full">
+                Refine with AI
+              </Button>
+            </div>
           )}
-        </div>
-      </section>
+
+          <div className="fixed inset-x-4 bottom-20 z-40 md:hidden">
+            <div className="glass-shell flex items-center justify-between rounded-full px-4 py-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">Trip ready</p>
+                <p className="text-sm font-semibold text-[#0f3460]">{headerDestination}</p>
+              </div>
+              <Link href={`/trips/${(lastSavedTrip || selectedTrip)?.id}`}>
+                <Button className="rounded-full">Open Workspace</Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

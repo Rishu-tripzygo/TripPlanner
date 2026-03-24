@@ -303,23 +303,23 @@ export default async function TripsPage() {
                 text:
                   draftTrips.length > 0
                     ? `${draftTrips.length} draft trip shell${draftTrips.length === 1 ? "" : "s"} still need an AI itinerary.`
-                    : "Create a trip shell when you already know the destination and travel dates.",
-                actionHref: draftTrips[0] ? `/ai-trip-planner?tripId=${draftTrips[0].id}` : "/trips/new",
-                actionLabel: draftTrips[0] ? "Generate AI plan" : "Create trip",
+                    : "You can start from AI now. Wandrly can create the trip automatically from the generated itinerary.",
+                actionHref: draftTrips[0] ? `/ai-trip-planner?tripId=${draftTrips[0].id}` : "/ai-trip-planner",
+                actionLabel: draftTrips[0] ? "Generate AI plan" : "Start with AI",
                 icon: <Sparkles className="size-5" />,
               },
               {
                 title: "2. Add route stops",
                 text:
                   tripsNeedingLocations.length > 0
-                    ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} need mapped destinations before the workspace becomes useful.`
-                    : "Map destinations so weather, ordering, and local context become meaningful.",
+                    ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} already have AI itinerary suggestions and need route confirmation, not manual stop entry.`
+                    : "Use the AI itinerary to confirm the best route suggestions before the map and local context lock in.",
                 actionHref: tripsNeedingLocations[0]
-                  ? `/trips/${tripsNeedingLocations[0].id}/itinerary/new`
+                  ? `/ai-trip-planner?tripId=${tripsNeedingLocations[0].id}`
                   : nextTrip
-                    ? `/trips/${nextTrip.id}/itinerary/new`
-                    : "/trips",
-                actionLabel: "Add destinations",
+                    ? `/ai-trip-planner?tripId=${nextTrip.id}`
+                    : "/ai-trip-planner",
+                actionLabel: "Review AI route",
                 icon: <MapPinned className="size-5" />,
               },
               {
@@ -365,6 +365,15 @@ export default async function TripsPage() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 {trips.slice(0, 4).map((trip) => {
+                  const activeItinerary = trip.itineraryVersions[0]?.itineraryData as
+                    | {
+                        trip_summary?: {
+                          destination?: string;
+                          budget_range?: string;
+                        };
+                        trip_overview?: string;
+                      }
+                    | undefined;
                   const status =
                     trip.locations.length === 0 && trip.itineraryVersions.length === 0
                       ? "draft"
@@ -379,12 +388,19 @@ export default async function TripsPage() {
                       key={trip.id}
                       id={trip.id}
                       title={trip.title}
-                      description={trip.description}
+                      description={activeItinerary?.trip_overview || trip.description}
                       startDate={trip.startDate}
                       endDate={trip.endDate}
                       imageUrl={trip.imageUrl}
                       stops={trip.locations.length}
                       status={status}
+                      destination={
+                        activeItinerary?.trip_summary?.destination ||
+                        trip.locations[0]?.locationTitle ||
+                        null
+                      }
+                      budgetLabel={activeItinerary?.trip_summary?.budget_range || null}
+                      aiReady={trip.itineraryVersions.length > 0}
                     />
                   );
                 })}
@@ -414,7 +430,7 @@ export default async function TripsPage() {
 
           <div className="mt-10 grid gap-8 xl:grid-cols-2">
             {memoriesByYear.map((year) => (
-              <div key={year.year} className="rounded-[28px] bg-[#F4F3F1] p-6">
+              <div key={year.year} className="rounded-[28px] bg-[#F4F3F1] p-6 shadow-[0_18px_40px_rgba(26,28,27,0.05)]">
                 <div className="flex items-end justify-between gap-4">
                   <div>
                     <p className="font-[family-name:var(--font-noto-serif)] text-[40px] font-bold tracking-[-0.04em] text-[#024785]">
@@ -441,15 +457,15 @@ export default async function TripsPage() {
                         }`}
                         style={{
                           backgroundImage: trip.imageUrl
-                            ? `linear-gradient(180deg,rgba(2,71,133,0.12),rgba(2,71,133,0.58)),url(${trip.imageUrl})`
-                            : "linear-gradient(145deg,#dfeaf7,#f8f7f4)",
+                            ? `linear-gradient(180deg,rgba(2,71,133,0.16),rgba(2,71,133,0.78)),url(${trip.imageUrl})`
+                            : "linear-gradient(145deg,#bfd6f0,#f3ede2)",
                         }}
                       >
                         <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/80">
                             {trip.monthLabel}
                           </p>
-                          <p className="mt-2 font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em]">
+                          <p className="mt-2 font-[family-name:var(--font-noto-serif)] text-[28px] font-bold tracking-[-0.03em] drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)]">
                             {trip.title}
                           </p>
                           {trip.destination ? (

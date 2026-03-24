@@ -6,7 +6,11 @@ import {
   generateStructuredItinerary,
   validateTripPlannerRequest,
 } from "@/lib/ai-trip-service";
-import { normalizeItineraryForStorage, serializeVersionRecord } from "@/lib/itinerary-utils";
+import {
+  buildTripSeedFromPlanner,
+  normalizeItineraryForStorage,
+  serializeVersionRecord,
+} from "@/lib/itinerary-utils";
 import { prisma } from "@/lib/prisma";
 
 function streamEvent(
@@ -21,6 +25,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
+  const userId = session.user.id;
 
   let body: AITripPlannerRequest;
 
@@ -37,25 +42,26 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: validationError }), { status: 400 });
   }
 
-  if (!body.tripId) {
-    return new Response(JSON.stringify({ error: "tripId is required." }), { status: 400 });
-  }
+  const existingTrip = body.tripId
+    ? await prisma.trip.findFirst({
+        where: {
+          id: body.tripId,
+          userId: session.user.id,
+        },
+        select: {
+          id: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          itineraryVersions: {
+            orderBy: { versionNumber: "desc" },
+            take: 1,
+          },
+        },
+      })
+    : null;
 
-  const trip = await prisma.trip.findFirst({
-    where: {
-      id: body.tripId,
-      userId: session.user.id,
-    },
-    select: {
-      id: true,
-      itineraryVersions: {
-        orderBy: { versionNumber: "desc" },
-        take: 1,
-      },
-    },
-  });
-
-  if (!trip) {
+  if (body.tripId && !existingTrip) {
     return new Response(JSON.stringify({ error: "Trip not found." }), { status: 404 });
   }
 
@@ -105,28 +111,95 @@ export async function POST(request: Request) {
           message: "Saving this version to your trip",
         });
 
-        const nextVersionNumber = (trip.itineraryVersions[0]?.versionNumber || 0) + 1;
+        const tripSeed = buildTripSeedFromPlanner(body, normalizedItinerary);
         const created = await prisma.$transaction(async (tx) => {
+          const tripRecord =
+            existingTrip ||
+            (await tx.trip.create({
+              data: {
+                userId,
+                ...tripSeed,
+              },
+              select: {
+                id: true,
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
+            }));
+
+          const lastVersion = existingTrip?.itineraryVersions[0]
+            ? existingTrip.itineraryVersions[0]
+            : await tx.itineraryVersion.findFirst({
+                where: { tripId: tripRecord.id },
+                orderBy: { versionNumber: "desc" },
+              });
+
           await tx.itineraryVersion.updateMany({
-            where: { tripId: trip.id, isActive: true },
+            where: { tripId: tripRecord.id, isActive: true },
             data: { isActive: false },
           });
 
-          return tx.itineraryVersion.create({
+          const version = await tx.itineraryVersion.create({
             data: {
-              tripId: trip.id,
-              versionNumber: nextVersionNumber,
+              tripId: tripRecord.id,
+              versionNumber: (lastVersion?.versionNumber || 0) + 1,
               sourceProvider: provider,
-              title: `${body.destination} itinerary`,
+              title: `${normalizedItinerary.trip_summary.destination} itinerary`,
               itineraryData: normalizedItinerary as unknown as Prisma.InputJsonValue,
               isActive: true,
             },
           });
+
+          if (normalizedItinerary.total_estimated_cost) {
+            await tx.budget.upsert({
+              where: { tripId: tripRecord.id },
+              create: {
+                tripId: tripRecord.id,
+                totalBudget: normalizedItinerary.total_estimated_cost.total,
+                currency: normalizedItinerary.total_estimated_cost.currency,
+                accommodation: normalizedItinerary.total_estimated_cost.accommodation,
+                food: normalizedItinerary.total_estimated_cost.food,
+                transport: normalizedItinerary.total_estimated_cost.transport,
+                activities: normalizedItinerary.total_estimated_cost.activities,
+                misc: normalizedItinerary.total_estimated_cost.misc,
+              },
+              update: {
+                totalBudget: normalizedItinerary.total_estimated_cost.total,
+                currency: normalizedItinerary.total_estimated_cost.currency,
+                accommodation: normalizedItinerary.total_estimated_cost.accommodation,
+                food: normalizedItinerary.total_estimated_cost.food,
+                transport: normalizedItinerary.total_estimated_cost.transport,
+                activities: normalizedItinerary.total_estimated_cost.activities,
+                misc: normalizedItinerary.total_estimated_cost.misc,
+              },
+            });
+          }
+
+          if (!existingTrip) {
+            await tx.notification.create({
+              data: {
+                userId,
+                type: "AI_TRIP_CREATED",
+                tripId: tripRecord.id,
+                message: `Your AI itinerary for ${tripRecord.title} is ready in Trips.`,
+              },
+            });
+          }
+
+          return { trip: tripRecord, version };
         });
 
         streamEvent(controller, {
           type: "complete",
-          version: serializeVersionRecord(created),
+          version: serializeVersionRecord(created.version),
+          trip: {
+            id: created.trip.id,
+            title: created.trip.title,
+            startDate: created.trip.startDate.toISOString(),
+            endDate: created.trip.endDate.toISOString(),
+            wasAutoCreated: !existingTrip,
+          },
         });
       } catch (error) {
         streamEvent(controller, {

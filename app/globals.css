@@ -46,7 +46,7 @@
   --surface-1: rgba(2, 71, 133, 0.025);
   --surface-2: rgba(2, 71, 133, 0.05);
   --surface-3: rgba(2, 71, 133, 0.08);
-  --nav-bg: rgba(250, 249, 247, 0.84);
+  --nav-bg: rgba(255, 255, 255, 0.62);
 }
 
 @layer base {
@@ -62,10 +62,10 @@
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     background-image:
-      radial-gradient(circle at 12% 12%, rgba(0, 194, 255, 0.07), transparent 22%),
-      radial-gradient(circle at 82% 8%, rgba(27, 58, 107, 0.12), transparent 24%),
-      radial-gradient(circle at 50% 100%, rgba(255, 107, 53, 0.06), transparent 28%),
-      linear-gradient(180deg, #f8f7f4 0%, #faf9f7 30%, #f6f5f1 68%, #faf9f7 100%);
+      radial-gradient(circle at 10% 12%, rgba(0, 194, 255, 0.08), transparent 24%),
+      radial-gradient(circle at 82% 8%, rgba(27, 58, 107, 0.1), transparent 22%),
+      radial-gradient(circle at 70% 84%, rgba(255, 177, 132, 0.12), transparent 24%),
+      linear-gradient(180deg, #f6f4ef 0%, #faf8f4 34%, #f7f5f1 70%, #fbfaf8 100%);
   }
 
   body::before {
@@ -73,11 +73,11 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    opacity: 0.18;
+    opacity: 0.1;
     background-image:
-      linear-gradient(rgba(2, 71, 133, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(2, 71, 133, 0.02) 1px, transparent 1px);
-    background-size: 80px 80px;
+      linear-gradient(rgba(2, 71, 133, 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(2, 71, 133, 0.018) 1px, transparent 1px);
+    background-size: 96px 96px;
     mask-image: radial-gradient(circle at center, black, transparent 82%);
   }
 
@@ -135,6 +135,26 @@
     border: 1px solid var(--border);
   }
 
+  .glass-shell {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.48)),
+      radial-gradient(circle at top right, rgba(0, 194, 255, 0.08), transparent 30%);
+    border: 1px solid rgba(255, 255, 255, 0.52);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(24px) saturate(170%);
+  }
+
+  .glass-float {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5)),
+      radial-gradient(circle at top right, rgba(0, 194, 255, 0.06), transparent 40%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 18px 44px rgba(20, 81, 139, 0.12);
+    backdrop-filter: blur(22px) saturate(170%);
+  }
+
   .premium-card {
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--card) 90%, transparent), color-mix(in srgb, var(--card) 98%, transparent)),
@@ -148,8 +168,8 @@
   .hero-orb {
     position: absolute;
     border-radius: 999px;
-    filter: blur(70px);
-    opacity: 0.48;
+    filter: blur(90px);
+    opacity: 0.58;
     pointer-events: none;
   }
 

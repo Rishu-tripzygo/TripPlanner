@@ -71,9 +71,9 @@ export default async function AITripPlannerPage({
               Turn a trip brief into a working itinerary.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#61738C]">
-              Start by attaching the planner to a real trip. That keeps the experience clean:
-              generate the draft, save versions, refine with AI, then move into the trip
-              workspace for route stops, budget, documents, and prep.
+              Start from a blank travel idea or attach the planner to an existing trip. Wandrly
+              can now generate the itinerary, create the trip automatically, save the active
+              version, and move you straight into the workspace.
             </p>
           </div>
 
@@ -83,10 +83,10 @@ export default async function AITripPlannerPage({
             </p>
             <div className="mt-5 space-y-4">
               {[
-                "1. Select or create a trip shell.",
-                "2. Generate the first AI itinerary draft.",
-                "3. Save it as the active version.",
-                "4. Refine details, then move into route and prep modules.",
+                "1. Fill the brief and let AI shape the first route.",
+                "2. Auto-create the trip or attach the plan to an existing one.",
+                "3. Save the generated itinerary as the active version.",
+                "4. Open Trips to manage route stops, prep, and refinements.",
               ].map((item) => (
                 <div key={item} className="rounded-[18px] bg-white px-4 py-4 text-sm text-[#3E536F] shadow-[0_10px_18px_rgba(26,28,27,0.04)]">
                   {item}
