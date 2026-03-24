@@ -67,22 +67,61 @@ const featureCards = [
   },
 ];
 
+const introMoments = [
+  {
+    eyebrow: "Orbital feed",
+    title: "Scanning the horizon.",
+    description: "Locking weather bands, route signals, and destination mood.",
+  },
+  {
+    eyebrow: "Route engine",
+    title: "Charting a cinematic arrival.",
+    description: "Pacing the days, shaping the route, and framing the first reveal.",
+  },
+  {
+    eyebrow: "Wandrly",
+    title: "Welcome to the next journey.",
+    description: "Your travel workspace is ready to open like a story, not a spreadsheet.",
+  },
+];
+
 export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [activeImage, setActiveImage] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
+  const [introStage, setIntroStage] = useState(0);
+  const currentHeroImage = heroImages[activeImage];
 
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("wandrly-intro-seen") === "1") {
+      setShowIntro(false);
+      return;
+    }
+
     const interval = window.setInterval(() => {
       setActiveImage((current) => (current + 1) % heroImages.length);
     }, 5200);
 
-    const introTimeout = window.setTimeout(() => setShowIntro(false), 1700);
+    const stageOne = window.setTimeout(() => setIntroStage(1), 1800);
+    const stageTwo = window.setTimeout(() => setIntroStage(2), 3900);
+    const introTimeout = window.setTimeout(() => {
+      setShowIntro(false);
+      sessionStorage.setItem("wandrly-intro-seen", "1");
+    }, 6800);
 
     return () => {
       window.clearInterval(interval);
+      window.clearTimeout(stageOne);
+      window.clearTimeout(stageTwo);
       window.clearTimeout(introTimeout);
     };
   }, []);
+
+  function dismissIntro() {
+    setShowIntro(false);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("wandrly-intro-seen", "1");
+    }
+  }
 
   return (
     <div className="pb-28 md:pb-0">
@@ -92,34 +131,213 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
           opacity: showIntro ? 1 : 0,
           pointerEvents: showIntro ? "auto" : "none",
         }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="fixed inset-0 z-[140] flex items-center justify-center bg-[radial-gradient(circle_at_center,#103669_0%,#091525_48%,#04070e_100%)]"
+        transition={{ duration: 1.25, ease: "easeOut" }}
+        className="fixed inset-0 z-[140] overflow-hidden bg-[radial-gradient(circle_at_center,#103669_0%,#091525_40%,#04070e_100%)]"
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 18 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-          className="text-center"
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.5em] text-[#9dd8ff]">
-            Wandrly
-          </p>
-          <h1 className="mt-6 font-[family-name:var(--font-noto-serif)] text-[3.2rem] font-bold tracking-[-0.08em] text-white sm:text-[5rem]">
-            Enter the journey.
-          </h1>
-          <div className="mx-auto mt-8 h-[2px] w-40 overflow-hidden rounded-full bg-white/14">
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: "0%" }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="h-full bg-[linear-gradient(90deg,#00C2FF,#ffffff)]"
+        <div className="absolute inset-0">
+          <motion.div
+            animate={{
+              scale: introStage === 2 ? 1 : 1.12,
+              opacity: introStage === 2 ? 0.5 : 0.18,
+              filter: introStage === 2 ? "blur(0px)" : "blur(10px)",
+            }}
+            transition={{ duration: 1.4, ease: "easeOut" }}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${currentHeroImage})` }}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,12,23,0.72),rgba(5,12,23,0.52)_42%,rgba(5,12,23,0.88)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(157,216,255,0.08),transparent_28%)]" />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+            className="absolute left-1/2 top-1/2 h-[70vw] w-[70vw] max-h-[900px] max-w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/6"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
+            className="absolute left-1/2 top-1/2 h-[54vw] w-[54vw] max-h-[680px] max-w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#9dd8ff]/10"
+          />
+          <motion.div
+            animate={{ scale: [0.92, 1.04, 0.96], opacity: [0.22, 0.38, 0.24] }}
+            transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-1/2 top-1/2 h-[34vw] w-[34vw] max-h-[420px] max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(0,194,255,0.28),rgba(0,194,255,0.02)_58%,transparent_72%)]"
+          />
+          <motion.div
+            animate={{ x: ["-12%", "10%", "-12%"] }}
+            transition={{ duration: 4.4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-[12%] top-[24%] h-[1px] w-[76%] bg-[linear-gradient(90deg,transparent,rgba(157,216,255,0.75),transparent)]"
+          />
+          <motion.div
+            animate={{ y: ["-10%", "14%", "-10%"] }}
+            transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-[50%] top-[14%] h-[72%] w-[1px] bg-[linear-gradient(180deg,transparent,rgba(157,216,255,0.45),transparent)]"
+          />
+          {Array.from({ length: 18 }).map((_, index) => (
+            <motion.span
+              key={index}
+              animate={{ opacity: [0.18, 0.84, 0.18] }}
+              transition={{
+                duration: 2.4 + (index % 4) * 0.35,
+                repeat: Infinity,
+                delay: index * 0.08,
+                ease: "easeInOut",
+              }}
+              className="absolute rounded-full bg-white"
+              style={{
+                top: `${8 + ((index * 11) % 74)}%`,
+                left: `${6 + ((index * 13) % 84)}%`,
+                width: `${index % 3 === 0 ? 3 : 2}px`,
+                height: `${index % 3 === 0 ? 3 : 2}px`,
+              }}
             />
+          ))}
+          <div className="absolute left-6 top-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:left-10 sm:top-10">
+            43.4674 N / 11.8853 E
           </div>
-        </motion.div>
+          <div className="absolute right-6 top-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:right-10 sm:top-10">
+            Orbital descent sequence
+          </div>
+          <div className="absolute bottom-6 left-6 text-[10px] uppercase tracking-[0.34em] text-white/42 sm:bottom-10 sm:left-10">
+            Sky lock / route acquisition / hero reveal
+          </div>
+        </div>
+
+        <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-16">
+          <div className="w-full max-w-5xl">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={dismissIntro}
+                className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/72 backdrop-blur-xl transition hover:bg-white/10"
+              >
+                Skip intro
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -24 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1.05, ease: "easeOut" }}
+                className="space-y-6"
+              >
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#9dd8ff] backdrop-blur-xl">
+                  <Stars className="size-3.5" />
+                  Wandrly cinematic launch
+                </div>
+                <div className="space-y-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.42em] text-white/50">
+                    {introMoments[introStage].eyebrow}
+                  </p>
+                  <h1 className="font-[family-name:var(--font-noto-serif)] text-[3rem] font-bold leading-[0.88] tracking-[-0.08em] text-white sm:text-[4.8rem]">
+                    {introMoments[introStage].title}
+                  </h1>
+                  <p className="max-w-xl text-base leading-8 text-white/72">
+                    {introMoments[introStage].description}
+                  </p>
+                </div>
+                <div className="h-[2px] w-full max-w-[340px] overflow-hidden rounded-full bg-white/10">
+                  <motion.div
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "0%" }}
+                    transition={{ duration: 5.8, ease: "easeInOut" }}
+                    className="h-full bg-[linear-gradient(90deg,#00C2FF,#ffffff)]"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1.15, ease: "easeOut", delay: 0.25 }}
+                className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/6 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl"
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(157,216,255,0.24),transparent_34%)]" />
+                <div className="relative space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.32em] text-white/48">
+                        Mission state
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-white">Destination lock acquired</p>
+                    </div>
+                    <div className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] uppercase tracking-[0.26em] text-[#9dd8ff]">
+                      Stage {introStage + 1} / 3
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {[
+                      ["Target", "Mediterranean horizon"],
+                      ["Mode", "Concierge route engine"],
+                      ["Reveal", "Premium travel workspace"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-[20px] border border-white/10 bg-black/16 p-4">
+                        <p className="text-[10px] uppercase tracking-[0.26em] text-white/42">{label}</p>
+                        <p className="mt-2 text-sm leading-7 text-white/82">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="relative h-[220px] overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(0,194,255,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.06))]">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                      className="absolute left-1/2 top-1/2 h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10"
+                    />
+                    <motion.div
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+                      className="absolute left-1/2 top-1/2 h-[128px] w-[128px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#9dd8ff]/24"
+                    />
+                    <motion.div
+                      animate={{ x: ["-30%", "44%", "-30%"], y: ["-18%", "28%", "-18%"] }}
+                      transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute left-[26%] top-[38%] h-3 w-3 rounded-full bg-[#9dd8ff] shadow-[0_0_28px_rgba(157,216,255,0.95)]"
+                    />
+                    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" fill="none">
+                      <motion.path
+                        d="M18 68C28 58 34 40 52 38C68 36 70 62 84 50"
+                        stroke="url(#routeLine)"
+                        strokeWidth="1.4"
+                        strokeDasharray="2 3"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ duration: 2.6, ease: "easeOut", delay: 0.7 }}
+                      />
+                      <defs>
+                        <linearGradient id="routeLine" x1="18" y1="68" x2="84" y2="50" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#00C2FF" />
+                          <stop offset="1" stopColor="#FFFFFF" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute left-5 top-5 rounded-full border border-white/10 bg-black/18 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/60">
+                      Orbital view
+                    </div>
+                    <div className="absolute bottom-5 right-5 rounded-full border border-white/10 bg-black/18 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-[#9dd8ff]">
+                      Hero reveal armed
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       <section className="relative overflow-hidden px-4 pt-8 sm:px-6 lg:px-8">
-        <div className="app-shell relative overflow-hidden rounded-[44px] border border-[rgba(2,71,133,0.08)] bg-[#ece3d7] shadow-[0_36px_90px_rgba(26,28,27,0.12)]">
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: showIntro ? 0.55 : 1,
+            scale: showIntro ? 1.02 : 1,
+            y: showIntro ? 36 : 0,
+            filter: showIntro ? "blur(8px)" : "blur(0px)",
+          }}
+          transition={{ duration: 1.6, ease: "easeOut" }}
+          className="app-shell relative overflow-hidden rounded-[44px] border border-[rgba(2,71,133,0.08)] bg-[#ece3d7] shadow-[0_36px_90px_rgba(26,28,27,0.12)]"
+        >
           <div className="absolute inset-0">
             {heroImages.map((image, index) => (
               <motion.div
@@ -141,9 +359,12 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
           <div className="relative z-10 px-6 pb-12 pt-16 sm:px-10 lg:px-14 lg:pb-18 lg:pt-20">
             <div className="mx-auto max-w-[1080px]">
               <motion.div
-                initial={{ opacity: 0, y: 28 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.55, delay: 0.1 }}
+                initial={false}
+                animate={{
+                  opacity: showIntro ? 0.35 : 1,
+                  y: showIntro ? 40 : 0,
+                }}
+                transition={{ duration: 1.25, delay: showIntro ? 0 : 0.18 }}
                 className="text-center"
               >
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/78 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#024785] shadow-[0_12px_28px_rgba(26,28,27,0.06)] backdrop-blur-xl">
@@ -186,16 +407,19 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
 
               <div className="mt-14 grid gap-5 lg:grid-cols-[1.18fr_0.82fr]">
                 <motion.div
-                  initial={{ opacity: 0, y: 28 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.18 }}
+                  initial={false}
+                  animate={{
+                    opacity: showIntro ? 0.28 : 1,
+                    y: showIntro ? 48 : 0,
+                  }}
+                  transition={{ duration: 1.3, delay: showIntro ? 0 : 0.28 }}
                   className="relative overflow-hidden rounded-[34px] border border-white/60 bg-white/60 p-5 shadow-[0_24px_48px_rgba(26,28,27,0.08)] backdrop-blur-xl"
                 >
                   <div className="absolute -right-10 top-[-24px] h-32 w-32 rounded-full bg-[#9dd8ff]/35 blur-3xl" />
                   <div className="grid gap-4 lg:grid-cols-[1.35fr_0.95fr_0.8fr_auto]">
                     {[
                       ["Destination", "Amalfi Coast, Italy"],
-                      ["Travel window", "14 Sep – 20 Sep"],
+                      ["Travel window", "14 Sep - 20 Sep"],
                       ["Travelers", "2 adults"],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-[22px] bg-[#f5ede2] px-5 py-5 text-left">
@@ -213,9 +437,12 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
                 </motion.div>
 
                 <motion.div
-                  initial={{ opacity: 0, y: 28 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, delay: 0.25 }}
+                  initial={false}
+                  animate={{
+                    opacity: showIntro ? 0.24 : 1,
+                    y: showIntro ? 54 : 0,
+                  }}
+                  transition={{ duration: 1.35, delay: showIntro ? 0 : 0.36 }}
                   className="relative overflow-hidden rounded-[34px] border border-white/60 bg-[#024785] p-6 text-white shadow-[0_26px_54px_rgba(2,71,133,0.16)]"
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(157,216,255,0.26),transparent_36%)]" />
@@ -247,7 +474,7 @@ export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean 
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <section className="px-4 py-24 sm:px-6 lg:px-8">

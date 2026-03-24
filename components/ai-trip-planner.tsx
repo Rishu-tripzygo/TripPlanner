@@ -1061,25 +1061,66 @@ export default function AITripPlanner({
                           </div>
                         ) : null}
 
-                        <div className="grid gap-4 xl:grid-cols-3">
-                          {[
-                            ["Morning", day.morning],
-                            ["Afternoon", day.afternoon],
-                            ["Evening", day.evening],
-                          ].map(([label, items]) => (
-                            <div
-                              key={label as string}
-                              className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4"
-                            >
-                              <p className="text-sm font-medium text-[#1A1C1B]">{label}</p>
-                              <div className="mt-3">
-                                <OutputList items={items as string[]} />
-                              </div>
+                        <div className="rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-[#F8F6F2] p-4 sm:p-5">
+                          <div className="flex flex-col gap-3 border-b border-[rgba(2,71,133,0.08)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">
+                                Daily Schedule
+                              </p>
+                              <p className="mt-2 text-sm leading-7 text-[#61738C]">
+                                A cleaner day flow with enough room for real activity detail.
+                              </p>
                             </div>
-                          ))}
+                            <div className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#61738C]">
+                              {day.morning.length + day.afternoon.length + day.evening.length} moments
+                            </div>
+                          </div>
+
+                          <div className="mt-5 space-y-4">
+                            {[
+                              ["Morning", day.morning, "08:00 - 12:00"],
+                              ["Afternoon", day.afternoon, "12:00 - 17:00"],
+                              ["Evening", day.evening, "17:00 onward"],
+                            ].map(([label, items, window]) => (
+                              <div
+                                key={label as string}
+                                className="grid gap-4 rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white p-4 md:grid-cols-[180px_1fr]"
+                              >
+                                <div className="border-b border-[rgba(2,71,133,0.08)] pb-3 md:border-b-0 md:border-r md:pb-0 md:pr-4">
+                                  <p className="text-xs uppercase tracking-[0.24em] text-[#4A5568]">
+                                    {label}
+                                  </p>
+                                  <p className="mt-2 font-[family-name:var(--font-noto-serif)] text-[28px] leading-none tracking-[-0.04em] text-[#024785]">
+                                    {Array.isArray(items) ? items.length : 0}
+                                  </p>
+                                  <p className="mt-2 text-sm text-[#61738C]">{window as string}</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                  {(items as string[]).length > 0 ? (
+                                    (items as string[]).map((item) => (
+                                      <div
+                                        key={`${label as string}-${item}`}
+                                        className="rounded-[14px] bg-[#FAF9F7] px-4 py-3 text-sm leading-7 text-[#3E536F]"
+                                      >
+                                        <div className="flex gap-3">
+                                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#024785]" />
+                                          <span>{item}</span>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="rounded-[14px] bg-[#FAF9F7] px-4 py-3 text-sm leading-7 text-[#61738C]">
+                                      No activities planned yet for this part of the day.
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
 
-                        <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="grid gap-4 xl:grid-cols-2">
                           <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-4">
                             <p className="text-sm font-medium text-[#1A1C1B]">Attractions</p>
                             <div className="mt-3">
