@@ -14,8 +14,8 @@ export default function BrandLogo({
   compact = false,
   light = false,
 }: BrandLogoProps) {
-  const textColor = light ? "text-white" : "text-[#024785]";
-  const secondaryColor = light ? "text-white/70" : "text-[#61738C]";
+  const textColor = light ? "text-white" : "text-[#0f3460]";
+  const secondaryColor = light ? "text-white/68" : "text-[#61738C]";
 
   return (
     <motion.div
@@ -31,36 +31,45 @@ export default function BrandLogo({
             : "border-[rgba(2,71,133,0.1)] bg-[linear-gradient(145deg,#ffffff,#f4f3f1)]"
         )}
       >
-        <svg
-          viewBox="0 0 48 48"
-          className="h-7 w-7"
-          aria-hidden="true"
-          fill="none"
-        >
+        <svg viewBox="0 0 48 48" className="h-7 w-7" aria-hidden="true" fill="none">
+          <defs>
+            <linearGradient id="wandrly-mark" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stopColor={light ? "#ffffff" : "#024785"} />
+              <stop offset="1" stopColor="#00C2FF" />
+            </linearGradient>
+          </defs>
+
           <circle
             cx="24"
             cy="24"
-            r="13"
-            stroke={light ? "white" : "#024785"}
-            strokeWidth="2.5"
+            r="15.5"
+            stroke="url(#wandrly-mark)"
+            strokeWidth="2.6"
+            opacity="0.95"
           />
           <path
-            d="M16.5 28.5c3.4-6 7.9-10.6 15-13.8"
-            stroke="#2B5F9E"
-            strokeWidth="2"
+            d="M18.5 30.5c0-6.3 3.5-11 8.9-13.4 2.9-1.3 5.5-.3 5.5 2.4 0 2.7-1.8 4.7-4.4 6.8-2.5 2-4.7 4.2-6.7 7.2"
+            stroke="url(#wandrly-mark)"
+            strokeWidth="2.15"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <path d="M28.5 14.7 33 13l-1.6 4.7" stroke="#2B5F9E" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M21.2 31.8 18 34l.8-3.8"
+            stroke={light ? "#ffffff" : "#024785"}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="31.8" cy="16.2" r="2.7" fill="#00C2FF" />
         </svg>
-        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#024785]" />
       </div>
 
       {!compact && (
         <div className="leading-none">
           <div
             className={cn(
-              "font-[family-name:var(--font-noto-serif)] text-[1.95rem] font-bold italic tracking-[-0.05em]",
+              "font-[family-name:var(--font-noto-serif)] text-[1.95rem] font-bold tracking-[-0.05em]",
               textColor
             )}
           >

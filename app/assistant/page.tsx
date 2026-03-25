@@ -37,11 +37,11 @@ export default async function AssistantPage() {
             </div>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <AuthButton
-                isLoggedIn={false}
-                className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white"
-              >
-                Unlock Assistant
+                <AuthButton
+                  isLoggedIn={false}
+                  className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white"
+                >
+                  Sign in to use the assistant
               </AuthButton>
               <Link
                 href="/explore"
@@ -104,7 +104,7 @@ export default async function AssistantPage() {
                   isLoggedIn={false}
                   className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Continue with GitHub
+                  Sign in to continue
                   <ArrowRight className="ml-2 size-4" />
                 </AuthButton>
               </CardContent>

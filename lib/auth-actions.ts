@@ -1,9 +1,10 @@
 "use server";
 
-import { signIn, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { redirect } from "next/navigation";
 
 export const login = async () => {
-  await signIn("github", { redirectTo: "/" });
+  redirect("/auth/signin?callbackUrl=/trips");
 };
 
 export const logout = async () => {

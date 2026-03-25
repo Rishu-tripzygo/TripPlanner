@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import BrandLogo from "@/components/brand-logo";
 import GlobalSearch from "@/components/global-search";
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Session } from "next-auth";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -71,7 +71,7 @@ export default function Navbar({ session }: { session: Session | null }) {
   }, [accountOpen]);
 
   async function handleLogin() {
-    await signIn("github", { callbackUrl: "/trips" });
+    router.push("/auth/signin?callbackUrl=/trips");
   }
 
   async function handleLogout() {
@@ -312,3 +312,4 @@ export default function Navbar({ session }: { session: Session | null }) {
 function ArrowHint() {
   return <span className="text-[#9BAAC0]">→</span>;
 }
+

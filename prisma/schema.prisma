@@ -35,6 +35,7 @@ model User {
   reactions       TripReaction[]
   following       Follow[]          @relation("UserFollowing")
   followers       Follow[]          @relation("UserFollowers")
+  guestPreviews   GuestPreview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,6 +79,27 @@ model VerificationToken {
   expires    DateTime
 
   @@id([identifier, token])
+}
+
+model GuestPreview {
+  id              String   @id @default(cuid())
+  sessionToken    String   @unique
+  publicToken     String   @unique
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  destination     String
+  plannerInput    Json
+  itineraryData   Json
+  sourceProvider  String
+  title           String?
+  expiresAt       DateTime
+  claimedAt       DateTime?
+  convertedTripId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([userId, claimedAt])
 }
 
 model Trip {

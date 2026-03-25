@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import AITripPlanner from "@/components/ai-trip-planner";
-import AuthButton from "@/components/auth-button";
+import GuestTripPlanner from "@/components/guest-trip-planner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { demoTripPreview } from "@/lib/demo-content";
 import { prisma } from "@/lib/prisma";
@@ -50,12 +50,12 @@ export default async function AITripPlannerPage({
             <div>
               <p className="section-label">Plan with AI</p>
               <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[48px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785] sm:text-[64px]">
-                Start with the trip brief. See the itinerary take shape.
+                Start with a real brief. Try one preview before you sign in.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-[#61738C]">
                 You do not need to know every stop up front. Wandrly turns a destination, dates,
                 and travel style into a structured itinerary, then keeps the trip ready for route,
-                budget, and prep.
+                budget, and prep once you save it.
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -81,12 +81,12 @@ export default async function AITripPlannerPage({
               </div>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <AuthButton
-                  isLoggedIn={false}
+                <Link
+                  href="/auth/signin?callbackUrl=%2Fonboarding%3FclaimPreview%3D1"
                   className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(2,71,133,0.16)]"
                 >
-                  Generate My Trip
-                </AuthButton>
+                  Sign in to save trips
+                </Link>
                 <Link
                   href="/explore"
                   className="inline-flex items-center justify-center rounded-full border border-white/55 bg-white/68 px-6 py-3 text-sm font-semibold text-[#14518b] backdrop-blur-xl"
@@ -155,22 +155,22 @@ export default async function AITripPlannerPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-[#61738C]">
-                  {[
-                    "Save the generated itinerary to a real trip automatically.",
-                    "Refine versions with AI without losing earlier drafts.",
-                    "Confirm route suggestions on the map and start prep modules.",
+                  {[ 
+                    "Generate one guest preview without creating an account first.",
+                    "Sign in later and import that preview into a real trip automatically.",
+                    "Refine versions with AI and confirm route suggestions once saved.",
                   ].map((item) => (
                     <div key={item} className="rounded-[18px] bg-[#F4F3F1] px-4 py-4 text-sm leading-7">
                       {item}
                     </div>
                   ))}
                   <div className="flex flex-col gap-3 sm:flex-row">
-                    <AuthButton
-                      isLoggedIn={false}
+                    <Link
+                      href="/auth/signin?callbackUrl=%2Fonboarding%3FclaimPreview%3D1"
                       className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-5 py-3 text-sm font-semibold text-white"
                     >
-                      Continue with GitHub
-                    </AuthButton>
+                      Continue to sign in
+                    </Link>
                     <Link
                       href="/explore"
                       className="inline-flex items-center justify-center rounded-full border border-[rgba(2,71,133,0.12)] bg-white px-5 py-3 text-sm font-semibold text-[#14518b]"
@@ -184,6 +184,8 @@ export default async function AITripPlannerPage({
             </div>
           </div>
         </section>
+
+        <GuestTripPlanner initialDraft={initialDraft} />
       </div>
     );
   }

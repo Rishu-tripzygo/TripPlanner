@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 interface AuthButtonProps {
@@ -22,7 +22,7 @@ export default function AuthButton({
     if (loggedIn) {
       router.push("/trips");
     } else {
-      await signIn("github", { callbackUrl: "/trips" });
+      router.push("/auth/signin?callbackUrl=/trips");
     }
   };
 
