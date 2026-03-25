@@ -22,8 +22,7 @@ export default async function PublicProfilePage({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-[#61738C]">
-            This traveler has not enabled a public profile yet, or the profile could not be
-            found.
+            This traveler has not enabled a public profile yet, or the link is no longer active.
           </CardContent>
         </Card>
       </div>

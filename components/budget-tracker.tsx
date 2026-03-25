@@ -99,6 +99,7 @@ export default function BudgetTracker({
   const [isSavingBudget, setIsSavingBudget] = useState(false);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [expenseDraft, setExpenseDraft] = useState({
     name: "",
     amount: "",
@@ -123,6 +124,7 @@ export default function BudgetTracker({
   async function saveBudget() {
     setIsSavingBudget(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/budget/${tripId}`, {
@@ -145,6 +147,7 @@ export default function BudgetTracker({
         activities: data.activities,
         misc: data.misc,
       });
+      setSuccessMessage("Budget saved. Your trip targets are up to date.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save budget.");
     } finally {
@@ -156,6 +159,7 @@ export default function BudgetTracker({
     event.preventDefault();
     setIsSavingExpense(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/expenses/${tripId}`, {
@@ -183,6 +187,7 @@ export default function BudgetTracker({
         expenseDate: new Date().toISOString().slice(0, 10),
         notes: "",
       });
+      setSuccessMessage("Expense logged. Your running total has been updated.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to log expense.");
     } finally {
@@ -256,6 +261,8 @@ export default function BudgetTracker({
             <div className="md:col-span-2 flex items-center justify-between gap-4">
               {error ? (
                 <p className="text-sm text-[#FFB4B4]">{error}</p>
+              ) : successMessage ? (
+                <p className="text-sm text-[#9FE7FF]">{successMessage}</p>
               ) : (
                 <p className="text-sm text-[#8B9BB4]">
                   {activeItinerary?.total_estimated_cost
@@ -453,8 +460,8 @@ export default function BudgetTracker({
               ))
             ) : (
               <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-                No actual expenses logged yet. Start adding spend during the trip to compare
-                planned vs real cost.
+                No real expenses logged yet. Start with flights, transfers, meals, or stays once
+                spending begins so Wandrly can compare your plan against actual trip cost.
               </div>
             )}
           </CardContent>

@@ -1,3 +1,5 @@
+"use client";
+
 import BrandLogo from "@/components/brand-logo";
 import Link from "next/link";
 

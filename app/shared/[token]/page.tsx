@@ -41,7 +41,8 @@ export default async function SharedTripPage({
             <CardTitle className="text-3xl text-white">Shared trip unavailable</CardTitle>
           </CardHeader>
           <CardContent className="text-[#8B9BB4]">
-            This link is private, expired, or no longer available.
+            This link is private, expired, or no longer available. Try another shared trip or
+            explore one of Wandrly&apos;s demo journeys instead.
           </CardContent>
         </Card>
       </div>
@@ -124,7 +125,9 @@ export default async function SharedTripPage({
               ))
             ) : (
               <div className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm text-[#8B9BB4]">
-                No locations have been added to this trip yet.
+                This shared trip does not have confirmed route stops yet. The itinerary can still
+                be viewed below, and the route will appear once the trip owner confirms the map
+                path.
               </div>
             )}
           </CardContent>
@@ -234,7 +237,17 @@ export default async function SharedTripPage({
             </div>
           </div>
         </section>
-      ) : null}
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl text-white">Itinerary preview unavailable</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm leading-8 text-[#D8E2F1]">
+            This trip has been shared publicly, but the day-wise AI itinerary is not attached yet.
+            Once the trip owner saves the itinerary, the full trip outline will appear here.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

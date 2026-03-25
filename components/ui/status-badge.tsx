@@ -7,6 +7,13 @@ const styles = {
   draft: "bg-white/8 text-[#8B9BB4] border-white/10",
 } as const;
 
+const labels: Record<keyof typeof styles, string> = {
+  planning: "Planning",
+  upcoming: "Upcoming",
+  done: "Completed",
+  draft: "Draft",
+};
+
 export default function StatusBadge({
   status,
   className,
@@ -22,7 +29,7 @@ export default function StatusBadge({
         className
       )}
     >
-      {status}
+      {labels[status]}
     </span>
   );
 }

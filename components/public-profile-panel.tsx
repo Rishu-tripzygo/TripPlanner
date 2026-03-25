@@ -93,11 +93,21 @@ export default function PublicProfilePanel({
             Shared itineraries from this traveler
           </h2>
         </div>
-        <div className="grid gap-6 xl:grid-cols-2">
-          {profile.publicTrips.map((trip) => (
-            <PublicTripCard key={trip.shareId} trip={trip} />
-          ))}
-        </div>
+        {profile.publicTrips.length > 0 ? (
+          <div className="grid gap-6 xl:grid-cols-2">
+            {profile.publicTrips.map((trip) => (
+              <PublicTripCard key={trip.shareId} trip={trip} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[28px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[linear-gradient(180deg,#ffffff,#f7f4ef)] p-6 shadow-[0_18px_38px_rgba(26,28,27,0.04)]">
+            <p className="text-sm font-semibold text-[#024785]">No public journeys yet</p>
+            <p className="mt-3 max-w-3xl text-sm leading-8 text-[#61738C]">
+              This traveler has not published any trips yet. Check back later, or explore the
+              curated demo routes to see how shared Wandrly trips look in practice.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

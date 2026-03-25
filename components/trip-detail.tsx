@@ -56,6 +56,7 @@ export default function TripDetailClient({
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const [isConfirmingRoute, setIsConfirmingRoute] = useState(false);
   const [routeActionError, setRouteActionError] = useState<string | null>(null);
+  const [routeActionSuccess, setRouteActionSuccess] = useState<string | null>(null);
 
   const status = useMemo(() => {
     const now = new Date();
@@ -246,6 +247,7 @@ export default function TripDetailClient({
   async function handleConfirmRoute() {
     setIsConfirmingRoute(true);
     setRouteActionError(null);
+    setRouteActionSuccess(null);
 
     try {
       const response = await fetch(`/api/trips/${trip.id}/confirm-route`, {
@@ -257,6 +259,7 @@ export default function TripDetailClient({
         throw new Error(data.error || "Failed to confirm AI route suggestions.");
       }
 
+      setRouteActionSuccess("AI route confirmed. The map and trip stops are now synced.");
       router.refresh();
     } catch (error) {
       setRouteActionError(
@@ -331,12 +334,12 @@ export default function TripDetailClient({
       </section>
 
       <section className="rounded-[32px] border border-[rgba(2,71,133,0.08)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(26,28,27,0.05)] sm:p-6">
-        <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2">
+        <div className="scroll-row items-start md:overflow-visible md:pb-0">
           {progressSteps.map((step, index) => {
             const Icon = step.icon;
 
             return (
-              <div key={step.key} className="flex min-w-[152px] items-center gap-3">
+              <div key={step.key} className="flex min-w-[168px] items-center gap-3">
                 <Link href={step.href} className="flex min-w-0 flex-1 items-center gap-3">
                   <div
                     className={cn(
@@ -379,7 +382,7 @@ export default function TripDetailClient({
           <div className="flex flex-col gap-3 sm:flex-row">
             {routeNeedsConfirmation && suggestedStops.length > 0 ? (
               <Button
-                className="rounded-full px-7"
+                className="w-full rounded-full px-7 sm:w-auto"
                 onClick={handleConfirmRoute}
                 disabled={isConfirmingRoute}
               >
@@ -387,11 +390,11 @@ export default function TripDetailClient({
               </Button>
             ) : (
               <Link href={nextAction.href}>
-                <Button className="rounded-full px-7">{nextAction.label}</Button>
+                <Button className="w-full rounded-full px-7 sm:w-auto">{nextAction.label}</Button>
               </Link>
             )}
             <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
-              <Button variant="outline" className="rounded-full px-7">
+              <Button variant="outline" className="w-full rounded-full px-7 sm:w-auto">
                 Refine with AI
               </Button>
             </Link>
@@ -399,6 +402,9 @@ export default function TripDetailClient({
         </div>
         {routeActionError ? (
           <p className="mt-4 text-sm text-[#B42318]">{routeActionError}</p>
+        ) : null}
+        {routeActionSuccess ? (
+          <p className="mt-4 text-sm text-[#14518b]">{routeActionSuccess}</p>
         ) : null}
       </section>
 
@@ -419,19 +425,23 @@ export default function TripDetailClient({
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     {suggestedStops.length > 0 ? (
-                      <Button className="rounded-full px-6" onClick={handleConfirmRoute} disabled={isConfirmingRoute}>
+                      <Button
+                        className="w-full rounded-full px-6 sm:w-auto"
+                        onClick={handleConfirmRoute}
+                        disabled={isConfirmingRoute}
+                      >
                         {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
                       </Button>
                     ) : null}
                     <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
-                      <Button variant="outline" className="rounded-full px-6">
+                      <Button variant="outline" className="w-full rounded-full px-6 sm:w-auto">
                         Refine itinerary with AI
                       </Button>
                     </Link>
                   </div>
                 </div>
                 {suggestedStops.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="scroll-row sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
                     {suggestedStops.map((stop) => (
                       <span
                         key={stop}
@@ -448,6 +458,9 @@ export default function TripDetailClient({
                 )}
                 {routeActionError ? (
                   <p className="text-sm text-[#B42318]">{routeActionError}</p>
+                ) : null}
+                {routeActionSuccess ? (
+                  <p className="text-sm text-[#14518b]">{routeActionSuccess}</p>
                 ) : null}
               </CardContent>
             </Card>
@@ -597,7 +610,7 @@ export default function TripDetailClient({
                 </div>
                 {routeNeedsConfirmation && suggestedStops.length > 0 ? (
                   <Button
-                    className="rounded-full"
+                    className="w-full rounded-full sm:w-auto"
                     onClick={handleConfirmRoute}
                     disabled={isConfirmingRoute}
                   >
@@ -635,6 +648,9 @@ export default function TripDetailClient({
                   ) : null}
                   {routeActionError ? (
                     <p className="text-sm text-[#B42318]">{routeActionError}</p>
+                  ) : null}
+                  {routeActionSuccess ? (
+                    <p className="text-sm text-[#14518b]">{routeActionSuccess}</p>
                   ) : null}
                 </div>
               )}
@@ -674,7 +690,7 @@ export default function TripDetailClient({
                   </div>
                 </div>
 
-                <div className="h-[420px] overflow-hidden border-y border-[rgba(2,71,133,0.08)]">
+                <div className="h-[320px] overflow-hidden border-y border-[rgba(2,71,133,0.08)] sm:h-[420px]">
                   {trip.locations.length > 0 ? (
                     <Map itineraries={trip.locations} />
                   ) : (
@@ -687,7 +703,7 @@ export default function TripDetailClient({
                         </p>
                       </div>
                       {suggestedStops.length > 0 ? (
-                        <div className="flex max-w-md flex-wrap justify-center gap-2">
+                        <div className="scroll-row max-w-md justify-center sm:flex sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
                           {suggestedStops.slice(0, 5).map((stop) => (
                             <span
                               key={stop}
@@ -700,7 +716,7 @@ export default function TripDetailClient({
                       ) : null}
                       {suggestedStops.length > 0 ? (
                         <Button
-                          className="rounded-full"
+                          className="w-full rounded-full sm:w-auto"
                           onClick={handleConfirmRoute}
                           disabled={isConfirmingRoute}
                         >
@@ -708,11 +724,14 @@ export default function TripDetailClient({
                         </Button>
                       ) : (
                         <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
-                          <Button className="rounded-full">Review AI itinerary</Button>
+                          <Button className="w-full rounded-full sm:w-auto">Review AI itinerary</Button>
                         </Link>
                       )}
                       {routeActionError ? (
                         <p className="max-w-sm text-sm text-[#B42318]">{routeActionError}</p>
+                      ) : null}
+                      {routeActionSuccess ? (
+                        <p className="max-w-sm text-sm text-[#14518b]">{routeActionSuccess}</p>
                       ) : null}
                     </div>
                   )}

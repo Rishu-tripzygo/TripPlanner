@@ -3,7 +3,8 @@
 import { AssistantMessageRecord } from "@/lib/phase-one-types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MessageSquareText, Send, Sparkles } from "lucide-react";
+import { ArrowRight, MessageSquareText, Send, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 interface AssistantTripOption {
@@ -29,6 +30,7 @@ export default function AssistantPanel({
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const attachedTrip = trips.find((trip) => trip.id === tripId) || null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,30 +106,78 @@ export default function AssistantPanel({
               onChange={(event) => setTripId(event.target.value)}
               className="mt-3 w-full rounded-[16px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
             >
-              <option value="">No trip attached</option>
+              <option value="">Ask generally first</option>
               {trips.map((trip) => (
                 <option key={trip.id} value={trip.id}>
                   {trip.title}
                 </option>
               ))}
             </select>
+            {attachedTrip ? (
+              <div className="mt-4 rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-4">
+                <p className="text-sm font-semibold text-[#024785]">{attachedTrip.title}</p>
+                <p className="mt-1 text-sm leading-7 text-[#61738C]">
+                  Use the assistant to refine the itinerary, improve the route, or decide what to
+                  prepare next for this trip.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Link href={`/trips/${attachedTrip.id}`}>
+                    <Button variant="outline" className="rounded-full">
+                      Open workspace
+                    </Button>
+                  </Link>
+                  <Link href={`/ai-trip-planner?tripId=${attachedTrip.id}`}>
+                    <Button variant="outline" className="rounded-full">
+                      Refine itinerary
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-[18px] border border-dashed border-[rgba(2,71,133,0.08)] bg-white/72 px-4 py-4 text-sm leading-7 text-[#61738C]">
+                You can ask broad travel questions without attaching a trip. Attach one when you
+                want Wandrly to answer against your saved itinerary and route.
+              </div>
+            )}
           </div>
 
-          <div className="mt-8 space-y-3">
-            {[
-              "What documents do I need for Bali in March?",
-              "Make my next trip more budget friendly.",
-              "Suggest a restaurant near my hotel area.",
-            ].map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => setQuestion(prompt)}
-                className="block w-full rounded-[18px] bg-[#FAF9F7] px-4 py-4 text-left text-sm text-[#3E536F] transition hover:bg-[#F4F3F1]"
-              >
-                {prompt}
-              </button>
-            ))}
+          <div className="mt-8 space-y-4">
+            <div>
+              <p className="section-label">Try asking</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  "What documents do I need for Bali in March?",
+                  "Make my next trip more budget friendly.",
+                  "Suggest a restaurant near my hotel area.",
+                  "Slow down day 3 and reduce travel time.",
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setQuestion(prompt)}
+                    className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-4 py-2.5 text-sm text-[#3E536F] transition hover:border-[#14518b]/16 hover:text-[#14518b]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[22px] bg-[#FAF9F7] p-5">
+              <p className="text-sm font-semibold text-[#024785]">Best ways to use Wandrly Assistant</p>
+              <div className="mt-4 space-y-3">
+                {[
+                  "Improve pacing before you save a trip",
+                  "Refine a saved itinerary after route confirmation",
+                  "Ask prep questions once the trip is in the workspace",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3 text-sm leading-7 text-[#61738C]">
+                    <ArrowRight className="mt-1 size-4 shrink-0 text-[#14518b]" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -145,6 +195,13 @@ export default function AssistantPanel({
           </div>
 
           <div className="max-h-[520px] space-y-4 overflow-y-auto px-6 py-6">
+            {messages.length === 1 ? (
+              <div className="rounded-[22px] border border-dashed border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-5 text-sm leading-7 text-[#61738C]">
+                Start with one question and Wandrly will respond like a travel copilot. Ask for a
+                route improvement, a better stay area, a cheaper version of the plan, or what to
+                prepare next.
+              </div>
+            ) : null}
             {messages.map((message) => {
               const isUser = message.role === "user";
               return (

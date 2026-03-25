@@ -41,12 +41,12 @@ export default function PublicTripCard({
         ) : (
           <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(0,194,255,0.12),transparent_30%),linear-gradient(145deg,#e4edf8,#f8f7f4)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1B3A6B]/72 via-[#1B3A6B]/12 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1B3A6B]/82 via-[#1B3A6B]/28 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-5 text-white">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
             {trip.destination || "Public itinerary"}
           </p>
-          <h3 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[34px] font-bold tracking-[-0.04em]">
+          <h3 className="mt-2 line-clamp-2 font-[family-name:var(--font-noto-serif)] text-[30px] font-bold tracking-[-0.04em] sm:text-[34px]">
             {trip.title}
           </h3>
         </div>
@@ -70,7 +70,7 @@ export default function PublicTripCard({
           </div>
         </div>
 
-        <p className="text-sm leading-8 text-[#61738C]">{trip.description}</p>
+        <p className="line-clamp-3 text-sm leading-8 text-[#61738C]">{trip.description}</p>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-[#61738C]">
           <span className="inline-flex items-center gap-2 rounded-full bg-[#F4F3F1] px-3 py-2">
@@ -82,15 +82,22 @@ export default function PublicTripCard({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Link href={`/shared/${trip.token}`}>
-            <Button>Open shared trip</Button>
+            <Button className="w-full sm:w-auto">View trip</Button>
           </Link>
-          <Button variant="outline" onClick={() => void toggleAction("bookmark")}>
+          <Link
+            href={`/ai-trip-planner?destination=${encodeURIComponent(
+              trip.destination || trip.title
+            )}${trip.travelStyle ? `&style=${encodeURIComponent(trip.travelStyle)}` : ""}`}
+          >
+            <Button variant="outline" className="w-full sm:w-auto">Use this itinerary</Button>
+          </Link>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => void toggleAction("bookmark")}>
             <Bookmark className={`size-4 ${bookmarked ? "fill-current" : ""}`} />
             {bookmarkCount}
           </Button>
-          <Button variant="outline" onClick={() => void toggleAction("react")}>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => void toggleAction("react")}>
             <Heart className={`size-4 ${reacted ? "fill-current text-[#B84A43]" : ""}`} />
             {reactionCount}
           </Button>

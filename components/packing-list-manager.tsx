@@ -249,7 +249,7 @@ export default function PackingListManager({
                               : "border-white/15 bg-transparent text-transparent"
                           }`}
                         >
-                          ✓
+                          ?
                         </span>
                         <span>
                           <span
@@ -278,7 +278,8 @@ export default function PackingListManager({
                 </div>
               ) : (
                 <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-                  No items in this section yet.
+                  Nothing is in this section yet. Add a custom item if you want to tailor the list
+                  beyond Wandrly&apos;s automatic packing suggestions.
                 </div>
               )}
             </CardContent>
@@ -288,3 +289,4 @@ export default function PackingListManager({
     </div>
   );
 }
+

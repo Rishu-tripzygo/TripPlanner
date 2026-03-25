@@ -10,6 +10,10 @@ import Link from "next/link";
 interface AITripPlannerPageProps {
   searchParams: Promise<{
     tripId?: string | string[];
+    destination?: string | string[];
+    style?: string | string[];
+    days?: string | string[];
+    travelers?: string | string[];
   }>;
 }
 
@@ -19,6 +23,24 @@ export default async function AITripPlannerPage({
   const session = await auth();
   const params = await searchParams;
   const requestedTripId = Array.isArray(params.tripId) ? params.tripId[0] : params.tripId;
+  const requestedDestination = Array.isArray(params.destination)
+    ? params.destination[0]
+    : params.destination;
+  const requestedStyle = Array.isArray(params.style) ? params.style[0] : params.style;
+  const requestedDays = Array.isArray(params.days) ? params.days[0] : params.days;
+  const requestedTravelers = Array.isArray(params.travelers)
+    ? params.travelers[0]
+    : params.travelers;
+  const initialDraft = {
+    destination: requestedDestination || undefined,
+    travelStyle: requestedStyle || undefined,
+    days:
+      requestedDays && !Number.isNaN(Number(requestedDays)) ? Number(requestedDays) : undefined,
+    travelers:
+      requestedTravelers && !Number.isNaN(Number(requestedTravelers))
+        ? Number(requestedTravelers)
+        : undefined,
+  };
 
   if (!session?.user?.id) {
     return (
@@ -221,6 +243,7 @@ export default async function AITripPlannerPage({
 
       <AITripPlanner
         initialTripId={requestedTripId}
+        initialDraft={initialDraft}
         trips={trips.map((trip) => ({
           id: trip.id,
           title: trip.title,

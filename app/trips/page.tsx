@@ -97,8 +97,8 @@ export default async function TripsPage() {
                   </span>
                 </p>
                 <p className="mt-3 max-w-lg text-base leading-8 text-[#61738C]">
-                  This dashboard is your command deck. Start the trip, shape the route, then
-                  move into budgets, docs, packing, and journals.
+                  This is your trip home base. Start with an itinerary, confirm the route, and
+                  then move into budgets, documents, packing, and journals when the trip is ready.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link href="/trips/new">
@@ -251,10 +251,10 @@ export default async function TripsPage() {
               ))}
 
               {notifications.length === 0 ? (
-                <p className="text-sm leading-7 text-[#61738C]">
-                  No active reminders yet. Once a trip gets close, your prep prompts will show up
-                  here.
-                </p>
+                <div className="rounded-[22px] bg-[#F4F3F1] p-5 text-sm leading-7 text-[#61738C]">
+                  No reminders yet. Once a trip has dates and gets closer, Wandrly will show
+                  planning nudges, countdown reminders, and prep prompts here.
+                </div>
               ) : null}
             </div>
           </div>
@@ -309,7 +309,7 @@ export default async function TripsPage() {
                 icon: <Sparkles className="size-5" />,
               },
               {
-                title: "2. Add route stops",
+                title: "2. Review the AI route",
                 text:
                   tripsNeedingLocations.length > 0
                     ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} already have AI itinerary suggestions and need route confirmation, not manual stop entry.`
@@ -358,9 +358,34 @@ export default async function TripsPage() {
           </CardHeader>
           <CardContent>
             {trips.length === 0 ? (
-              <div className="rounded-[24px] bg-[#F4F3F1] p-6 text-sm leading-8 text-[#61738C]">
-                No trips yet. Start with AI if you want the fastest path from idea to a
-                structured travel plan.
+              <div className="rounded-[24px] bg-[#F4F3F1] p-6">
+                <p className="font-[family-name:var(--font-noto-serif)] text-[30px] font-bold tracking-[-0.03em] text-[#024785]">
+                  No trips yet, but you can start in two clean ways.
+                </p>
+                <p className="mt-3 max-w-2xl text-sm leading-8 text-[#61738C]">
+                  Use AI if you want the fastest path from travel idea to saved workspace, or
+                  create a manual trip shell first if you already know the destination and dates.
+                </p>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <Link
+                    href="/ai-trip-planner"
+                    className="rounded-[22px] border border-[rgba(2,71,133,0.08)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(26,28,27,0.06)]"
+                  >
+                    <p className="text-sm font-semibold text-[#024785]">Start with AI</p>
+                    <p className="mt-2 text-sm leading-7 text-[#61738C]">
+                      Generate an itinerary first and let Wandrly create the trip automatically.
+                    </p>
+                  </Link>
+                  <Link
+                    href="/trips/new"
+                    className="rounded-[22px] border border-[rgba(2,71,133,0.08)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(26,28,27,0.06)]"
+                  >
+                    <p className="text-sm font-semibold text-[#024785]">Create a trip shell</p>
+                    <p className="mt-2 text-sm leading-7 text-[#61738C]">
+                      Start manually if you already know your dates, title, and basic destination.
+                    </p>
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2">

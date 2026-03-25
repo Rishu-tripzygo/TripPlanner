@@ -28,6 +28,7 @@ export default function JournalManager({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const orderedEntries = useMemo(
     () => [...entries].sort((a, b) => a.day - b.day),
@@ -45,6 +46,7 @@ export default function JournalManager({
   async function saveEntry() {
     setIsSaving(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/journal/${tripId}`, {
@@ -67,6 +69,7 @@ export default function JournalManager({
         const filtered = current.filter((entry) => entry.day !== nextEntry.day);
         return [...filtered, nextEntry];
       });
+      setSuccessMessage(`Day ${selectedDay} saved to your trip memory timeline.`);
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : "Unable to save journal entry."
@@ -188,6 +191,9 @@ export default function JournalManager({
             ) : null}
 
             {error ? <p className="text-sm text-[#FFB4B4]">{error}</p> : null}
+            {!error && successMessage ? (
+              <p className="text-sm text-[#9FE7FF]">{successMessage}</p>
+            ) : null}
 
             <Button onClick={saveEntry} disabled={isSaving} className="w-full">
               <span className="inline-flex items-center gap-2">
@@ -233,8 +239,8 @@ export default function JournalManager({
             ))
           ) : (
             <div className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-              No journal entries yet. Start with Day 1 and build the travel memory timeline as
-              the trip unfolds.
+              No journal entries yet. Start with the first meaningful day and build a memory
+              timeline that captures places, moments, meals, and highlights as the trip unfolds.
             </div>
           )}
         </CardContent>

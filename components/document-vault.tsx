@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { UploadButton } from "@/lib/upload-thing";
@@ -44,6 +44,7 @@ export default function DocumentVault({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const passportWarning = useMemo(() => {
     const passport = documents.find((document) =>
@@ -70,6 +71,7 @@ export default function DocumentVault({
 
     setIsSaving(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/documents/${tripId}`, {
@@ -90,10 +92,9 @@ export default function DocumentVault({
         url: "",
         expiryDate: "",
       });
+      setSuccessMessage("Document saved. It is now available inside this trip vault.");
     } catch (saveError) {
-      setError(
-        saveError instanceof Error ? saveError.message : "Unable to save document."
-      );
+      setError(saveError instanceof Error ? saveError.message : "Unable to save document.");
     } finally {
       setIsSaving(false);
     }
@@ -107,8 +108,8 @@ export default function DocumentVault({
             <p className="section-label">Document Vault</p>
             <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
             <p className="text-sm leading-7 text-[#8B9BB4]">
-              Keep trip-critical files in one secure place so passports, tickets, insurance,
-              and hotel confirmations stay easy to access before departure.
+              Keep trip-critical files in one secure place so passports, tickets, insurance, and
+              hotel confirmations stay easy to access before departure.
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
@@ -134,7 +135,7 @@ export default function DocumentVault({
               </div>
               <p className="text-sm text-[#8B9BB4]">Vault status</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                {documents.length > 0 ? "Ready" : "Needs uploads"}
+                {documents.length > 0 ? "Ready" : "Start uploading"}
               </p>
             </div>
           </CardContent>
@@ -206,6 +207,10 @@ export default function DocumentVault({
               <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FFB4B4]">
                 {error}
               </div>
+            ) : successMessage ? (
+              <div className="rounded-[14px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-4 py-3 text-sm text-[#D8F5FF]">
+                {successMessage}
+              </div>
             ) : null}
 
             <Button onClick={saveDocument} className="w-full" disabled={isSaving}>
@@ -251,8 +256,8 @@ export default function DocumentVault({
             ))
           ) : (
             <div className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
-              No documents stored yet. Upload passports, tickets, hotel vouchers, and other
-              travel paperwork here.
+              No travel documents are stored yet. Upload passports, tickets, hotel vouchers,
+              insurance, or emergency contacts so everything stays easy to access before departure.
             </div>
           )}
         </CardContent>

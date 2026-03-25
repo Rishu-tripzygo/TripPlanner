@@ -52,6 +52,7 @@ interface CompletedTripPayload {
 interface AITripPlannerProps {
   trips: PlannerTripOption[];
   initialTripId?: string;
+  initialDraft?: Partial<AITripPlannerRequest>;
 }
 
 type StreamEvent =
@@ -190,6 +191,7 @@ function TimelineBlock({
 export default function AITripPlanner({
   trips,
   initialTripId,
+  initialDraft,
 }: AITripPlannerProps) {
   const [tripOptions, setTripOptions] = useState<PlannerTripOption[]>(trips);
   const [plannerMode, setPlannerMode] = useState<"autocreate" | "existing">(
@@ -198,7 +200,10 @@ export default function AITripPlanner({
   const [selectedTripId, setSelectedTripId] = useState(
     initialTripId && trips.some((trip) => trip.id === initialTripId) ? initialTripId : ""
   );
-  const [form, setForm] = useState<AITripPlannerRequest>(emptyForm);
+  const [form, setForm] = useState<AITripPlannerRequest>({
+    ...emptyForm,
+    ...initialDraft,
+  });
   const [result, setResult] = useState<PersistedItinerary | null>(null);
   const [versions, setVersions] = useState<ItineraryVersionRecord[]>([]);
   const [messages, setMessages] = useState<RefinementMessage[]>([]);
@@ -537,6 +542,16 @@ export default function AITripPlanner({
   useEffect(() => {
     setTripOptions(trips);
   }, [trips]);
+
+  useEffect(() => {
+    if (!initialDraft) return;
+    setForm((current) => ({
+      ...current,
+      ...Object.fromEntries(
+        Object.entries(initialDraft).filter(([, value]) => value !== undefined && value !== "")
+      ),
+    }));
+  }, [initialDraft]);
 
   useEffect(() => {
     if (plannerMode !== "existing" || !selectedTripId) {
@@ -894,7 +909,12 @@ export default function AITripPlanner({
                       ? "Your trip will be created automatically as soon as the itinerary is ready."
                       : "The new itinerary version will be saved into the selected trip."}
                   </p>
-                  <Button type="submit" size="lg" className="h-14 rounded-full px-8 text-base" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="h-14 w-full rounded-full px-8 text-base sm:w-auto"
+                    disabled={isLoading}
+                  >
                     Generate My Trip
                   </Button>
                 </div>
@@ -968,7 +988,7 @@ export default function AITripPlanner({
                   <p className="mt-4 max-w-2xl text-sm leading-8 text-white/84 sm:text-base">
                     {result.trip_overview}
                   </p>
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="scroll-row mt-6 sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
                     <DetailPill label="days" value={`${result.trip_summary.duration_days}`} />
                     <DetailPill label="travelers" value={`${result.trip_summary.travelers}`} />
                     <DetailPill label="budget" value={result.trip_summary.budget_range} />
@@ -976,10 +996,10 @@ export default function AITripPlanner({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   {nextWorkspaceStep ? (
                     <Link href={nextWorkspaceStep.href}>
-                      <Button className="rounded-full px-7 py-6 text-base">
+                      <Button className="w-full rounded-full px-7 py-6 text-base sm:w-auto">
                         {nextWorkspaceStep.label}
                       </Button>
                     </Link>
@@ -987,7 +1007,7 @@ export default function AITripPlanner({
                   <Button
                     variant="outline"
                     onClick={() => setRefineOpen(true)}
-                    className="rounded-full border-white/35 bg-white/15 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/22"
+                    className="w-full rounded-full border-white/35 bg-white/15 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/22 sm:w-auto"
                   >
                     Refine with AI
                   </Button>
@@ -996,7 +1016,7 @@ export default function AITripPlanner({
             </div>
 
             <div className="border-t border-white/45 bg-white/46 px-6 py-5 sm:px-8">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="scroll-row items-center sm:flex sm:flex-wrap sm:items-center sm:overflow-visible sm:pb-0">
                 <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#14518b]">
                   Saved to {(lastSavedTrip || selectedTrip)?.title || "trip"}
                 </div>
@@ -1035,13 +1055,17 @@ export default function AITripPlanner({
                     {nextWorkspaceStep.description}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Link href={nextWorkspaceStep.href}>
-                    <Button className="rounded-full px-6">
+                    <Button className="w-full rounded-full px-6 sm:w-auto">
                       {nextWorkspaceStep.label}
                     </Button>
                   </Link>
-                  <Button variant="outline" className="rounded-full px-6" onClick={() => setRefineOpen(true)}>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full px-6 sm:w-auto"
+                    onClick={() => setRefineOpen(true)}
+                  >
                     Refine with AI
                   </Button>
                 </div>
@@ -1150,7 +1174,7 @@ export default function AITripPlanner({
                         </h3>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="scroll-row sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
                         {day.weather ? (
                           <div className="rounded-full border border-white/45 bg-white/60 px-4 py-2 text-sm text-[#61738C]">
                             {day.weather.summary} · {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
@@ -1171,18 +1195,22 @@ export default function AITripPlanner({
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-[22px] border border-white/45 bg-white/48 p-5">
-                        <p className="text-sm font-semibold text-[#0f3460]">Attractions</p>
+                      <details className="rounded-[22px] border border-white/45 bg-white/48 p-5 lg:pointer-events-none" open>
+                        <summary className="cursor-pointer list-none text-sm font-semibold text-[#0f3460]">
+                          Attractions
+                        </summary>
                         <div className="mt-3">
                           <OutputList items={day.places} />
                         </div>
-                      </div>
-                      <div className="rounded-[22px] border border-white/45 bg-white/48 p-5">
-                        <p className="text-sm font-semibold text-[#0f3460]">Food and recharge</p>
+                      </details>
+                      <details className="rounded-[22px] border border-white/45 bg-white/48 p-5 lg:pointer-events-none" open>
+                        <summary className="cursor-pointer list-none text-sm font-semibold text-[#0f3460]">
+                          Food and recharge
+                        </summary>
                         <div className="mt-3">
                           <OutputList items={[...day.food_recommendations, ...day.relaxation_suggestions]} />
                         </div>
-                      </div>
+                      </details>
                     </div>
 
                     <div className="rounded-[22px] border border-white/45 bg-[linear-gradient(135deg,rgba(20,81,139,0.08),rgba(0,194,255,0.08))] p-5">
@@ -1263,9 +1291,9 @@ export default function AITripPlanner({
           {refineOpen ? (
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[rgba(8,18,38,0.35)] p-4 backdrop-blur-md sm:items-center sm:p-6">
               <div className="absolute inset-0" onClick={() => setRefineOpen(false)} />
-              <Card className="glass-shell relative max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-[32px] border-white/45 bg-white/78 shadow-[0_30px_80px_rgba(14,55,94,0.22)]">
+              <Card className="glass-shell relative max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-[28px] border-white/45 bg-white/78 shadow-[0_30px_80px_rgba(14,55,94,0.22)] sm:rounded-[32px]">
                 <CardContent className="space-y-5 overflow-y-auto p-6 sm:p-7">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <SectionTitle
                       eyebrow="Refine with AI"
                       title="Adjust this trip like a conversation"
@@ -1360,14 +1388,14 @@ export default function AITripPlanner({
           )}
 
           <div className="fixed inset-x-4 bottom-20 z-40 md:hidden">
-            <div className="glass-shell flex items-center justify-between rounded-full px-4 py-3">
-              <div>
+            <div className="glass-shell flex flex-col gap-3 rounded-[28px] px-4 py-4">
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">Trip ready</p>
                 <p className="text-sm font-semibold text-[#0f3460]">{headerDestination}</p>
               </div>
               {nextWorkspaceStep ? (
                 <Link href={nextWorkspaceStep.href}>
-                  <Button className="rounded-full">Open Workspace</Button>
+                  <Button className="w-full rounded-full">Open Workspace</Button>
                 </Link>
               ) : null}
             </div>

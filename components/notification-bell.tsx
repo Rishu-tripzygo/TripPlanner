@@ -179,8 +179,8 @@ export default function NotificationBell({ className }: NotificationBellProps) {
               ))
             ) : (
               <div className="rounded-[20px] border border-dashed border-white/55 bg-white/34 p-5 text-sm leading-7 text-[#61738C]">
-                No reminders yet. Once a trip gets closer, countdown alerts and prep prompts will
-                show up here.
+                No reminders yet. As soon as a saved trip has dates and gets closer, Wandrly will
+                surface countdown reminders, prep nudges, and route-related prompts here.
               </div>
             )}
           </div>

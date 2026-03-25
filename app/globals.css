@@ -177,6 +177,15 @@
     @apply mx-auto w-full max-w-[1280px];
   }
 
+  .scroll-row {
+    @apply flex gap-3 overflow-x-auto pb-2;
+    scrollbar-width: none;
+  }
+
+  .scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+
   .section-label {
     @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-[#024785];
   }
