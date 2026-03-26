@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { AITripPlannerRequest } from "@/lib/ai-trip-types";
 import { PersistedItinerary } from "@/lib/phase-one-types";
 import { buildTripSeedFromPlanner } from "@/lib/itinerary-utils";
+import { buildRouteStateForActiveVersion } from "@/lib/trip-route-state";
 
 export const GUEST_PREVIEW_COOKIE = "wandrly_guest_session";
 const GUEST_PREVIEW_TTL_MS = 1000 * 60 * 60;
@@ -143,7 +144,7 @@ export async function claimGuestPreviewToUser(sessionToken: string, userId: stri
       },
     });
 
-    await tx.itineraryVersion.create({
+    const version = await tx.itineraryVersion.create({
       data: {
         tripId: trip.id,
         versionNumber: 1,
@@ -152,6 +153,16 @@ export async function claimGuestPreviewToUser(sessionToken: string, userId: stri
         itineraryData: itinerary as unknown as Prisma.InputJsonValue,
         isActive: true,
       },
+    });
+
+    await tx.trip.update({
+      where: { id: trip.id },
+      data: buildRouteStateForActiveVersion({
+        itinerary,
+        activeVersionId: version.id,
+        confirmedLocationCount: 0,
+        currentRouteSourceVersionId: null,
+      }),
     });
 
     if (itinerary.total_estimated_cost) {

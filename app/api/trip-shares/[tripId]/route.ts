@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageTrip, getTripAccess } from "@/lib/trip-access";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
@@ -31,10 +32,15 @@ export async function GET(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       share: true,
@@ -55,7 +61,11 @@ export async function GET(
       },
     }));
 
-  return NextResponse.json(serializeShare(share));
+  return NextResponse.json({
+    ...serializeShare(share),
+    viewerRole: access.role,
+    canManage: canManageTrip(access),
+  });
 }
 
 export async function PUT(
@@ -68,13 +78,24 @@ export async function PUT(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
   const body = await request.json();
   const isPublic = Boolean(body?.isPublic);
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
+  if (!canManageTrip(access)) {
+    return NextResponse.json(
+      { error: "Only the trip owner can change public sharing." },
+      { status: 403 }
+    );
+  }
 
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       share: true,
@@ -98,5 +119,9 @@ export async function PUT(
         },
       });
 
-  return NextResponse.json(serializeShare(share));
+  return NextResponse.json({
+    ...serializeShare(share),
+    viewerRole: access.role,
+    canManage: true,
+  });
 }

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { canEditTrip, getTripAccess } from "@/lib/trip-access";
 import { NextResponse } from "next/server";
 
 function serializeDocument(document: {
@@ -32,11 +33,15 @@ export async function GET(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
 
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       documents: {
@@ -62,6 +67,7 @@ export async function POST(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
   const body = await request.json();
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -79,16 +85,15 @@ export async function POST(
     );
   }
 
-  const trip = await prisma.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: session.user.id,
-    },
-    select: { id: true },
-  });
-
-  if (!trip) {
+  if (!access) {
     return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
+  if (!canEditTrip(access)) {
+    return NextResponse.json(
+      { error: "You can view these documents, but only editors can add or remove them." },
+      { status: 403 }
+    );
   }
 
   const document = await prisma.document.create({
@@ -102,4 +107,52 @@ export async function POST(
   });
 
   return NextResponse.json(serializeDocument(document));
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ tripId: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
+  const { searchParams } = new URL(request.url);
+  const documentId = searchParams.get("documentId");
+
+  if (!documentId) {
+    return NextResponse.json({ error: "documentId is required." }, { status: 400 });
+  }
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
+  if (!canEditTrip(access)) {
+    return NextResponse.json(
+      { error: "You can view these documents, but only editors can add or remove them." },
+      { status: 403 }
+    );
+  }
+
+  const document = await prisma.document.findFirst({
+    where: {
+      id: documentId,
+      tripId,
+    },
+    select: { id: true },
+  });
+
+  if (!document) {
+    return NextResponse.json({ error: "Document not found." }, { status: 404 });
+  }
+
+  await prisma.document.delete({
+    where: { id: document.id },
+  });
+
+  return NextResponse.json({ ok: true, documentId: document.id });
 }

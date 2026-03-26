@@ -29,6 +29,7 @@ model User {
   accounts        Account[]
   sessions        Session[]
   trips           Trip[]
+  tripCollaborations TripCollaborator[]
   chatMessages    ChatMessage[]
   notifications   Notification[]
   bookmarks       TripBookmark[]
@@ -36,6 +37,7 @@ model User {
   following       Follow[]          @relation("UserFollowing")
   followers       Follow[]          @relation("UserFollowers")
   guestPreviews   GuestPreview[]
+  generationRequests GenerationRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -109,6 +111,13 @@ model Trip {
   imageUrl String?
   startDate DateTime
   endDate DateTime
+  routeStatus RouteStatus @default(NOT_STARTED)
+  routeSourceVersionId String?
+  routeUpdatedAt DateTime?
+  originLabel String?
+  originLat Float?
+  originLng Float?
+  returnToOrigin Boolean @default(true)
   user User @relation(fields: [userId], references: [id] )
   userId String
 
@@ -121,9 +130,36 @@ model Trip {
   itineraryVersions ItineraryVersion[]
   chatMessages ChatMessage[]
   share TripShare?
+  generationRequests GenerationRequest[]
+  collaborators TripCollaborator[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model GenerationRequest {
+  id             String                  @id @default(cuid())
+  userId         String?
+  user           User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tripId         String?
+  trip           Trip?                   @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  requestType    GenerationRequestType
+  status         GenerationRequestStatus @default(QUEUED)
+  providerOrder  Json
+  attemptLog     Json?
+  requestPayload Json
+  promptSnapshot String?
+  providerUsed   String?
+  resultMeta     Json?
+  errorMessage   String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([tripId, createdAt])
+  @@index([status, createdAt])
 }
 
 model Location {
@@ -286,6 +322,21 @@ model TripShare {
   updatedAt DateTime       @updatedAt
 }
 
+model TripCollaborator {
+  id          String           @id @default(cuid())
+  trip        Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  email       String
+  role        CollaboratorRole @default(VIEWER)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([tripId, userId])
+  @@index([userId, createdAt])
+}
+
 model Follow {
   id          String   @id @default(cuid())
   follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
@@ -328,6 +379,12 @@ enum ThemePreference {
   DARK
 }
 
+enum CollaboratorRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
 enum ExpenseCategory {
   ACCOMMODATION
   FOOD
@@ -340,4 +397,26 @@ enum ChatRole {
   USER
   ASSISTANT
   SYSTEM
+}
+
+enum GenerationRequestType {
+  ITINERARY
+  REFINE
+  GUEST_PREVIEW
+}
+
+enum GenerationRequestStatus {
+  QUEUED
+  GENERATING
+  FORMATTING
+  SAVING
+  COMPLETED
+  FAILED
+}
+
+enum RouteStatus {
+  NOT_STARTED
+  SUGGESTED
+  CONFIRMED
+  STALE
 }

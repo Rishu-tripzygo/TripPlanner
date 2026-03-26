@@ -5,7 +5,14 @@ import { UploadButton } from "@/lib/upload-thing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentRecord } from "@/lib/phase-one-types";
-import { AlertTriangle, FileBadge2, FileText, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  FileBadge2,
+  FileText,
+  ShieldCheck,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 const documentTypes = [
   "Passport scan",
@@ -63,6 +70,28 @@ export default function DocumentVault({
       : null;
   }, [documents, tripStartDate]);
 
+  const missingDocumentPrompts = useMemo(() => {
+    const checks = [
+      { label: "Passport or government ID", patterns: [/passport/i, /\bid\b/i] },
+      { label: "Flight or rail ticket", patterns: [/flight/i, /ticket/i, /rail/i] },
+      {
+        label: "Hotel or stay confirmation",
+        patterns: [/hotel/i, /voucher/i, /stay/i, /booking/i],
+      },
+      { label: "Travel insurance", patterns: [/insurance/i] },
+      { label: "Emergency contact details", patterns: [/emergency/i, /contact/i] },
+    ];
+
+    return checks.filter(
+      (check) =>
+        !documents.some((document) =>
+          check.patterns.some(
+            (pattern) => pattern.test(document.type) || pattern.test(document.name)
+          )
+        )
+    );
+  }, [documents]);
+
   async function saveDocument() {
     if (!draft.url || !draft.name.trim()) {
       setError("Upload a file and enter a document name first.");
@@ -97,6 +126,27 @@ export default function DocumentVault({
       setError(saveError instanceof Error ? saveError.message : "Unable to save document.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function removeDocument(documentId: string) {
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch(`/api/documents/${tripId}?documentId=${documentId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to remove document.");
+      }
+
+      setDocuments((current) => current.filter((document) => document.id !== documentId));
+      setSuccessMessage("Document removed from the vault.");
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : "Unable to remove document.");
     }
   }
 
@@ -216,6 +266,10 @@ export default function DocumentVault({
             <Button onClick={saveDocument} className="w-full" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Document"}
             </Button>
+            <div className="rounded-[14px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-[#8B9BB4]">
+              Keep only practical travel files here. Avoid uploading payment details or anything
+              you would not want exposed if a shared device is lost.
+            </div>
           </CardContent>
         </Card>
       </section>
@@ -225,6 +279,34 @@ export default function DocumentVault({
           <CardContent className="flex gap-3 pt-6 text-[#F8D7A1]">
             <AlertTriangle className="mt-1 size-5 shrink-0 text-[#F59E0B]" />
             <p className="text-sm leading-7">{passportWarning}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {missingDocumentPrompts.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl text-white">Still worth adding before departure</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {missingDocumentPrompts.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                    <Upload className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{item.label}</p>
+                    <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+                      Add this so the trip vault is complete before travel day.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       ) : null}
@@ -249,9 +331,21 @@ export default function DocumentVault({
                       : ""}
                   </p>
                 </div>
-                <a href={document.url} target="_blank" rel="noreferrer">
-                  <Button variant="outline">Open</Button>
-                </a>
+                <div className="flex flex-wrap gap-3">
+                  <a href={document.url} target="_blank" rel="noreferrer">
+                    <Button variant="outline">Open</Button>
+                  </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void removeDocument(document.id)}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Trash2 className="size-4" />
+                      Remove
+                    </span>
+                  </Button>
+                </div>
               </div>
             ))
           ) : (

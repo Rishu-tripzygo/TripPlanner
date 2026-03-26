@@ -1,11 +1,34 @@
 import { auth } from "@/auth";
 import { generateAssistantReply } from "@/lib/assistant-service";
+import { checkRateLimit } from "@/lib/request-rate-limit";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const assistantLimit = Number(process.env.ASSISTANT_LIMIT_PER_MINUTE || 12);
+  const assistantRate = checkRateLimit({
+    scope: "assistant",
+    key: session.user.id,
+    limit: Number.isFinite(assistantLimit) ? assistantLimit : 12,
+    windowMs: 60 * 1000,
+  });
+
+  if (!assistantRate.allowed) {
+    return NextResponse.json(
+      {
+        error: "You are sending messages too quickly. Please wait a moment and try again.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(assistantRate.retryAfterSeconds),
+        },
+      }
+    );
   }
 
   try {

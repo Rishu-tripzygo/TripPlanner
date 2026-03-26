@@ -4,7 +4,16 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackingItem, PackingListRecord } from "@/lib/phase-one-types";
-import { Briefcase, CheckCheck, ClipboardList, Plus, Shirt } from "lucide-react";
+import {
+  Briefcase,
+  CheckCheck,
+  ClipboardList,
+  PackageOpen,
+  Plus,
+  Printer,
+  Shirt,
+  Users,
+} from "lucide-react";
 
 const categoryOrder: PackingItem["category"][] = [
   "Clothing",
@@ -33,6 +42,18 @@ export default function PackingListManager({
 
   const packedCount = useMemo(
     () => list.items.filter((item) => item.packed).length,
+    [list.items]
+  );
+  const essentialRemaining = useMemo(
+    () => list.items.filter((item) => item.essential && !item.packed).length,
+    [list.items]
+  );
+  const totalEstimatedWeight = useMemo(
+    () =>
+      list.items.reduce(
+        (sum, item) => sum + (item.estimatedWeightGrams || 0) * (item.quantity || 1),
+        0
+      ),
     [list.items]
   );
   const groupedItems = useMemo(
@@ -121,6 +142,20 @@ export default function PackingListManager({
     void saveList(nextList);
   }
 
+  function updateItem(itemId: string, patch: Partial<PackingItem>) {
+    const nextList = {
+      ...list,
+      items: list.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+    };
+
+    setList(nextList);
+    void saveList(nextList);
+  }
+
+  function handlePrint() {
+    window.print();
+  }
+
   return (
     <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -133,7 +168,7 @@ export default function PackingListManager({
               itinerary, and weather signals. Update anything and it stays saved to this trip.
             </p>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
+          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
               <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
                 <ClipboardList className="size-5" />
@@ -159,6 +194,28 @@ export default function PackingListManager({
                   }}
                 />
               </div>
+            </div>
+            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
+              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                <PackageOpen className="size-5" />
+              </div>
+              <p className="text-sm text-[#8B9BB4]">Essential items left</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{essentialRemaining}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+                Pack these before departure
+              </p>
+            </div>
+            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
+              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                <Users className="size-5" />
+              </div>
+              <p className="text-sm text-[#8B9BB4]">Estimated carry weight</p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {(totalEstimatedWeight / 1000).toFixed(1)} kg
+              </p>
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+                Based on checklist quantities
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -202,8 +259,16 @@ export default function PackingListManager({
                 Add to checklist
               </span>
             </Button>
-            <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4 text-sm leading-7 text-[#8B9BB4]">
-              Changes save automatically. {isSaving ? "Saving..." : "Everything is up to date."}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button onClick={handlePrint} variant="outline" className="w-full">
+                <span className="inline-flex items-center gap-2">
+                  <Printer className="size-4" />
+                  Print checklist
+                </span>
+              </Button>
+              <div className="flex w-full items-center rounded-[16px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-[#8B9BB4]">
+                Changes save automatically. {isSaving ? "Saving..." : "Everything is up to date."}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -235,44 +300,103 @@ export default function PackingListManager({
                   {group.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start justify-between gap-3 rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
+                      className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
                     >
-                      <button
-                        type="button"
-                        onClick={() => togglePacked(item.id)}
-                        className="flex flex-1 items-start gap-3 text-left"
-                      >
-                        <span
-                          className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                            item.packed
-                              ? "border-[#00C2FF]/30 bg-[#00C2FF]/20 text-[#00C2FF]"
-                              : "border-white/15 bg-transparent text-transparent"
-                          }`}
+                      <div className="flex items-start justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => togglePacked(item.id)}
+                          className="flex flex-1 items-start gap-3 text-left"
                         >
-                          ?
-                        </span>
-                        <span>
                           <span
-                            className={`block text-sm font-medium ${
-                              item.packed ? "text-[#8B9BB4] line-through" : "text-white"
+                            className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                              item.packed
+                                ? "border-[#00C2FF]/30 bg-[#00C2FF]/20 text-[#00C2FF]"
+                                : "border-white/15 bg-transparent text-transparent"
                             }`}
                           >
-                            {item.label}
+                            ?
                           </span>
-                          {item.quantity ? (
-                            <span className="mt-1 block text-xs uppercase tracking-[0.18em] text-[#4A5568]">
-                              Qty {item.quantity}
+                          <span>
+                            <span
+                              className={`block text-sm font-medium ${
+                                item.packed ? "text-[#8B9BB4] line-through" : "text-white"
+                              }`}
+                            >
+                              {item.label}
                             </span>
-                          ) : null}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id)}
-                        className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4] transition hover:text-white"
-                      >
-                        Remove
-                      </button>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {item.aiSuggested ? (
+                                <span className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#9DEBFF]">
+                                  AI suggested
+                                </span>
+                              ) : null}
+                              {item.essential ? (
+                                <span className="rounded-full border border-[#F59E0B]/20 bg-[#F59E0B]/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#F8D7A1]">
+                                  Essential
+                                </span>
+                              ) : null}
+                              {item.sharedItem ? (
+                                <span className="rounded-full border border-white/12 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#8B9BB4]">
+                                  Shared
+                                </span>
+                              ) : null}
+                            </div>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4] transition hover:text-white"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateItem(item.id, {
+                                quantity: Math.max(1, (item.quantity || 1) - 1),
+                              })
+                            }
+                            className="px-3 py-2 text-sm text-[#D8E2F1]"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs uppercase tracking-[0.16em] text-[#8B9BB4]">
+                            Qty {item.quantity || 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateItem(item.id, {
+                                quantity: Math.min(12, (item.quantity || 1) + 1),
+                              })
+                            }
+                            className="px-3 py-2 text-sm text-[#D8E2F1]"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateItem(item.id, { sharedItem: !item.sharedItem })}
+                          className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.16em] ${
+                            item.sharedItem
+                              ? "bg-[#eef4fb] text-[#14518b]"
+                              : "border border-white/10 bg-white/[0.04] text-[#8B9BB4]"
+                          }`}
+                        >
+                          {item.sharedItem ? "Shared item" : "Mark shared"}
+                        </button>
+                        {item.estimatedWeightGrams ? (
+                          <span className="text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+                            {(item.estimatedWeightGrams * (item.quantity || 1) / 1000).toFixed(1)} kg
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>

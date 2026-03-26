@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeItineraryForStorage, serializeVersionRecord } from "@/lib/itinerary-utils";
+import { buildRouteStateForActiveVersion } from "@/lib/trip-route-state";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -55,6 +56,12 @@ export async function POST(request: Request) {
     where: { id: tripId, userId: session.user.id },
     select: {
       id: true,
+      routeSourceVersionId: true,
+      _count: {
+        select: {
+          locations: true,
+        },
+      },
       itineraryVersions: {
         orderBy: { versionNumber: "desc" },
         take: 1,
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
       data: { isActive: false },
     });
 
-    return tx.itineraryVersion.create({
+    const version = await tx.itineraryVersion.create({
       data: {
         tripId: trip.id,
         versionNumber: nextVersion,
@@ -86,6 +93,18 @@ export async function POST(request: Request) {
         isActive: true,
       },
     });
+
+    await tx.trip.update({
+      where: { id: trip.id },
+      data: buildRouteStateForActiveVersion({
+        itinerary: normalizedItinerary,
+        activeVersionId: version.id,
+        confirmedLocationCount: trip._count.locations,
+        currentRouteSourceVersionId: trip.routeSourceVersionId || null,
+      }),
+    });
+
+    return version;
   });
 
   return NextResponse.json(serializeVersionRecord(created));

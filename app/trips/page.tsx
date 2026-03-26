@@ -62,13 +62,16 @@ export default async function TripsPage() {
   const completedTrips = trips.filter((trip) => new Date(trip.endDate) < today);
   const totalStops = trips.reduce((sum, trip) => sum + trip.locations.length, 0);
   const draftTrips = trips.filter(
-    (trip) => trip.locations.length === 0 && trip.itineraryVersions.length === 0
+    (trip) => trip.itineraryVersions.length === 0
   );
   const tripsNeedingLocations = trips.filter(
-    (trip) => trip.itineraryVersions.length > 0 && trip.locations.length === 0
+    (trip) => trip.routeStatus === "SUGGESTED"
+  );
+  const tripsWithStaleRoute = trips.filter(
+    (trip) => trip.routeStatus === "STALE"
   );
   const tripsReadyForPrep = trips.filter(
-    (trip) => trip.itineraryVersions.length > 0 && trip.locations.length > 0
+    (trip) => trip.itineraryVersions.length > 0 && trip.routeStatus === "CONFIRMED"
   );
   const nextTrip = upcomingTrips[0] || null;
   const memoriesByYear = await getMemoriesByYear(session.user.id);
@@ -311,15 +314,19 @@ export default async function TripsPage() {
               {
                 title: "2. Review the AI route",
                 text:
-                  tripsNeedingLocations.length > 0
-                    ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} already have AI itinerary suggestions and need route confirmation, not manual stop entry.`
-                    : "Use the AI itinerary to confirm the best route suggestions before the map and local context lock in.",
-                actionHref: tripsNeedingLocations[0]
-                  ? `/ai-trip-planner?tripId=${tripsNeedingLocations[0].id}`
+                  tripsWithStaleRoute.length > 0
+                    ? `${tripsWithStaleRoute.length} trip${tripsWithStaleRoute.length === 1 ? "" : "s"} have a confirmed route that no longer matches the latest itinerary. Review and refresh those first.`
+                    : tripsNeedingLocations.length > 0
+                      ? `${tripsNeedingLocations.length} trip${tripsNeedingLocations.length === 1 ? "" : "s"} already have AI itinerary suggestions and need route confirmation, not manual stop entry.`
+                      : "Use the AI itinerary to confirm the best route suggestions before the map and local context lock in.",
+                actionHref: tripsWithStaleRoute[0]
+                  ? `/trips/${tripsWithStaleRoute[0].id}`
+                  : tripsNeedingLocations[0]
+                    ? `/trips/${tripsNeedingLocations[0].id}`
                   : nextTrip
-                    ? `/ai-trip-planner?tripId=${nextTrip.id}`
+                    ? `/trips/${nextTrip.id}`
                     : "/ai-trip-planner",
-                actionLabel: "Review AI route",
+                actionLabel: tripsWithStaleRoute.length > 0 ? "Refresh route" : "Review AI route",
                 icon: <MapPinned className="size-5" />,
               },
               {
@@ -426,6 +433,7 @@ export default async function TripsPage() {
                       }
                       budgetLabel={activeItinerary?.trip_summary?.budget_range || null}
                       aiReady={trip.itineraryVersions.length > 0}
+                      routeStatus={trip.routeStatus}
                     />
                   );
                 })}

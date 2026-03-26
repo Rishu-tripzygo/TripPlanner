@@ -6,6 +6,8 @@ import { PersistedItinerary } from "@/lib/phase-one-types";
 import { Calendar, Share2, Sparkles } from "lucide-react";
 import Image from "next/image";
 
+export const revalidate = 300;
+
 export default async function SharedTripPage({
   params,
 }: {

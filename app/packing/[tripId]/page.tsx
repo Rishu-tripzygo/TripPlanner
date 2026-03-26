@@ -3,6 +3,7 @@ import PackingListManager from "@/components/packing-list-manager";
 import { prisma } from "@/lib/prisma";
 import { PackingListRecord } from "@/lib/phase-one-types";
 import { generatePackingItems } from "@/lib/packing-list";
+import { getTripAccess } from "@/lib/trip-access";
 
 export default async function PackingPage({
   params,
@@ -16,10 +17,15 @@ export default async function PackingPage({
     return <div className="app-shell px-4 py-20 text-white">Please sign in.</div>;
   }
 
+  const access = await getTripAccess(tripId, session.user.id);
+
+  if (!access) {
+    return <div className="app-shell px-4 py-20 text-white">Trip not found.</div>;
+  }
+
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       packingList: true,

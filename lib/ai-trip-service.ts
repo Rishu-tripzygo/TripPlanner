@@ -6,6 +6,27 @@ import {
 
 export type AIProvider = "gemini" | "openai";
 
+export interface AIProviderAttempt {
+  provider: AIProvider;
+  model: string;
+  status: "success" | "failed";
+  startedAt: string;
+  completedAt: string;
+  durationMs: number;
+  fallbackUsed: boolean;
+  errorMessage?: string;
+}
+
+export class AIProviderPipelineError extends Error {
+  attempts: AIProviderAttempt[];
+
+  constructor(message: string, attempts: AIProviderAttempt[]) {
+    super(message);
+    this.name = "AIProviderPipelineError";
+    this.attempts = attempts;
+  }
+}
+
 const DEFAULT_PROVIDER_ORDER: AIProvider[] = ["openai", "gemini"];
 
 export const itinerarySchema = {
@@ -322,7 +343,7 @@ function hasUsableGeminiKey() {
   return !!key;
 }
 
-function getProviderOrder(): AIProvider[] {
+export function getAIProviderOrder(): AIProvider[] {
   const configuredOrder =
     process.env.AI_PROVIDER_ORDER?.split(",")
       .map((value) => value.trim().toLowerCase())
@@ -438,26 +459,78 @@ async function generateWithGemini(prompt: string, systemPrompt: string) {
   return JSON.parse(rawJson) as AITripPlannerResponse;
 }
 
+function getModelForProvider(provider: AIProvider) {
+  if (provider === "gemini") {
+    return process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  }
+
+  return process.env.OPENAI_MODEL || "gpt-5-mini";
+}
+
+export function getAIProviderAttempts(error: unknown) {
+  if (error instanceof AIProviderPipelineError) {
+    return error.attempts;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "attempts" in error &&
+    Array.isArray((error as { attempts?: unknown[] }).attempts)
+  ) {
+    return (error as { attempts: AIProviderAttempt[] }).attempts;
+  }
+
+  return [];
+}
+
 export async function generateStructuredItinerary(
   prompt: string,
   systemPrompt: string
 ) {
   const errors: string[] = [];
+  const attempts: AIProviderAttempt[] = [];
+  const providers = getAIProviderOrder();
 
-  for (const provider of getProviderOrder()) {
+  for (const [index, provider] of providers.entries()) {
+    const startedAt = new Date();
+    const model = getModelForProvider(provider);
+
     try {
       const itinerary =
         provider === "gemini"
           ? await generateWithGemini(prompt, systemPrompt)
           : await generateWithOpenAI(prompt, systemPrompt);
 
-      return { itinerary, provider };
+      const completedAt = new Date();
+      attempts.push({
+        provider,
+        model,
+        status: "success",
+        startedAt: startedAt.toISOString(),
+        completedAt: completedAt.toISOString(),
+        durationMs: completedAt.getTime() - startedAt.getTime(),
+        fallbackUsed: index > 0,
+      });
+
+      return { itinerary, provider, attempts };
     } catch (error) {
       const message =
         error instanceof Error ? error.message : `Unknown ${provider} error.`;
       errors.push(`${provider}: ${message}`);
+      const completedAt = new Date();
+      attempts.push({
+        provider,
+        model,
+        status: "failed",
+        startedAt: startedAt.toISOString(),
+        completedAt: completedAt.toISOString(),
+        durationMs: completedAt.getTime() - startedAt.getTime(),
+        fallbackUsed: index > 0,
+        errorMessage: message,
+      });
     }
   }
 
-  throw new Error(errors.join(" | "));
+  throw new AIProviderPipelineError(errors.join(" | "), attempts);
 }

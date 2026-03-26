@@ -4,6 +4,7 @@ import {
   extractSuggestedStopsFromItinerary,
   geocodeAddress,
 } from "@/lib/route-suggestions";
+import { buildRouteStateAfterConfirmation } from "@/lib/trip-route-state";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -16,6 +17,18 @@ export async function POST(
   }
 
   const { tripId } = await params;
+  const body = await request.json().catch(() => ({}));
+  const replaceExisting = Boolean(body.replaceExisting);
+  const selectedStops = Array.isArray(body.selectedStops)
+    ? body.selectedStops
+        .filter((value: unknown): value is string => typeof value === "string")
+        .map((value: string) => value.trim())
+        .filter(Boolean)
+    : null;
+  const originLabel =
+    typeof body.originLabel === "string" ? body.originLabel.trim() : undefined;
+  const returnToOrigin =
+    typeof body.returnToOrigin === "boolean" ? body.returnToOrigin : undefined;
 
   const trip = await prisma.trip.findFirst({
     where: { id: tripId, userId: session.user.id },
@@ -39,6 +52,7 @@ export async function POST(
     | undefined;
 
   const suggestions = extractSuggestedStopsFromItinerary(activeItinerary);
+  const routeStops = selectedStops && selectedStops.length > 0 ? selectedStops : suggestions;
 
   if (suggestions.length === 0) {
     return NextResponse.json(
@@ -47,44 +61,124 @@ export async function POST(
     );
   }
 
-  if (trip.locations.length > 0) {
+  if (routeStops.length === 0) {
     return NextResponse.json(
-      { error: "This trip already has confirmed route stops." },
-      { status: 409 }
+      { error: "Choose at least one route stop before confirming the route." },
+      { status: 400 }
     );
   }
 
+  if (trip.locations.length > 0) {
+    if (!replaceExisting) {
+      return NextResponse.json(
+        { error: "This trip already has confirmed route stops." },
+        { status: 409 }
+      );
+    }
+  }
+
   try {
-    const geocoded = await Promise.all(
-      suggestions.map(async (place, index) => {
-        const { lat, lng } = await geocodeAddress(place);
-        return {
+    const destinationContext =
+      activeItinerary?.trip_summary.destination || trip.title || null;
+    const nextOriginLabel =
+      originLabel !== undefined ? originLabel || null : trip.originLabel || null;
+    let nextOriginCoords:
+      | {
+          lat: number;
+          lng: number;
+        }
+      | null = null;
+
+    if (nextOriginLabel) {
+      const { lat, lng } = await geocodeAddress(nextOriginLabel, destinationContext);
+      nextOriginCoords = { lat, lng };
+    }
+
+    const geocoded: Array<{
+      locationTitle: string;
+      lat: number;
+      lng: number;
+      tripId: string;
+      order: number;
+    }> = [];
+    const skippedStops: Array<{ stop: string; reason: string }> = [];
+
+    for (const place of routeStops) {
+      try {
+        const { lat, lng } = await geocodeAddress(place, destinationContext);
+        geocoded.push({
           locationTitle: place,
           lat,
           lng,
           tripId,
-          order: index,
-        };
-      })
-    );
+          order: geocoded.length,
+        });
+      } catch (error) {
+        skippedStops.push({
+          stop: place,
+          reason:
+            error instanceof Error ? error.message : "Failed to geocode route stop.",
+        });
+      }
+    }
 
-    await prisma.location.createMany({
-      data: geocoded,
-    });
+    if (geocoded.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            skippedStops[0]?.reason ||
+            "No AI route suggestions could be mapped for this trip yet.",
+        },
+        { status: 422 }
+      );
+    }
 
-    await prisma.notification.create({
-      data: {
-        userId: session.user.id,
-        type: "ROUTE_CONFIRMED",
-        tripId,
-        message: `AI route suggestions were confirmed for ${trip.title}.`,
-      },
+    await prisma.$transaction(async (tx) => {
+      if (replaceExisting && trip.locations.length > 0) {
+        await tx.location.deleteMany({
+          where: { tripId },
+        });
+      }
+
+      await tx.location.createMany({
+        data: geocoded,
+      });
+
+      await tx.trip.update({
+        where: { id: tripId },
+        data: {
+          ...buildRouteStateAfterConfirmation(trip.itineraryVersions[0]?.id || null),
+          ...(originLabel !== undefined
+            ? {
+                originLabel: nextOriginLabel,
+                originLat: nextOriginCoords?.lat ?? null,
+                originLng: nextOriginCoords?.lng ?? null,
+              }
+            : {}),
+          ...(returnToOrigin !== undefined ? { returnToOrigin } : {}),
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId: session.user.id,
+          type: replaceExisting ? "ROUTE_UPDATED" : "ROUTE_CONFIRMED",
+          tripId,
+          message: replaceExisting
+            ? `The confirmed route was refreshed from the latest AI itinerary for ${trip.title}.`
+            : `AI route suggestions were confirmed for ${trip.title}.`,
+        },
+      });
     });
 
     return NextResponse.json({
       ok: true,
       createdStops: geocoded.length,
-      suggestions,
+      suggestions: routeStops,
+      replacedExisting: replaceExisting,
+      skippedStops,
+      originLabel: nextOriginLabel,
+      returnToOrigin: returnToOrigin ?? trip.returnToOrigin,
     });
   } catch (error) {
     return NextResponse.json(

@@ -60,15 +60,50 @@ export async function getPublicTripCards(
           }
         : undefined,
     },
-    include: {
-      bookmarks: true,
-      reactions: true,
+    select: {
+      id: true,
+      tripId: true,
+      token: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          bookmarks: true,
+          reactions: true,
+        },
+      },
+      ...(viewerId
+        ? {
+            bookmarks: {
+              where: { userId: viewerId },
+              select: { id: true },
+              take: 1,
+            },
+            reactions: {
+              where: { userId: viewerId },
+              select: { id: true },
+              take: 1,
+            },
+          }
+        : {}),
       trip: {
-        include: {
-          locations: true,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          startDate: true,
+          endDate: true,
+          locations: {
+            select: {
+              locationTitle: true,
+            },
+          },
           itineraryVersions: {
             where: { isActive: true },
             take: 1,
+            select: {
+              itineraryData: true,
+            },
           },
           user: {
             select: {
@@ -103,8 +138,8 @@ export async function getPublicTripCards(
       travelStyle: getTripSummaryValue(itineraryData, "travel_style"),
       purpose: getTripSummaryValue(itineraryData, "purpose"),
       stops: share.trip.locations.length,
-      bookmarksCount: share.bookmarks.length,
-      reactionsCount: share.reactions.length,
+      bookmarksCount: share._count.bookmarks,
+      reactionsCount: share._count.reactions,
       author: {
         id: share.trip.user.id,
         name: share.trip.user.name || "Traveler",
@@ -113,10 +148,10 @@ export async function getPublicTripCards(
         location: share.trip.user.location,
       },
       isBookmarked: viewerId
-        ? share.bookmarks.some((bookmark) => bookmark.userId === viewerId)
+        ? "bookmarks" in share && share.bookmarks.length > 0
         : false,
       hasReacted: viewerId
-        ? share.reactions.some((reaction) => reaction.userId === viewerId)
+        ? "reactions" in share && share.reactions.length > 0
         : false,
     };
   });
@@ -131,21 +166,71 @@ export async function getPublicProfile(
       OR: [{ username }, { id: username }],
       isPublicProfile: true,
     },
-    include: {
-      followers: true,
-      following: true,
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      bio: true,
+      location: true,
+      image: true,
+      coverImageUrl: true,
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+      ...(viewerId
+        ? {
+            followers: {
+              where: { followerId: viewerId },
+              select: { id: true },
+              take: 1,
+            },
+          }
+        : {}),
       trips: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          startDate: true,
+          endDate: true,
           locations: true,
           share: {
-            include: {
-              bookmarks: true,
-              reactions: true,
+            select: {
+              id: true,
+              token: true,
+              isPublic: true,
+              _count: {
+                select: {
+                  bookmarks: true,
+                  reactions: true,
+                },
+              },
+              ...(viewerId
+                ? {
+                    bookmarks: {
+                      where: { userId: viewerId },
+                      select: { id: true },
+                      take: 1,
+                    },
+                    reactions: {
+                      where: { userId: viewerId },
+                      select: { id: true },
+                      take: 1,
+                    },
+                  }
+                : {}),
             },
           },
           itineraryVersions: {
             where: { isActive: true },
             take: 1,
+            select: {
+              itineraryData: true,
+            },
           },
         },
       },
@@ -172,8 +257,8 @@ export async function getPublicProfile(
         travelStyle: getTripSummaryValue(itineraryData, "travel_style"),
         purpose: getTripSummaryValue(itineraryData, "purpose"),
         stops: trip.locations.length,
-        bookmarksCount: share.bookmarks.length,
-        reactionsCount: share.reactions.length,
+        bookmarksCount: share._count.bookmarks,
+        reactionsCount: share._count.reactions,
         author: {
           id: user.id,
           name: user.name || "Traveler",
@@ -182,10 +267,10 @@ export async function getPublicProfile(
           location: user.location,
         },
         isBookmarked: viewerId
-          ? share.bookmarks.some((bookmark) => bookmark.userId === viewerId)
+          ? "bookmarks" in share && share.bookmarks.length > 0
           : false,
         hasReacted: viewerId
-          ? share.reactions.some((reaction) => reaction.userId === viewerId)
+          ? "reactions" in share && share.reactions.length > 0
           : false,
       };
     })
@@ -201,10 +286,10 @@ export async function getPublicProfile(
     coverImageUrl: user.coverImageUrl,
     tripsShared: publicTrips.length,
     destinationsVisited: user.trips.reduce((sum, trip) => sum + trip.locations.length, 0),
-    followersCount: user.followers.length,
-    followingCount: user.following.length,
+    followersCount: user._count.followers,
+    followingCount: user._count.following,
     isFollowing: viewerId
-      ? user.followers.some((follow) => follow.followerId === viewerId)
+      ? "followers" in user && user.followers.length > 0
       : false,
     publicTrips,
   };

@@ -102,6 +102,10 @@ export interface PackingItem {
   category: "Clothing" | "Documents" | "Tech" | "Toiletries" | "Medications" | "Misc";
   packed: boolean;
   quantity?: number;
+  essential?: boolean;
+  aiSuggested?: boolean;
+  sharedItem?: boolean;
+  estimatedWeightGrams?: number;
 }
 
 export interface PackingListRecord {
@@ -126,6 +130,18 @@ export interface TripShareRecord {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TripCollaboratorRecord {
+  id: string;
+  tripId: string;
+  userId: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+  role: "OWNER" | "EDITOR" | "VIEWER";
+  isOwner: boolean;
+  createdAt: string;
 }
 
 export interface DocumentRecord {

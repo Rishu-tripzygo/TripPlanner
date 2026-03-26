@@ -198,11 +198,17 @@ export default async function AITripPlannerPage({
       title: true,
       startDate: true,
       endDate: true,
+      routeStatus: true,
       locations: {
         select: {
           locationTitle: true,
         },
         take: 1,
+      },
+      _count: {
+        select: {
+          locations: true,
+        },
       },
     },
   });
@@ -252,6 +258,8 @@ export default async function AITripPlannerPage({
           startDate: trip.startDate.toISOString(),
           endDate: trip.endDate.toISOString(),
           destinationHint: trip.locations[0]?.locationTitle || null,
+          routeStatus: trip.routeStatus,
+          confirmedStopsCount: trip._count.locations,
         }))}
       />
     </div>

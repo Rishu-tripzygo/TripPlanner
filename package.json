@@ -7,7 +7,9 @@
     "postinstall": "prisma generate",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "verify": "npm run build && npm run typecheck"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

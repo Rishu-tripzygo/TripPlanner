@@ -3,6 +3,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { generatePackingItems } from "@/lib/packing-list";
 import { prisma } from "@/lib/prisma";
 import { PackingItem } from "@/lib/phase-one-types";
+import { canEditTrip, getTripAccess } from "@/lib/trip-access";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -15,11 +16,15 @@ export async function GET(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
 
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       packingList: true,
@@ -81,6 +86,7 @@ export async function PUT(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
   const body = await request.json();
   const template = typeof body.template === "string" ? body.template : "Custom";
   const items = Array.isArray(body.items) ? (body.items as PackingItem[]) : null;
@@ -89,16 +95,15 @@ export async function PUT(
     return NextResponse.json({ error: "items are required." }, { status: 400 });
   }
 
-  const trip = await prisma.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: session.user.id,
-    },
-    select: { id: true },
-  });
-
-  if (!trip) {
+  if (!access) {
     return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
+  if (!canEditTrip(access)) {
+    return NextResponse.json(
+      { error: "You can view this packing list, but only editors can change it." },
+      { status: 403 }
+    );
   }
 
   const packingList = await prisma.packingList.upsert({

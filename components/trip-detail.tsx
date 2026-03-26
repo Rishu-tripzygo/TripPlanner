@@ -1,24 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Location, Trip } from "@/app/generated/prisma";
-import CurrencyConverterWidget from "@/components/currency-converter-widget";
 import DestinationNotesPanel from "@/components/destination-notes-panel";
-import Map from "@/components/map";
 import SortableItinerary from "@/components/sortable-itinerary";
-import TripSharePanel from "@/components/trip-share-panel";
 import StatusBadge from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DestinationForecast, PersistedItinerary } from "@/lib/phase-one-types";
+import { formatDistanceKm, getRouteSummary } from "@/lib/route-metrics";
 import { extractSuggestedStopsFromItinerary } from "@/lib/route-suggestions";
 import { cn } from "@/lib/utils";
 import {
   BookOpenText,
   Calendar,
+  CheckSquare,
   CheckCircle2,
   CloudSun,
   Compass,
@@ -30,7 +30,38 @@ import {
   Route,
   Sparkles,
   TriangleAlert,
+  ArrowUp,
+  ArrowDown,
+  Square,
+  Home,
+  Settings2,
 } from "lucide-react";
+
+const Map = dynamic(() => import("@/components/map"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-[linear-gradient(145deg,#f4f8fb,#f7f4ef)] p-8 text-sm text-[#61738C]">
+      Loading map...
+    </div>
+  ),
+});
+
+const CurrencyConverterWidget = dynamic(
+  () => import("@/components/currency-converter-widget"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[220px] animate-pulse rounded-[22px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7]" />
+    ),
+  }
+);
+
+const TripSharePanel = dynamic(() => import("@/components/trip-share-panel"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[240px] animate-pulse rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7]" />
+  ),
+});
 
 export type TripWithLocation = Trip & {
   locations: Location[];
@@ -44,12 +75,20 @@ type PrepCard = {
   icon: typeof Landmark;
 };
 
+type RouteDraftStop = {
+  id: string;
+  label: string;
+  enabled: boolean;
+};
+
 export default function TripDetailClient({
   trip,
   activeItinerary,
+  canManageTrip,
 }: {
   trip: TripWithLocation;
   activeItinerary?: PersistedItinerary | null;
+  canManageTrip: boolean;
 }) {
   const router = useRouter();
   const [forecasts, setForecasts] = useState<DestinationForecast[]>([]);
@@ -57,6 +96,11 @@ export default function TripDetailClient({
   const [isConfirmingRoute, setIsConfirmingRoute] = useState(false);
   const [routeActionError, setRouteActionError] = useState<string | null>(null);
   const [routeActionSuccess, setRouteActionSuccess] = useState<string | null>(null);
+  const [routeDraftStops, setRouteDraftStops] = useState<RouteDraftStop[]>([]);
+  const [originLabelDraft, setOriginLabelDraft] = useState(trip.originLabel || "");
+  const [returnToOriginDraft, setReturnToOriginDraft] = useState(
+    trip.returnToOrigin ?? true
+  );
 
   const status = useMemo(() => {
     const now = new Date();
@@ -76,10 +120,10 @@ export default function TripDetailClient({
   const workflowScore = useMemo(() => {
     const shellReady = 1;
     const itineraryReady = activeItinerary ? 1 : 0;
-    const routeReady = trip.locations.length > 0 ? 1 : 0;
-    const prepReady = activeItinerary && trip.locations.length > 0 ? 1 : 0;
+    const routeReady = trip.routeStatus === "CONFIRMED" ? 1 : 0;
+    const prepReady = activeItinerary && trip.routeStatus === "CONFIRMED" ? 1 : 0;
     return Math.round(((shellReady + itineraryReady + routeReady + prepReady) / 4) * 100);
-  }, [activeItinerary, trip.locations.length]);
+  }, [activeItinerary, trip.routeStatus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,8 +178,8 @@ export default function TripDetailClient({
         key: "route",
         label: "Route",
         icon: Route,
-        complete: trip.locations.length > 0,
-        active: Boolean(activeItinerary) && trip.locations.length === 0,
+        complete: trip.routeStatus === "CONFIRMED",
+        active: Boolean(activeItinerary) && trip.routeStatus !== "CONFIRMED",
         href: `/ai-trip-planner?tripId=${trip.id}`,
       },
       {
@@ -150,8 +194,8 @@ export default function TripDetailClient({
         key: "prepare",
         label: "Prepare",
         icon: Package,
-        complete: Boolean(activeItinerary && trip.locations.length > 0),
-        active: Boolean(activeItinerary && trip.locations.length > 0),
+        complete: Boolean(activeItinerary && trip.routeStatus === "CONFIRMED"),
+        active: Boolean(activeItinerary && trip.routeStatus === "CONFIRMED"),
         href: `/budget/${trip.id}`,
       },
       {
@@ -163,7 +207,7 @@ export default function TripDetailClient({
         href: `/trips/${trip.id}`,
       },
     ],
-    [activeItinerary, trip.id, trip.locations.length, workflowScore]
+    [activeItinerary, trip.id, trip.routeStatus, workflowScore]
   );
 
   const nextAction = useMemo(() => {
@@ -177,13 +221,23 @@ export default function TripDetailClient({
       };
     }
 
-    if (trip.locations.length === 0) {
+    if (trip.routeStatus === "SUGGESTED" || trip.locations.length === 0) {
       return {
         title: "Confirm the AI route suggestions",
         description:
           "Wandrly already has suggested places from the itinerary. Confirm those first so the map, stop count, and prep modules can follow the real route.",
-        href: `/ai-trip-planner?tripId=${trip.id}`,
-        label: "Review route",
+        href: `/trips/${trip.id}`,
+        label: "Confirm AI route",
+      };
+    }
+
+    if (trip.routeStatus === "STALE") {
+      return {
+        title: "Refresh the confirmed route",
+        description:
+          "The itinerary changed after the route was confirmed. Review the new AI route suggestions and refresh the mapped stops so the workspace matches the latest plan.",
+        href: `/trips/${trip.id}`,
+        label: "Refresh route",
       };
     }
 
@@ -194,7 +248,7 @@ export default function TripDetailClient({
       href: `/budget/${trip.id}`,
       label: "Continue planning",
     };
-  }, [activeItinerary, trip.id, trip.locations.length]);
+  }, [activeItinerary, trip.id, trip.locations.length, trip.routeStatus]);
 
   const prepCards = useMemo<PrepCard[]>(
     () => [
@@ -210,9 +264,9 @@ export default function TripDetailClient({
       {
         title: "Packing",
         href: `/packing/${trip.id}`,
-        status: activeItinerary && trip.locations.length > 0 ? "Ready" : "Waiting on route",
+        status: activeItinerary && trip.routeStatus === "CONFIRMED" ? "Ready" : "Waiting on route",
         note:
-          activeItinerary && trip.locations.length > 0
+          activeItinerary && trip.routeStatus === "CONFIRMED"
             ? "Build the checklist for this itinerary."
             : "Works best after itinerary and stops are confirmed.",
         icon: Package,
@@ -232,17 +286,85 @@ export default function TripDetailClient({
         icon: BookOpenText,
       },
     ],
-    [activeItinerary, trip.id, trip.locations.length]
+    [activeItinerary, trip.id, trip.routeStatus]
   );
 
   const weatherSummary = forecasts[0];
   const primaryDestination =
     trip.locations[0]?.locationTitle || activeItinerary?.trip_summary.destination || "Destination";
+  const routeSummary = useMemo(
+    () =>
+      getRouteSummary({
+        locations: trip.locations,
+        origin:
+          trip.originLabel && trip.originLat !== null && trip.originLng !== null
+            ? {
+                label: trip.originLabel,
+                lat: trip.originLat,
+                lng: trip.originLng,
+              }
+            : null,
+        returnToOrigin: trip.returnToOrigin,
+      }),
+    [trip.locations, trip.originLabel, trip.originLat, trip.originLng, trip.returnToOrigin]
+  );
   const suggestedStops = useMemo(
     () => extractSuggestedStopsFromItinerary(activeItinerary).slice(0, 8),
     [activeItinerary]
   );
-  const routeNeedsConfirmation = Boolean(activeItinerary) && trip.locations.length === 0;
+  const routeNeedsConfirmation = Boolean(activeItinerary) && trip.routeStatus === "SUGGESTED";
+  const routeNeedsRefresh = Boolean(activeItinerary) && trip.routeStatus === "STALE";
+  const selectedRouteStops = useMemo(
+    () =>
+      routeDraftStops
+        .filter((stop) => stop.enabled)
+        .map((stop) => stop.label.trim())
+        .filter(Boolean),
+    [routeDraftStops]
+  );
+
+  useEffect(() => {
+    setRouteDraftStops(
+      suggestedStops.map((stop, index) => ({
+        id: `${index}-${stop}`,
+        label: stop,
+        enabled: true,
+      }))
+    );
+  }, [suggestedStops]);
+
+  useEffect(() => {
+    setOriginLabelDraft(trip.originLabel || "");
+    setReturnToOriginDraft(trip.returnToOrigin ?? true);
+  }, [trip.id, trip.originLabel, trip.returnToOrigin]);
+
+  function updateRouteDraftStop(id: string, nextLabel: string) {
+    setRouteDraftStops((current) =>
+      current.map((stop) => (stop.id === id ? { ...stop, label: nextLabel } : stop))
+    );
+  }
+
+  function toggleRouteDraftStop(id: string) {
+    setRouteDraftStops((current) =>
+      current.map((stop) => (stop.id === id ? { ...stop, enabled: !stop.enabled } : stop))
+    );
+  }
+
+  function moveRouteDraftStop(id: string, direction: -1 | 1) {
+    setRouteDraftStops((current) => {
+      const index = current.findIndex((stop) => stop.id === id);
+      const nextIndex = index + direction;
+
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) {
+        return current;
+      }
+
+      const copy = [...current];
+      const [item] = copy.splice(index, 1);
+      copy.splice(nextIndex, 0, item);
+      return copy;
+    });
+  }
 
   async function handleConfirmRoute() {
     setIsConfirmingRoute(true);
@@ -250,8 +372,19 @@ export default function TripDetailClient({
     setRouteActionSuccess(null);
 
     try {
+      if (selectedRouteStops.length === 0) {
+        throw new Error("Choose at least one route stop before confirming the route.");
+      }
+
       const response = await fetch(`/api/trips/${trip.id}/confirm-route`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          replaceExisting: routeNeedsRefresh,
+          selectedStops: selectedRouteStops,
+          originLabel: originLabelDraft.trim(),
+          returnToOrigin: returnToOriginDraft,
+        }),
       });
       const data = await response.json();
 
@@ -259,7 +392,13 @@ export default function TripDetailClient({
         throw new Error(data.error || "Failed to confirm AI route suggestions.");
       }
 
-      setRouteActionSuccess("AI route confirmed. The map and trip stops are now synced.");
+      setRouteActionSuccess(
+        data.skippedStops?.length
+          ? `Route saved with ${data.createdStops} mapped stop${data.createdStops === 1 ? "" : "s"}. ${data.skippedStops.length} stop${data.skippedStops.length === 1 ? "" : "s"} could not be mapped and were skipped.`
+          : routeNeedsRefresh
+            ? "Confirmed route refreshed. The map and trip stops now match the latest itinerary."
+            : "AI route confirmed. The map and trip stops are now synced."
+      );
       router.refresh();
     } catch (error) {
       setRouteActionError(
@@ -380,13 +519,19 @@ export default function TripDetailClient({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            {routeNeedsConfirmation && suggestedStops.length > 0 ? (
+            {(routeNeedsConfirmation || routeNeedsRefresh) && suggestedStops.length > 0 ? (
               <Button
                 className="w-full rounded-full px-7 sm:w-auto"
                 onClick={handleConfirmRoute}
-                disabled={isConfirmingRoute}
+                disabled={isConfirmingRoute || selectedRouteStops.length === 0}
               >
-                {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+                {isConfirmingRoute
+                  ? routeNeedsRefresh
+                    ? "Refreshing route..."
+                    : "Confirming route..."
+                  : routeNeedsRefresh
+                    ? "Refresh confirmed route"
+                    : "Confirm AI route"}
               </Button>
             ) : (
               <Link href={nextAction.href}>
@@ -396,6 +541,11 @@ export default function TripDetailClient({
             <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
               <Button variant="outline" className="w-full rounded-full px-7 sm:w-auto">
                 Refine with AI
+              </Button>
+            </Link>
+            <Link href={`/trips/${trip.id}/settings`}>
+              <Button variant="outline" className="w-full rounded-full px-7 sm:w-auto">
+                Trip settings
               </Button>
             </Link>
           </div>
@@ -410,17 +560,21 @@ export default function TripDetailClient({
 
       <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
-          {routeNeedsConfirmation ? (
+          {routeNeedsConfirmation || routeNeedsRefresh ? (
             <Card className="border-[rgba(2,71,133,0.08)] bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(240,247,255,0.92))]">
               <CardContent className="space-y-5 p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="section-label">Route review</p>
                     <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#024785]">
-                      The itinerary already contains route suggestions
+                      {routeNeedsRefresh
+                        ? "The confirmed route is out of sync with the latest itinerary"
+                        : "The itinerary already contains route suggestions"}
                     </h2>
                     <p className="mt-3 text-sm leading-8 text-[#61738C]">
-                      You do not need to invent the stops manually. Wandrly extracted likely route stops from the AI itinerary. Confirm them once and the map, stop count, and prep flow will update automatically.
+                      {routeNeedsRefresh
+                        ? "You already have confirmed stops, but the active itinerary changed after that route was saved. Refresh the route once to align the map, stop count, and prep flow with the latest AI plan."
+                        : "You do not need to invent the stops manually. Wandrly extracted likely route stops from the AI itinerary. Confirm them once and the map, stop count, and prep flow will update automatically."}
                     </p>
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
@@ -428,9 +582,15 @@ export default function TripDetailClient({
                       <Button
                         className="w-full rounded-full px-6 sm:w-auto"
                         onClick={handleConfirmRoute}
-                        disabled={isConfirmingRoute}
+                        disabled={isConfirmingRoute || selectedRouteStops.length === 0}
                       >
-                        {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+                        {isConfirmingRoute
+                          ? routeNeedsRefresh
+                            ? "Refreshing route..."
+                            : "Confirming route..."
+                          : routeNeedsRefresh
+                            ? "Refresh confirmed route"
+                            : "Confirm AI route"}
                       </Button>
                     ) : null}
                     <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
@@ -440,17 +600,18 @@ export default function TripDetailClient({
                     </Link>
                   </div>
                 </div>
-                {suggestedStops.length > 0 ? (
-                  <div className="scroll-row sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
-                    {suggestedStops.map((stop) => (
-                      <span
-                        key={stop}
-                        className="rounded-full border border-[#14518b]/10 bg-white px-3 py-1.5 text-sm text-[#46617c]"
-                      >
-                        {stop}
-                      </span>
-                    ))}
-                  </div>
+                {routeDraftStops.length > 0 ? (
+                  <RouteReviewEditor
+                    stops={routeDraftStops}
+                    selectedCount={selectedRouteStops.length}
+                    originLabel={originLabelDraft}
+                    returnToOrigin={returnToOriginDraft}
+                    onOriginChange={setOriginLabelDraft}
+                    onReturnToOriginChange={setReturnToOriginDraft}
+                    onToggleStop={toggleRouteDraftStop}
+                    onUpdateStop={updateRouteDraftStop}
+                    onMoveStop={moveRouteDraftStop}
+                  />
                 ) : (
                   <div className="rounded-[18px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] px-4 py-4 text-sm leading-7 text-[#61738C]">
                     This itinerary does not expose clear route stops yet. Open the planner and refine the itinerary first.
@@ -608,14 +769,20 @@ export default function TripDetailClient({
                     Confirm the stops on the actual route
                   </h2>
                 </div>
-                {routeNeedsConfirmation && suggestedStops.length > 0 ? (
+                {routeNeedsConfirmation || routeNeedsRefresh ? (
                   <Button
                     className="w-full rounded-full sm:w-auto"
                     onClick={handleConfirmRoute}
-                    disabled={isConfirmingRoute}
+                    disabled={isConfirmingRoute || selectedRouteStops.length === 0}
                   >
                     <Route className="size-4" />
-                    {isConfirmingRoute ? "Confirming..." : "Confirm suggested stops"}
+                    {isConfirmingRoute
+                      ? routeNeedsRefresh
+                        ? "Refreshing..."
+                        : "Confirming..."
+                      : routeNeedsRefresh
+                        ? "Refresh suggested stops"
+                        : "Confirm suggested stops"}
                   </Button>
                 ) : (
                   <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
@@ -632,11 +799,11 @@ export default function TripDetailClient({
               ) : (
                 <div className="space-y-4 rounded-[22px] border border-dashed border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] p-6">
                   <p className="text-sm leading-7 text-[#61738C]">
-                    No confirmed route stops yet. Start by reviewing the AI suggestions above, then confirm them once so the route becomes the real map source for this trip.
+                    No confirmed route stops yet. Review the AI suggestions above, trim or reorder them if needed, and confirm the route once so the map becomes the real route source for this trip.
                   </p>
-                  {suggestedStops.length > 0 ? (
+                  {selectedRouteStops.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {suggestedStops.map((stop) => (
+                      {selectedRouteStops.map((stop) => (
                         <span
                           key={stop}
                           className="rounded-full border border-[#14518b]/10 bg-white px-3 py-1.5 text-sm text-[#46617c]"
@@ -692,19 +859,35 @@ export default function TripDetailClient({
 
                 <div className="h-[320px] overflow-hidden border-y border-[rgba(2,71,133,0.08)] sm:h-[420px]">
                   {trip.locations.length > 0 ? (
-                    <Map itineraries={trip.locations} />
+                    <Map
+                      itineraries={trip.locations}
+                      origin={
+                        trip.originLabel && trip.originLat !== null && trip.originLng !== null
+                          ? {
+                              label: trip.originLabel,
+                              lat: trip.originLat,
+                              lng: trip.originLng,
+                            }
+                          : null
+                      }
+                      returnToOrigin={trip.returnToOrigin}
+                    />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-4 bg-[linear-gradient(145deg,#f4f8fb,#f7f4ef)] p-8 text-center">
                       <MapPinned className="size-10 text-[#14518b]" />
                       <div>
-                        <p className="text-lg font-semibold text-[#1A1C1B]">Confirm AI route suggestions</p>
+                        <p className="text-lg font-semibold text-[#1A1C1B]">
+                          {routeNeedsRefresh ? "Refresh the confirmed route" : "Confirm AI route suggestions"}
+                        </p>
                         <p className="mt-2 max-w-sm text-sm leading-7 text-[#61738C]">
-                          The map turns on once route stops are confirmed. Start from the AI itinerary suggestions instead of entering destinations manually.
+                          {routeNeedsRefresh
+                            ? "The map is still showing the older confirmed route. Refresh it from the latest itinerary suggestions to bring the workspace back into sync."
+                            : "The map turns on once route stops are confirmed. Add your home base if you want the line to start there, move through the trip stops, and return home."}
                         </p>
                       </div>
-                      {suggestedStops.length > 0 ? (
+                      {selectedRouteStops.length > 0 ? (
                         <div className="scroll-row max-w-md justify-center sm:flex sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
-                          {suggestedStops.slice(0, 5).map((stop) => (
+                          {selectedRouteStops.slice(0, 5).map((stop) => (
                             <span
                               key={stop}
                               className="rounded-full border border-[#14518b]/10 bg-white px-3 py-1.5 text-sm text-[#46617c]"
@@ -714,13 +897,19 @@ export default function TripDetailClient({
                           ))}
                         </div>
                       ) : null}
-                      {suggestedStops.length > 0 ? (
+                      {selectedRouteStops.length > 0 ? (
                         <Button
                           className="w-full rounded-full sm:w-auto"
                           onClick={handleConfirmRoute}
-                          disabled={isConfirmingRoute}
+                          disabled={isConfirmingRoute || selectedRouteStops.length === 0}
                         >
-                          {isConfirmingRoute ? "Confirming route..." : "Confirm AI route"}
+                          {isConfirmingRoute
+                            ? routeNeedsRefresh
+                              ? "Refreshing route..."
+                              : "Confirming route..."
+                            : routeNeedsRefresh
+                              ? "Refresh confirmed route"
+                              : "Confirm AI route"}
                         </Button>
                       ) : (
                         <Link href={`/ai-trip-planner?tripId=${trip.id}`}>
@@ -738,6 +927,68 @@ export default function TripDetailClient({
                 </div>
 
                 <div className="grid gap-4 px-6 pb-6">
+                  {trip.locations.length > 1 ? (
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <InfoTile
+                        label="Approx. route distance"
+                        value={formatDistanceKm(routeSummary.totalDistanceKm)}
+                        note="Straight-line estimate across the saved route order."
+                      />
+                      <InfoTile
+                        label="Longest leg"
+                        value={formatDistanceKm(routeSummary.longestSegmentKm)}
+                        note="Useful for spotting an awkward jump in the current route."
+                      />
+                      <InfoTile
+                        label="Route legs"
+                        value={`${routeSummary.segments.length}`}
+                        note={
+                          trip.returnToOrigin && trip.originLabel
+                            ? "Includes the return-to-home leg."
+                            : "Leg count reflects the current saved route."
+                        }
+                      />
+                    </div>
+                  ) : null}
+
+                  {routeSummary.segments.length > 0 ? (
+                    <div className="rounded-[24px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] p-5">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="section-label">Route legs</p>
+                          <h3 className="mt-2 text-xl font-semibold text-[#1A1C1B]">
+                            Read the trip stop by stop
+                          </h3>
+                        </div>
+                        <div className="rounded-full border border-[#14518b]/10 bg-white px-3 py-1.5 text-xs uppercase tracking-[0.16em] text-[#61738C]">
+                          Approximate distances
+                        </div>
+                      </div>
+                      <div className="mt-5 grid gap-3">
+                        {routeSummary.segments.map((segment, index) => (
+                          <div
+                            key={segment.id}
+                            className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-white px-4 py-4"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">
+                                  Leg {index + 1}
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-[#1A1C1B]">
+                                  {segment.from.label} to {segment.to.label}
+                                </p>
+                              </div>
+                              <div className="rounded-full border border-[#14518b]/10 bg-[#eef4fb] px-3 py-1.5 text-sm text-[#14518b]">
+                                {formatDistanceKm(segment.distanceKm)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="grid gap-4 sm:grid-cols-3">
                     <InsightCard
                       icon={CloudSun}
@@ -861,6 +1112,18 @@ export default function TripDetailClient({
                 Keep this secondary until the route and prep feel solid. Then publish a polished version or invite collaborators.
               </p>
             </div>
+            {canManageTrip ? (
+              <Link href={`/trips/${trip.id}/settings`}>
+                <Button variant="outline" className="rounded-full">
+                  <Settings2 className="size-4" />
+                  Open settings
+                </Button>
+              </Link>
+            ) : (
+              <div className="rounded-[18px] border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] px-4 py-3 text-sm leading-7 text-[#61738C]">
+                You can collaborate on this trip, but only the owner can change trip settings and public sharing.
+              </div>
+            )}
             <TripSharePanel tripId={trip.id} tripTitle={trip.title} />
           </CardContent>
         </Card>
@@ -903,6 +1166,123 @@ function InsightCard({
       </div>
       <p className="mt-4 text-sm font-semibold text-[#1A1C1B]">{title}</p>
       <p className="mt-2 text-sm leading-7 text-[#61738C]">{description}</p>
+    </div>
+  );
+}
+
+function RouteReviewEditor({
+  stops,
+  selectedCount,
+  originLabel,
+  returnToOrigin,
+  onOriginChange,
+  onReturnToOriginChange,
+  onToggleStop,
+  onUpdateStop,
+  onMoveStop,
+}: {
+  stops: RouteDraftStop[];
+  selectedCount: number;
+  originLabel: string;
+  returnToOrigin: boolean;
+  onOriginChange: (value: string) => void;
+  onReturnToOriginChange: (value: boolean) => void;
+  onToggleStop: (id: string) => void;
+  onUpdateStop: (id: string, value: string) => void;
+  onMoveStop: (id: string, direction: -1 | 1) => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-white p-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#46617c]">
+            <Home className="size-4 text-[#14518b]" />
+            Start from home base
+          </label>
+          <input
+            value={originLabel}
+            onChange={(event) => onOriginChange(event.target.value)}
+            placeholder="Optional: Bengaluru home, Kochi Airport, Hotel pickup"
+            className="mt-3 w-full rounded-[16px] border border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] px-4 py-3 text-sm text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10"
+          />
+          <p className="mt-2 text-xs leading-6 text-[#7a8ea8]">
+            If added, the map can start from home, move through the trip stops, and optionally return there.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onReturnToOriginChange(!returnToOrigin)}
+          className="flex items-start gap-3 rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-white p-4 text-left transition hover:border-[#14518b]/18"
+        >
+          <div className="mt-0.5 text-[#14518b]">
+            {returnToOrigin ? <CheckSquare className="size-5" /> : <Square className="size-5" />}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-[#1A1C1B]">Return back home at the end</p>
+            <p className="mt-2 text-xs leading-6 text-[#7a8ea8]">
+              Keep this on if you want the displayed route to loop back to the home base after the last confirmed stop.
+            </p>
+          </div>
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#7a8ea8]">
+          {selectedCount} selected stop{selectedCount === 1 ? "" : "s"}
+        </p>
+        <p className="text-sm text-[#61738C]">
+          Rename, remove, or reorder the route before confirming it.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {stops.map((stop, index) => (
+          <div
+            key={stop.id}
+            className="grid gap-3 rounded-[20px] border border-[rgba(2,71,133,0.08)] bg-white p-4 lg:grid-cols-[auto,1fr,auto]"
+          >
+            <button
+              type="button"
+              onClick={() => onToggleStop(stop.id)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#14518b]"
+            >
+              {stop.enabled ? <CheckSquare className="size-5" /> : <Square className="size-5" />}
+              Use
+            </button>
+
+            <input
+              value={stop.label}
+              onChange={(event) => onUpdateStop(stop.id, event.target.value)}
+              className={cn(
+                "w-full rounded-[16px] border px-4 py-3 text-sm focus:border-[#14518b]/30 focus:ring-2 focus:ring-[#14518b]/10",
+                stop.enabled
+                  ? "border-[rgba(2,71,133,0.12)] bg-[#FAF9F7] text-[#1A1C1B]"
+                  : "border-[rgba(2,71,133,0.08)] bg-[#F6F4EF] text-[#7a8ea8]"
+              )}
+            />
+
+            <div className="flex items-center gap-2 lg:justify-end">
+              <button
+                type="button"
+                onClick={() => onMoveStop(stop.id, -1)}
+                disabled={index === 0}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] text-[#14518b] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ArrowUp className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMoveStop(stop.id, 1)}
+                disabled={index === stops.length - 1}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-[rgba(2,71,133,0.08)] bg-[#FAF9F7] text-[#14518b] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ArrowDown className="size-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

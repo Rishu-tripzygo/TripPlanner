@@ -1,8 +1,15 @@
 import { auth } from "@/auth";
 import { Prisma } from "@/app/generated/prisma/client";
-import { buildRefinementPrompt, generateStructuredItinerary } from "@/lib/ai-trip-service";
+import {
+  buildRefinementPrompt,
+  getAIProviderAttempts,
+  getAIProviderOrder,
+  generateStructuredItinerary,
+} from "@/lib/ai-trip-service";
+import { createGenerationRequest, updateGenerationRequest } from "@/lib/generation-requests";
 import { normalizeItineraryForStorage, serializeVersionRecord } from "@/lib/itinerary-utils";
 import { prisma } from "@/lib/prisma";
+import { buildRouteStateForActiveVersion } from "@/lib/trip-route-state";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -45,15 +52,45 @@ export async function POST(
     orderBy: { versionNumber: "desc" },
     select: { versionNumber: true },
   });
+  const confirmedLocationCount = await prisma.location.count({
+    where: { tripId: version.tripId },
+  });
 
   const systemPrompt =
     "You are an expert travel planning assistant. Update the existing itinerary with precision, preserve unaffected sections, and keep the response practical, elegant, and valid JSON only.";
+  const promptSnapshot = buildRefinementPrompt(version.itineraryData as never, instruction);
+  const generationRequest = await createGenerationRequest({
+    userId,
+    tripId: version.tripId,
+    requestType: "REFINE",
+    providerOrder: getAIProviderOrder(),
+    requestPayload: {
+      itineraryVersionId: version.id,
+      instruction,
+    },
+    promptSnapshot,
+  });
 
   try {
-    const { itinerary, provider } = await generateStructuredItinerary(
-      buildRefinementPrompt(version.itineraryData as never, instruction),
+    await updateGenerationRequest(generationRequest.id, {
+      status: "GENERATING",
+      startedAt: new Date(),
+    });
+
+    const { itinerary, provider, attempts } = await generateStructuredItinerary(
+      promptSnapshot,
       systemPrompt
     );
+
+    await updateGenerationRequest(generationRequest.id, {
+      status: "FORMATTING",
+      providerUsed: provider,
+      attemptLog: attempts,
+      resultMeta: {
+        destination: itinerary.trip_summary.destination,
+        durationDays: itinerary.trip_summary.duration_days,
+      },
+    });
 
     const normalized = normalizeItineraryForStorage(itinerary, {
       destination: itinerary.trip_summary.destination,
@@ -66,6 +103,10 @@ export async function POST(
       hotelCategory: "",
       travelDates: version.trip.startDate.toISOString(),
       tripId: version.tripId,
+    });
+
+    await updateGenerationRequest(generationRequest.id, {
+      status: "SAVING",
     });
 
     const created = await prisma.$transaction(async (tx) => {
@@ -89,10 +130,29 @@ export async function POST(
           tripId: version.tripId,
           versionNumber: (latestVersion?.versionNumber || 0) + 1,
           sourceProvider: provider,
-          sourcePrompt: instruction,
+          sourcePrompt: promptSnapshot,
           title: `Refined: ${version.title || itinerary.trip_summary.destination}`,
           itineraryData: normalized as unknown as Prisma.InputJsonValue,
           isActive: true,
+        },
+      });
+
+      const updatedTrip = await tx.trip.update({
+        where: { id: version.tripId },
+        data: buildRouteStateForActiveVersion({
+          itinerary: normalized,
+          activeVersionId: nextVersion.id,
+          confirmedLocationCount,
+          currentRouteSourceVersionId: version.trip.routeSourceVersionId || null,
+        }),
+        select: {
+          id: true,
+          routeStatus: true,
+          _count: {
+            select: {
+              locations: true,
+            },
+          },
         },
       });
 
@@ -109,11 +169,28 @@ export async function POST(
       return {
         nextVersion,
         assistantMessage,
+        updatedTrip,
       };
+    });
+
+    await updateGenerationRequest(generationRequest.id, {
+      status: "COMPLETED",
+      tripId: version.tripId,
+      providerUsed: provider,
+      completedAt: new Date(),
+      resultMeta: {
+        itineraryVersionId: created.nextVersion.id,
+        previousVersionId: version.id,
+      },
     });
 
     return NextResponse.json({
       version: serializeVersionRecord(created.nextVersion),
+      trip: {
+        id: created.updatedTrip.id,
+        routeStatus: created.updatedTrip.routeStatus,
+        confirmedStopsCount: created.updatedTrip._count.locations,
+      },
       assistantMessage: {
         id: created.assistantMessage.id,
         role: created.assistantMessage.role,
@@ -123,6 +200,13 @@ export async function POST(
       },
     });
   } catch (error) {
+    await updateGenerationRequest(generationRequest.id, {
+      status: "FAILED",
+      errorMessage: error instanceof Error ? error.message : "Unknown AI provider error.",
+      attemptLog: getAIProviderAttempts(error),
+      completedAt: new Date(),
+    });
+
     return NextResponse.json(
       {
         error: "Failed to refine itinerary.",

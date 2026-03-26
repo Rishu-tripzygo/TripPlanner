@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { canEditTrip, getTripAccess } from "@/lib/trip-access";
 import { NextResponse } from "next/server";
 
 function serializeEntry(entry: {
@@ -33,10 +34,15 @@ export async function GET(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
+
+  if (!access) {
+    return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      userId: session.user.id,
     },
     include: {
       journalEntries: {
@@ -62,6 +68,7 @@ export async function POST(
   }
 
   const { tripId } = await params;
+  const access = await getTripAccess(tripId, session.user.id);
   const body = await request.json();
   const day = Number(body.day);
   const content = typeof body.content === "string" ? body.content.trim() : "";
@@ -73,16 +80,15 @@ export async function POST(
     return NextResponse.json({ error: "A valid day is required." }, { status: 400 });
   }
 
-  const trip = await prisma.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: session.user.id,
-    },
-    select: { id: true },
-  });
-
-  if (!trip) {
+  if (!access) {
     return NextResponse.json({ error: "Trip not found." }, { status: 404 });
+  }
+
+  if (!canEditTrip(access)) {
+    return NextResponse.json(
+      { error: "You can read this journal, but only editors can save entries." },
+      { status: 403 }
+    );
   }
 
   const entry = await prisma.journalEntry.upsert({

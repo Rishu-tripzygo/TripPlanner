@@ -16,6 +16,7 @@ import {
   PersistedItinerary,
   RefinementMessage,
 } from "@/lib/phase-one-types";
+import type { TripRouteStatus } from "@/lib/trip-route-state";
 import { cn } from "@/lib/utils";
 import {
   BedDouble,
@@ -39,6 +40,8 @@ interface PlannerTripOption {
   startDate: string;
   endDate: string;
   destinationHint?: string | null;
+  routeStatus?: TripRouteStatus | null;
+  confirmedStopsCount?: number;
 }
 
 interface CompletedTripPayload {
@@ -47,6 +50,8 @@ interface CompletedTripPayload {
   startDate: string;
   endDate: string;
   wasAutoCreated: boolean;
+  routeStatus: TripRouteStatus;
+  confirmedStopsCount: number;
 }
 
 interface AITripPlannerProps {
@@ -56,6 +61,7 @@ interface AITripPlannerProps {
 }
 
 type StreamEvent =
+  | { type: "request"; requestId: string }
   | { type: "status"; stage: string; message: string }
   | { type: "overview_chunk"; text: string }
   | { type: "complete"; version: ItineraryVersionRecord; trip: CompletedTripPayload }
@@ -77,6 +83,83 @@ function formatTripWindow(trip: PlannerTripOption) {
   return `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(
     trip.endDate
   ).toLocaleDateString()}`;
+}
+
+function getRouteStatusTone(routeStatus?: TripRouteStatus | null) {
+  switch (routeStatus) {
+    case "CONFIRMED":
+      return "text-[#0f7a54]";
+    case "STALE":
+      return "text-[#b26a15]";
+    case "SUGGESTED":
+      return "text-[#14518b]";
+    default:
+      return "text-[#61738C]";
+  }
+}
+
+function getRouteStatusLabel(routeStatus?: TripRouteStatus | null) {
+  switch (routeStatus) {
+    case "CONFIRMED":
+      return "Route confirmed";
+    case "STALE":
+      return "Route needs refresh";
+    case "SUGGESTED":
+      return "Route suggestions ready";
+    default:
+      return "Route not started";
+  }
+}
+
+function getNextWorkspaceStep(
+  trip: CompletedTripPayload | PlannerTripOption | null,
+  wasAutoCreated?: boolean
+) {
+  if (!trip) return null;
+  const stateEyebrow =
+    typeof wasAutoCreated === "boolean"
+      ? wasAutoCreated
+        ? "Trip created"
+        : "Itinerary updated"
+      : "Current trip";
+
+  if (trip.routeStatus === "SUGGESTED") {
+    return {
+      eyebrow: stateEyebrow,
+      title: "Review and confirm the AI route next",
+      description:
+        "Your itinerary is saved, but the route is still in suggestion mode. Open the workspace to review stops, adjust them if needed, and confirm the route on the map.",
+      label: "Review Route in Workspace",
+    };
+  }
+
+  if (trip.routeStatus === "STALE") {
+    return {
+      eyebrow: "Route out of sync",
+      title: "Refresh the confirmed route before you keep planning",
+      description:
+        "This new itinerary version changed the suggested stops. Open the workspace to review the updated route, refresh it, and keep the map aligned with the latest plan.",
+      label: "Refresh Route in Workspace",
+    };
+  }
+
+  if (trip.routeStatus === "CONFIRMED") {
+    return {
+      eyebrow: stateEyebrow,
+      title: "Your route is already confirmed. Move into prep.",
+      description:
+        "The itinerary is saved and the route is still confirmed. Open the workspace to continue with budget, documents, packing, and final trip prep.",
+      label: "Continue in Workspace",
+    };
+  }
+
+  return {
+    eyebrow: stateEyebrow,
+    title: "Open the workspace to keep shaping this trip",
+    description:
+      "Your itinerary is saved. Open the workspace to review route suggestions, add context, and move the trip into the next planning step.",
+    label: "Open Workspace",
+  };
 }
 
 function destinationImage(destination?: string) {
@@ -220,6 +303,7 @@ export default function AITripPlanner({
   const [refinePrompt, setRefinePrompt] = useState("");
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const [streamingOverview, setStreamingOverview] = useState("");
+  const [generationRequestId, setGenerationRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function updateField<K extends keyof AITripPlannerRequest>(
@@ -250,6 +334,56 @@ export default function AITripPlanner({
     }
     if (form.interests.length === 0) return "Select at least one interest.";
     return null;
+  }
+
+  function handleStartNewBrief() {
+    setPlannerMode("autocreate");
+    setSelectedTripId("");
+    setForm({ ...emptyForm });
+    setResult(null);
+    setVersions([]);
+    setMessages([]);
+    setSelectedVersionId(null);
+    setProviderLabel(null);
+    setLastSavedTrip(null);
+    setHistoryOpen(false);
+    setRefineOpen(false);
+    setRefinePrompt("");
+    setStreamStatus(null);
+    setStreamingOverview("");
+    setGenerationRequestId(null);
+    setError(null);
+    setAdvancedOpen(false);
+  }
+
+  function syncTripRouteState(
+    tripId: string,
+    routeState: {
+      routeStatus: TripRouteStatus;
+      confirmedStopsCount: number;
+    }
+  ) {
+    setTripOptions((current) =>
+      current.map((trip) =>
+        trip.id === tripId
+          ? {
+              ...trip,
+              routeStatus: routeState.routeStatus,
+              confirmedStopsCount: routeState.confirmedStopsCount,
+            }
+          : trip
+      )
+    );
+
+    setLastSavedTrip((current) =>
+      current && current.id === tripId
+        ? {
+            ...current,
+            routeStatus: routeState.routeStatus,
+            confirmedStopsCount: routeState.confirmedStopsCount,
+          }
+        : current
+    );
   }
 
   async function loadVersions(tripId: string) {
@@ -340,7 +474,9 @@ export default function AITripPlanner({
         if (!line.trim()) continue;
         const event = JSON.parse(line) as StreamEvent;
 
-        if (event.type === "status") {
+        if (event.type === "request") {
+          setGenerationRequestId(event.requestId);
+        } else if (event.type === "status") {
           setStreamStatus(event.message);
         } else if (event.type === "overview_chunk") {
           setStreamingOverview((current) => current + event.text);
@@ -372,6 +508,7 @@ export default function AITripPlanner({
     setIsLoading(true);
     setStreamStatus("Designing your itinerary...");
     setStreamingOverview("");
+    setGenerationRequestId(null);
 
     try {
       const { version: savedVersion, trip } = await submitPlanner();
@@ -390,6 +527,8 @@ export default function AITripPlanner({
                   startDate: trip.startDate,
                   endDate: trip.endDate,
                   destinationHint: form.destination,
+                  routeStatus: trip.routeStatus,
+                  confirmedStopsCount: trip.confirmedStopsCount,
                 }
               : item
           );
@@ -401,6 +540,8 @@ export default function AITripPlanner({
             startDate: trip.startDate,
             endDate: trip.endDate,
             destinationHint: form.destination,
+            routeStatus: trip.routeStatus,
+            confirmedStopsCount: trip.confirmedStopsCount,
           },
           ...current,
         ];
@@ -439,12 +580,12 @@ export default function AITripPlanner({
         body: JSON.stringify({ setActive: true }),
       });
 
-      const updated = await response.json();
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(updated.error || "Failed to restore itinerary version.");
+        throw new Error(data.error || "Failed to restore itinerary version.");
       }
 
-      const nextVersion = updated as ItineraryVersionRecord;
+      const nextVersion = data.version as ItineraryVersionRecord;
       setVersions((current) =>
         current.map((version) =>
           version.id === nextVersion.id ? nextVersion : { ...version, isActive: false }
@@ -453,6 +594,12 @@ export default function AITripPlanner({
       setSelectedVersionId(nextVersion.id);
       setProviderLabel(nextVersion.sourceProvider);
       setResult(nextVersion.itineraryData);
+      if (data.trip) {
+        syncTripRouteState(nextVersion.tripId, {
+          routeStatus: data.trip.routeStatus as TripRouteStatus,
+          confirmedStopsCount: data.trip.confirmedStopsCount as number,
+        });
+      }
     } catch (restoreError) {
       setError(
         restoreError instanceof Error
@@ -525,6 +672,12 @@ export default function AITripPlanner({
         assistantMessage,
       ]);
       setRefinePrompt("");
+      if (data.trip) {
+        syncTripRouteState(nextVersion.tripId, {
+          routeStatus: data.trip.routeStatus as TripRouteStatus,
+          confirmedStopsCount: data.trip.confirmedStopsCount as number,
+        });
+      }
     } catch (refineError) {
       setMessages((current) =>
         current.filter((message) => message.id !== optimisticUserMessage.id)
@@ -600,13 +753,15 @@ export default function AITripPlanner({
   const nextWorkspaceStep = useMemo(() => {
     if (!activeTripForResult) return null;
     return {
-      title: "Next, move this trip into the workspace",
-      description:
-        "Your itinerary is already saved. Open the workspace to confirm route suggestions, review the map, and start preparation.",
+      ...getNextWorkspaceStep(activeTripForResult, lastSavedTrip?.wasAutoCreated),
       href: `/trips/${activeTripForResult.id}`,
-      label: "Open Workspace",
     };
-  }, [activeTripForResult]);
+  }, [activeTripForResult, lastSavedTrip?.wasAutoCreated]);
+  const tripSaveLabel = lastSavedTrip
+    ? lastSavedTrip.wasAutoCreated
+      ? "Trip created"
+      : "Trip updated"
+    : "Active itinerary loaded";
 
   return (
     <div className="app-shell space-y-8">
@@ -617,7 +772,7 @@ export default function AITripPlanner({
             <StepBadge step="01" title="Trip input" />
             <SectionTitle
               eyebrow="AI Trip Planner"
-              title="Tell Wandrly where you want to go, and we’ll shape the first great version."
+              title="Tell Wandrly where you want to go, and we'll shape the first great version."
               description="A cleaner brief creates a better trip. Start with the essentials, then open advanced preferences only if you want more control."
             />
           </div>
@@ -933,6 +1088,11 @@ export default function AITripPlanner({
               title={streamStatus || "Finding the best route, stays, and experiences for your trip."}
               description="Wandrly is building a structured itinerary, balancing pace, destination highlights, hotel logic, and travel practicality."
             />
+            {generationRequestId ? (
+              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-[#7a8ea8]">
+                Request logged: {generationRequestId}
+              </p>
+            ) : null}
           </div>
 
           <div className="glass-shell overflow-hidden rounded-[34px] p-6 sm:p-8">
@@ -943,7 +1103,7 @@ export default function AITripPlanner({
                 <div className="h-16 w-[84%] animate-pulse rounded-[24px] bg-white/48" />
                 <div className="rounded-[28px] border border-white/45 bg-white/38 p-5 backdrop-blur-xl">
                   <p className="text-sm leading-8 text-[#61738C]">
-                    {streamingOverview || "Designing your itinerary… finding best routes, stays, and experiences…"}
+                    {streamingOverview || "Designing your itinerary... finding best routes, stays, and experiences..."}
                   </p>
                 </div>
               </div>
@@ -1011,6 +1171,13 @@ export default function AITripPlanner({
                   >
                     Refine with AI
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleStartNewBrief}
+                    className="w-full rounded-full border-white/35 bg-white/10 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/18 sm:w-auto"
+                  >
+                    Start a new brief
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1020,6 +1187,23 @@ export default function AITripPlanner({
                 <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#14518b]">
                   Saved to {(lastSavedTrip || selectedTrip)?.title || "trip"}
                 </div>
+                <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]">
+                  {tripSaveLabel}
+                </div>
+                <div
+                  className={cn(
+                    "rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm",
+                    getRouteStatusTone(activeTripForResult?.routeStatus)
+                  )}
+                >
+                  {getRouteStatusLabel(activeTripForResult?.routeStatus)}
+                </div>
+                {typeof activeTripForResult?.confirmedStopsCount === "number" ? (
+                  <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]">
+                    {activeTripForResult.confirmedStopsCount} confirmed
+                    {activeTripForResult.confirmedStopsCount === 1 ? " stop" : " stops"}
+                  </div>
+                ) : null}
                 {providerLabel ? (
                   <div className="rounded-full border border-white/45 bg-white/62 px-4 py-2 text-sm text-[#61738C]">
                     {providerLabel}
@@ -1047,7 +1231,9 @@ export default function AITripPlanner({
             <Card className="glass-shell overflow-hidden rounded-[30px] border-white/45 bg-white/58">
               <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="max-w-2xl">
-                  <p className="section-label text-[#14518b]">What happens next</p>
+                  <p className="section-label text-[#14518b]">
+                    {nextWorkspaceStep.eyebrow}
+                  </p>
                   <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] leading-[0.98] tracking-[-0.04em] text-[#024785]">
                     {nextWorkspaceStep.title}
                   </h2>
@@ -1067,6 +1253,13 @@ export default function AITripPlanner({
                     onClick={() => setRefineOpen(true)}
                   >
                     Refine with AI
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full rounded-full px-6 text-[#14518b] sm:w-auto"
+                    onClick={handleStartNewBrief}
+                  >
+                    Start a new brief
                   </Button>
                 </div>
               </CardContent>
@@ -1177,7 +1370,7 @@ export default function AITripPlanner({
                       <div className="scroll-row sm:flex sm:flex-wrap sm:overflow-visible sm:pb-0">
                         {day.weather ? (
                           <div className="rounded-full border border-white/45 bg-white/60 px-4 py-2 text-sm text-[#61738C]">
-                            {day.weather.summary} · {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
+                            {day.weather.summary} - {day.weather.temperatureMin}C to {day.weather.temperatureMax}C
                           </div>
                         ) : null}
                         {day.estimatedCost ? (
@@ -1390,14 +1583,19 @@ export default function AITripPlanner({
           <div className="fixed inset-x-4 bottom-20 z-40 md:hidden">
             <div className="glass-shell flex flex-col gap-3 rounded-[28px] px-4 py-4">
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">Trip ready</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#7a8ea8]">
+                  {nextWorkspaceStep?.eyebrow || "Trip ready"}
+                </p>
                 <p className="text-sm font-semibold text-[#0f3460]">{headerDestination}</p>
               </div>
               {nextWorkspaceStep ? (
                 <Link href={nextWorkspaceStep.href}>
-                  <Button className="w-full rounded-full">Open Workspace</Button>
+                  <Button className="w-full rounded-full">{nextWorkspaceStep.label}</Button>
                 </Link>
               ) : null}
+              <Button variant="outline" onClick={handleStartNewBrief} className="w-full rounded-full">
+                Start a new brief
+              </Button>
             </div>
           </div>
         </section>

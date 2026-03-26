@@ -1,4 +1,5 @@
 import { Location } from "@/app/generated/prisma";
+import { formatDistanceKm, getRouteSummary } from "@/lib/route-metrics";
 import { reorderItinerary } from "@/lib/actions/reorder-itineraty";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MapPin, Route } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 interface SortableItineraryProps {
   locations: Location[];
@@ -53,6 +54,13 @@ export default function SortableItinerary({
 }: SortableItineraryProps) {
   const id = useId();
   const [localLocation, setLocalLocation] = useState(locations);
+  const routeSummary = useMemo(
+    () =>
+      getRouteSummary({
+        locations: localLocation,
+      }),
+    [localLocation]
+  );
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -96,6 +104,26 @@ export default function SortableItinerary({
               </p>
             </div>
           </div>
+          {routeSummary.segments.length > 0 ? (
+            <div className="mb-4 grid gap-3 rounded-[18px] border border-white/8 bg-[#121826] p-4 text-sm text-[#D8E2F1] md:grid-cols-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4]">Approx. distance</p>
+                <p className="mt-2 font-semibold text-white">
+                  {formatDistanceKm(routeSummary.totalDistanceKm)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4]">Longest leg</p>
+                <p className="mt-2 font-semibold text-white">
+                  {formatDistanceKm(routeSummary.longestSegmentKm)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4]">Legs</p>
+                <p className="mt-2 font-semibold text-white">{routeSummary.segments.length}</p>
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-4">
             {localLocation.map((item) => (
               <SortableItem key={item.id} item={item} />

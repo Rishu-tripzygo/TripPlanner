@@ -19,6 +19,7 @@ export interface TripCardProps {
   destination?: string | null;
   budgetLabel?: string | null;
   aiReady?: boolean;
+  routeStatus?: "NOT_STARTED" | "SUGGESTED" | "CONFIRMED" | "STALE" | null;
 }
 
 export default function TripCard({
@@ -33,6 +34,7 @@ export default function TripCard({
   destination,
   budgetLabel,
   aiReady,
+  routeStatus,
 }: TripCardProps) {
   return (
     <Link href={`/trips/${id}`} className="block h-full">
@@ -64,7 +66,7 @@ export default function TripCard({
           </div>
           <CardContent className="space-y-4 pt-5">
             <p className="line-clamp-2 text-sm leading-7 text-[#61738C]">{description}</p>
-            {destination || budgetLabel || aiReady ? (
+            {destination || budgetLabel || aiReady || routeStatus ? (
               <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-[#7A8EA8]">
                 {destination ? (
                   <span className="rounded-full bg-[#F4F3F1] px-3 py-1.5">{destination}</span>
@@ -77,6 +79,16 @@ export default function TripCard({
                 {aiReady ? (
                   <span className="rounded-full bg-[#EAF8F2] px-3 py-1.5 text-[#12715B]">
                     AI itinerary ready
+                  </span>
+                ) : null}
+                {routeStatus === "SUGGESTED" ? (
+                  <span className="rounded-full bg-[#FFF7E6] px-3 py-1.5 text-[#9A6700]">
+                    Route review needed
+                  </span>
+                ) : null}
+                {routeStatus === "STALE" ? (
+                  <span className="rounded-full bg-[#FDECEC] px-3 py-1.5 text-[#B42318]">
+                    Route out of sync
                   </span>
                 ) : null}
               </div>
