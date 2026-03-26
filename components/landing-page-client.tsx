@@ -1,685 +1,647 @@
 "use client";
 
-import DestinationCard from "@/components/destination-card";
-import { demoTripPreview } from "@/lib/demo-content";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { demoTripPreview } from "@/lib/demo-content";
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
-  Clock3,
   Compass,
   MapPinned,
+  Mountain,
   ShieldCheck,
   Sparkles,
-  Star,
+  Stars,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const heroImages = [
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=80",
-  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=2200&q=80",
-  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=2200&q=80",
+  "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=2200&q=80",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2200&q=80",
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2200&q=80",
 ];
 
-const featuredDestinations = [
+const heroCards = [
   {
-    title: "Amalfi Coast",
-    country: "Italy",
-    budget: "INR 95k avg",
-    season: "May to Sep",
+    title: "Volcanic sunrise trails",
+    note: "Route pacing, stay picks, and scenic timing already mapped.",
     image:
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Kyoto",
-    country: "Japan",
-    budget: "INR 68k avg",
-    season: "Oct to Nov",
+    title: "Slow-road escape",
+    note: "Drive days, stop order, and overnight rhythm stay connected.",
     image:
-      "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Santorini",
-    country: "Greece",
-    budget: "INR 92k avg",
-    season: "Jun to Sep",
+    title: "Mountain basecamp",
+    note: "Weather-aware planning, gear prep, and map context in one place.",
     image:
-      "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    title: "Marrakech",
-    country: "Morocco",
-    budget: "INR 74k avg",
-    season: "Oct to Apr",
-    image:
-      "https://images.unsplash.com/photo-1597212618440-806262de4f6b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
-const featureCards = [
+const proofMetrics = [
+  { value: "One brief", label: "becomes a route, itinerary, and prep system" },
+  { value: "Guest preview", label: "lets travelers see value before signup" },
+  { value: "Live workspace", label: "keeps budgets, docs, packing, and notes together" },
+];
+
+const featureGrid = [
   {
     icon: Sparkles,
-    title: "AI builds the first itinerary draft",
-    text: "Turn one destination brief into a day-wise route with stays, pace, food, and practical flow.",
-    eyebrow: "Draft faster",
+    title: "AI creates the first polished draft",
+    text: "Give Wandrly the trip shape and it returns a structured itinerary with route logic, day flow, stay guidance, and local texture.",
   },
   {
     icon: MapPinned,
-    title: "Everything stays connected",
-    text: "Maps, budgets, weather, packing, documents, and notes evolve around the same trip.",
-    eyebrow: "One workspace",
+    title: "Route review stays editable",
+    text: "Refine with AI, review suggested stops, reorder them, set a home base, and confirm the route only when it feels right.",
   },
   {
-    icon: Compass,
-    title: "Refine without losing clarity",
-    text: "Adjust routes, update style, and shape each day while keeping the itinerary usable.",
-    eyebrow: "Stay in control",
+    icon: ShieldCheck,
+    title: "Execution details stay attached",
+    text: "Budgets, documents, packing, weather, and journal context stay connected to the same trip instead of living in scattered tools.",
   },
 ];
 
-const workflowSteps = [
+const workflow = [
   {
     step: "01",
-    title: "Tell Wandrly where you want to go",
-    text: "Add your destination, dates, travelers, budget, and the style of trip you want.",
+    title: "Describe the trip in human terms",
+    text: "Destination, dates, pace, style, and budget are enough to start.",
   },
   {
     step: "02",
-    title: "Let AI shape the itinerary",
-    text: "Get a structured plan with route logic, stays, activities, food, and timing.",
+    title: "Review the AI-crafted shape",
+    text: "See the itinerary draft, suggested route stops, and overall travel rhythm.",
   },
   {
     step: "03",
-    title: "Refine details in your workspace",
-    text: "Adjust pacing, map stops, hotel choices, weather planning, and travel prep in one place.",
+    title: "Tune the route and details",
+    text: "Refine days, update stops, and only confirm the map when it reflects the real plan.",
   },
   {
     step: "04",
-    title: "Manage the full journey beautifully",
-    text: "Budgets, packing, documents, journals, and sharing stay attached to the trip.",
+    title: "Run the trip from one workspace",
+    text: "Move into budget, packing, documents, collaboration, and sharing without losing context.",
   },
 ];
 
-const trustItems = [
-  { label: "Trips organized in one workspace", value: "Route, budget, docs, and prep" },
-  { label: "Planning time reduced dramatically", value: "From scattered tabs to one system" },
-  { label: "Built for modern travel coordination", value: "AI draft plus real execution tools" },
-];
-
-const testimonials = [
+const routeEditions = [
   {
-    name: "Meera S.",
-    role: "Luxury leisure traveler",
-    quote:
-      "Wandrly feels like having a travel designer and a trip manager in the same calm interface.",
+    eyebrow: "Romantic",
+    title: "Amalfi Coast Summer Route",
+    text: "A seven-day coastal trip with cliffside stays, boat time, lemon grove walks, and dinners paced for a relaxed honeymoon feel.",
+    image:
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+    meta: "7 days",
+    tone: "Soft coast",
   },
   {
-    name: "Julian R.",
-    role: "Frequent city-break planner",
-    quote:
-      "The itinerary starts smart, but what really stands out is how the details stay organized after that.",
+    eyebrow: "Adventure",
+    title: "Dolomite Ridge Week",
+    text: "A mountain-first route with cable cars, alpine lakes, quiet villages, and enough breathing room between big landscape days.",
+    image:
+      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
+    meta: "6 days",
+    tone: "High altitude",
+  },
+  {
+    eyebrow: "Slow travel",
+    title: "Kyoto and Lake Biwa Edit",
+    text: "A composed mix of temple mornings, design hotels, tea houses, lake detours, and evenings that never feel overbooked.",
+    image:
+      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
+    meta: "8 days",
+    tone: "Quiet detail",
   },
 ];
 
-const plannerChips = ["Romantic", "Adventure", "Family", "Luxury", "Food-led", "Slow travel"];
+const heroPreviewMoments = [
+  "Route review before you lock stops",
+  "Packing, budget, and docs in one trip view",
+  "AI refinement without losing structure",
+];
 
 export default function LandingPageClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [activeImage, setActiveImage] = useState(0);
+  const primaryHref = "/ai-trip-planner";
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       setActiveImage((current) => (current + 1) % heroImages.length);
-    }, 5200);
+    }, 5400);
 
     return () => window.clearInterval(interval);
   }, []);
 
-  const primaryHref = isLoggedIn ? "/ai-trip-planner" : "/ai-trip-planner";
-
   return (
     <div className="pb-24 md:pb-0">
-      <section className="relative overflow-hidden px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="app-shell relative overflow-hidden rounded-[40px] border border-white/45 bg-[#f7f4ef] shadow-[0_30px_90px_rgba(22,40,64,0.12)]">
-          <div className="absolute inset-0">
-            {heroImages.map((image, index) => (
-              <motion.div
-                key={image}
-                animate={{
-                  opacity: activeImage === index ? 1 : 0,
-                  scale: activeImage === index ? 1 : 1.04,
-                }}
-                transition={{ duration: 1.8, ease: "easeOut" }}
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${image})` }}
-              />
-            ))}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(248,244,238,0.7),rgba(248,244,238,0.78)_30%,rgba(248,244,238,0.96)_72%,#f8f6f2_100%)]" />
-            <div className="hero-orb left-[-4%] top-[8%] h-[320px] w-[320px] bg-[rgba(0,194,255,0.24)]" />
-            <div className="hero-orb right-[-8%] top-[20%] h-[360px] w-[360px] bg-[rgba(255,204,170,0.34)]" />
-            <div className="hero-orb bottom-[-12%] left-[26%] h-[300px] w-[300px] bg-[rgba(114,155,255,0.16)]" />
-          </div>
-
-          <div className="relative z-10 px-6 pb-14 pt-16 sm:px-10 lg:px-14 lg:pb-18 lg:pt-20">
-            <div className="mx-auto max-w-[1160px]">
-              <div className="grid gap-10 lg:grid-cols-[0.94fr_1.06fr] lg:items-center">
+      <section className="px-2 pt-4 sm:px-4 lg:px-5">
+        <div className="landing-shell">
+          <div className="relative overflow-hidden rounded-[38px] border border-white/40 bg-[#d8c8ba] shadow-[0_36px_120px_rgba(16,23,37,0.22)]">
+            <div className="absolute inset-0">
+              <AnimatePresence mode="wait">
                 <motion.div
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-120px" }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="max-w-[560px]"
-                >
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/58 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#14518b] shadow-[0_10px_28px_rgba(20,81,139,0.08)] backdrop-blur-xl">
-                    <Sparkles className="size-3.5" />
-                    AI-powered travel planning
-                  </div>
+                  key={heroImages[activeImage]}
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${heroImages[activeImage]})` }}
+                />
+              </AnimatePresence>
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(42,36,44,0.22),rgba(42,36,44,0.28)_24%,rgba(35,28,34,0.46)_62%,rgba(26,19,24,0.72)_100%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,227,192,0.28),transparent_32%),radial-gradient(circle_at_80%_18%,rgba(255,183,125,0.24),transparent_26%),radial-gradient(circle_at_30%_90%,rgba(136,174,222,0.2),transparent_30%)]" />
+            </div>
 
-                  <h1 className="mt-7 font-[family-name:var(--font-noto-serif)] text-[3.35rem] font-bold leading-[0.9] tracking-[-0.07em] text-[#0f3460] sm:text-[4.55rem] xl:text-[5.8rem]">
-                    Plan dream trips with clarity, beauty, and zero chaos.
-                  </h1>
+            <div className="pointer-events-none absolute inset-5 rounded-[32px] border border-white/28 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] sm:inset-7" />
 
-                  <p className="mt-6 max-w-2xl text-base leading-8 text-[#566b84] sm:text-lg">
-                    Wandrly creates smart itineraries, keeps your route organized, and gives you one
-                    elegant place to manage stays, budgets, packing, documents, and trip details.
-                  </p>
-
-                  <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                    <Link href={primaryHref}>
-                      <Button className="min-w-[220px] rounded-full px-7 py-6 text-base">
-                        Generate My Itinerary
-                        <ArrowRight className="size-4" />
-                      </Button>
-                    </Link>
-                    <Link href="/explore">
-                      <Button
-                        variant="outline"
-                        className="min-w-[220px] rounded-full border-white/60 bg-white/72 px-7 py-6 text-base text-[#0f3460] backdrop-blur-xl"
+            <div className="relative z-10 px-5 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8 lg:px-12 lg:pb-12 xl:px-16">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  {["AI itinerary studio", "Route-first planning", "Real trip prep"].map(
+                    (label) => (
+                      <span
+                        key={label}
+                        className="rounded-full border border-white/24 bg-white/10 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.24em] text-white/82 backdrop-blur-xl"
                       >
-                        See Demo Trip
-                      </Button>
-                    </Link>
+                        {label}
+                      </span>
+                    )
+                  )}
+                </div>
+
+                <div className="rounded-full border border-white/24 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/74 backdrop-blur-xl">
+                  Plan with confidence
+                </div>
+              </div>
+
+              <div className="mx-auto mt-10 max-w-[1240px] lg:mt-14 2xl:max-w-[1320px]">
+                <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end xl:gap-14">
+                  <div className="max-w-[760px]">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/24 bg-white/12 px-4 py-2 text-sm text-white/90 backdrop-blur-xl">
+                      <Mountain className="size-4 text-[#ffd39d]" />
+                      AI planning shaped for travelers, not spreadsheets
+                    </div>
+
+                    <h1 className="mt-6 font-[family-name:var(--font-noto-serif)] text-[3rem] leading-[0.92] tracking-[-0.06em] text-white sm:text-[4.2rem] lg:text-[5.9rem] xl:text-[6.4rem]">
+                      Plan travel with atmosphere, structure, and calm control.
+                    </h1>
+
+                    <p className="mt-5 max-w-2xl text-base leading-8 text-white/78 sm:text-lg">
+                      Start with a short brief and turn it into a polished itinerary, confirmed
+                      route, and trip-ready workspace with budgets, documents, and packing built
+                      in.
+                    </p>
+
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                      <Link href={primaryHref}>
+                        <Button className="min-w-[220px] rounded-full bg-white px-7 py-6 text-base text-[#2c2a31] hover:bg-white">
+                          {isLoggedIn ? "Open Planner" : "Start Planning"}
+                          <ArrowRight className="size-4" />
+                        </Button>
+                      </Link>
+                      <Link href="/explore">
+                        <Button
+                          variant="outline"
+                          className="min-w-[220px] rounded-full border-white/30 bg-white/10 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/16"
+                        >
+                          See Demo Trip
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
-                  <div className="mt-9 flex flex-wrap items-center gap-4 text-sm text-[#566b84]">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 py-2 backdrop-blur-xl">
-                      <Star className="size-4 text-[#ff8b5e]" />
-                      Premium planning experience
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-4 py-2 backdrop-blur-xl">
-                      <ShieldCheck className="size-4 text-[#14518b]" />
-                      One connected travel workspace
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-120px" }}
-                  transition={{ duration: 0.86, ease: "easeOut", delay: 0.1 }}
-                  className="relative min-h-[420px] lg:min-h-[600px]"
-                >
-                  <motion.div
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="glass-shell absolute inset-x-0 top-0 overflow-hidden rounded-[34px] p-4 sm:p-5"
-                  >
-                    <div className="relative h-[430px] overflow-hidden rounded-[28px] sm:h-[520px]">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{
-                          backgroundImage:
-                            "url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80')",
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,35,68,0.08),rgba(8,35,68,0.18)_24%,rgba(8,35,68,0.68)_100%)]" />
-
-                      <div className="absolute left-5 top-5 rounded-full border border-white/30 bg-white/18 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/92 backdrop-blur-xl">
-                        Featured arrival
+                  <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                    <div className="rounded-[28px] border border-white/20 bg-white/12 p-5 text-white shadow-[0_20px_50px_rgba(8,14,28,0.16)] backdrop-blur-[24px]">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/62">
+                            Featured route
+                          </p>
+                          <h2 className="mt-3 text-[1.65rem] font-semibold tracking-[-0.04em] text-white">
+                            {demoTripPreview.title}
+                          </h2>
+                        </div>
+                        <div className="rounded-full border border-white/18 bg-white/10 px-3 py-2 text-xs uppercase tracking-[0.18em] text-white/76">
+                          {demoTripPreview.duration}
+                        </div>
                       </div>
 
-                      <div className="absolute bottom-5 left-5 right-5 rounded-[24px] border border-white/22 bg-[rgba(255,255,255,0.16)] p-5 text-white shadow-[0_18px_50px_rgba(12,28,52,0.2)] backdrop-blur-[24px]">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <p className="text-[11px] uppercase tracking-[0.28em] text-white/72">
-                              Summer coast escape
+                      <p className="mt-4 text-sm leading-7 text-white/74">
+                        {demoTripPreview.summary}
+                      </p>
+
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                        {demoTripPreview.days.slice(0, 2).map((day) => (
+                          <div
+                            key={day.label}
+                            className="rounded-[20px] border border-white/16 bg-black/12 p-4"
+                          >
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/56">
+                              {day.label}
                             </p>
-                            <h2 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[2.2rem] font-bold tracking-[-0.05em] sm:text-[3rem]">
-                              Amalfi Coast
-                            </h2>
-                            <p className="mt-2 max-w-md text-sm leading-7 text-white/84 sm:text-base">
-                              A seven-day route with coastal stays, garden lunches, private boat time,
-                              and a pace that still feels restful.
-                            </p>
+                            <p className="mt-2 text-sm font-medium text-white">{day.title}</p>
                           </div>
-                          <div className="rounded-full border border-white/24 bg-white/14 px-4 py-2 text-sm font-medium text-white/88">
-                            AI plan ready
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-10 grid gap-4 lg:grid-cols-[0.82fr_1.18fr] xl:gap-5">
+                  <div className="rounded-[28px] border border-white/20 bg-white/10 p-5 text-white shadow-[0_20px_50px_rgba(8,14,28,0.16)] backdrop-blur-[24px]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex -space-x-2">
+                        {[0, 1, 2, 3].map((index) => (
+                          <div
+                            key={index}
+                            className="flex size-10 items-center justify-center rounded-full border border-white/16 bg-[linear-gradient(145deg,rgba(255,255,255,0.32),rgba(255,255,255,0.14))] text-sm font-semibold text-white"
+                          >
+                            {index === 3 ? "50+" : String.fromCharCode(65 + index)}
                           </div>
+                        ))}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">People joined</p>
+                        <p className="text-sm text-white/64">
+                          Travelers want beauty and operational clarity together.
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-5 max-w-md text-sm leading-7 text-white/72">
+                      Wandrly keeps the planning mood aspirational, but the product stays useful:
+                      route review, trip prep, and live travel details all stay connected instead
+                      of scattered across tabs.
+                    </p>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link href="/assistant">
+                        <Button className="rounded-full bg-white/92 px-5 text-[#2b2b31] hover:bg-white">
+                          Preview assistant
+                        </Button>
+                      </Link>
+                      <Link href="/explore">
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-white/28 bg-white/8 px-5 text-white hover:bg-white/14"
+                        >
+                          View sample routes
+                        </Button>
+                      </Link>
+                    </div>
+
+                    <div className="mt-7 grid gap-4 sm:grid-cols-[0.94fr_1.06fr]">
+                      <div
+                        className="min-h-[180px] overflow-hidden rounded-[24px] border border-white/18 bg-cover bg-center"
+                        style={{
+                          backgroundImage:
+                            "linear-gradient(180deg,rgba(17,24,39,0.06),rgba(17,24,39,0.38)),url('https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=900&q=80')",
+                        }}
+                      />
+                      <div className="rounded-[24px] border border-white/18 bg-black/12 p-4 backdrop-blur-[18px]">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/58">
+                          What opens next
+                        </p>
+                        <div className="mt-4 space-y-3">
+                          {heroPreviewMoments.map((moment) => (
+                            <div
+                              key={moment}
+                              className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/6 px-3 py-3"
+                            >
+                              <span className="mt-1 inline-flex size-2.5 rounded-full bg-[#ffd39d]" />
+                              <p className="text-sm leading-6 text-white/76">{moment}</p>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 6.2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-                    className="glass-float absolute left-[-4%] top-[10%] hidden w-[180px] rounded-[24px] p-4 lg:block"
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Duration</p>
-                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">7 days</p>
-                    <p className="mt-1 text-sm text-[#61738C]">Balanced pace, coastal luxury</p>
-                  </motion.div>
+                  <div className="grid gap-4 lg:grid-cols-[1.12fr_0.88fr]">
+                    <motion.div
+                      whileHover={{ y: -6 }}
+                      transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                      className="relative min-h-[320px] overflow-hidden rounded-[30px] border border-white/18 shadow-[0_20px_50px_rgba(8,14,28,0.16)]"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${heroCards[0].image})` }}
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,16,27,0.12),rgba(10,16,27,0.2)_38%,rgba(10,16,27,0.64)_100%)]" />
+                      <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-6">
+                        <div className="inline-flex rounded-full border border-white/22 bg-white/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.2em] text-white/70 backdrop-blur-xl">
+                          Signature escape
+                        </div>
+                        <p className="mt-4 text-[1.65rem] font-semibold tracking-[-0.04em]">
+                          {heroCards[0].title}
+                        </p>
+                        <p className="mt-2 max-w-lg text-sm leading-7 text-white/72">
+                          {heroCards[0].note}
+                        </p>
+                      </div>
+                    </motion.div>
 
-                  <motion.div
-                    animate={{ y: [0, 8, 0] }}
-                    transition={{ duration: 6.8, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-                    className="glass-float absolute right-[-2%] top-[12%] hidden w-[190px] rounded-[24px] p-4 lg:block"
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Budget</p>
-                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">Mid to luxe</p>
-                    <p className="mt-1 text-sm text-[#61738C]">Hotels, dining, and transfers aligned</p>
-                  </motion.div>
-
-                  <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 6.4, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}
-                    className="glass-float absolute bottom-[18%] left-[4%] hidden w-[210px] rounded-[24px] p-4 md:block"
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Travelers</p>
-                    <p className="mt-2 text-2xl font-semibold text-[#0f3460]">2 adults</p>
-                    <p className="mt-1 text-sm text-[#61738C]">Romantic route with slow mornings</p>
-                  </motion.div>
-
-                  <motion.div
-                    animate={{ y: [0, 9, 0] }}
-                    transition={{ duration: 6.6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                    className="glass-float absolute bottom-[10%] right-[6%] hidden w-[220px] rounded-[24px] p-4 md:block"
-                  >
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#61738C]">Planning result</p>
-                    <p className="mt-2 text-xl font-semibold text-[#0f3460]">Route, stays, budget, and prep</p>
-                    <p className="mt-1 text-sm text-[#61738C]">Ready to move into the trip workspace</p>
-                  </motion.div>
-                </motion.div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-120px" }}
-                transition={{ duration: 0.85, ease: "easeOut", delay: 0.12 }}
-                className="glass-shell relative mt-12 overflow-hidden rounded-[34px] p-6 sm:p-8"
-              >
-                <div className="absolute -left-12 top-10 h-40 w-40 rounded-full bg-[rgba(0,194,255,0.1)] blur-3xl" />
-                <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-[rgba(255,199,163,0.16)] blur-3xl" />
-                <div className="relative">
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="max-w-2xl">
-                      <p className="section-label text-[#14518b]">Smart trip planner</p>
-                      <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.25rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.15rem]">
-                        Start with a beautiful brief, not a messy form.
-                      </h2>
-                      <p className="mt-4 text-base leading-8 text-[#61738C]">
-                        Give Wandrly the right inputs and get a polished itinerary you can refine,
-                        save, and operate across the rest of the product.
-                      </p>
-                    </div>
-
-                    <div className="inline-flex flex-wrap gap-2">
-                      {plannerChips.map((chip) => (
-                        <span
-                          key={chip}
-                          className="rounded-full border border-white/55 bg-white/58 px-4 py-2 text-sm text-[#14518b] backdrop-blur-xl"
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                      {heroCards.slice(1).map((card) => (
+                        <motion.div
+                          key={card.title}
+                          whileHover={{ y: -6 }}
+                          transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                          className="overflow-hidden rounded-[28px] border border-white/18 bg-white/10 shadow-[0_20px_50px_rgba(8,14,28,0.16)] backdrop-blur-[24px]"
                         >
-                          {chip}
-                        </span>
+                          <div
+                            className="h-[180px] bg-cover bg-center"
+                            style={{ backgroundImage: `url(${card.image})` }}
+                          />
+                          <div className="border-t border-white/14 px-4 py-4 text-white">
+                            <p className="text-base font-medium">{card.title}</p>
+                            <p className="mt-2 text-sm leading-7 text-white/66">{card.note}</p>
+                          </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
-
-                  <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_0.8fr_0.9fr_auto]">
-                    {[
-                      ["Where to?", "Amalfi Coast, Kyoto, Dubai..."],
-                      ["Travel dates", "14 Sep - 20 Sep"],
-                      ["Travelers", "2 travelers"],
-                      ["Style", "Luxury coast escape"],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label}
-                        className="rounded-[24px] border border-white/55 bg-white/56 px-5 py-5 shadow-[0_12px_28px_rgba(20,81,139,0.05)] backdrop-blur-[24px]"
-                      >
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7A8EA8]">
-                          {label}
-                        </p>
-                        <p className="mt-3 text-[15px] font-medium text-[#1f3550]">{value}</p>
-                      </div>
-                    ))}
-
-                    <Link href="/ai-trip-planner" className="flex">
-                      <Button className="h-full w-full rounded-[24px] px-6 text-base">
-                        Plan Your Trip
-                        <ArrowRight className="size-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-14 sm:px-6 lg:px-8">
-        <div className="app-shell">
-          <div className="glass-shell grid gap-5 rounded-[32px] p-6 sm:grid-cols-3 sm:p-7">
-            {trustItems.map((item) => (
-              <div key={item.label} className="rounded-[22px] border border-white/40 bg-white/42 p-5 backdrop-blur-xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14518b]">
-                  Trusted by modern travelers
-                </p>
-                <h3 className="mt-3 text-lg font-semibold text-[#0f3460]">{item.label}</h3>
-                <p className="mt-2 text-sm leading-7 text-[#61738C]">{item.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="app-shell grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="glass-shell rounded-[32px] p-7 sm:p-8">
-            <p className="section-label text-[#14518b]">Try Wandrly before you sign in</p>
-            <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.5rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.2rem]">
-              See the trip outcome before you commit to the workflow.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-[#61738C]">
-              Explore a sample itinerary, preview how the trip workspace comes together, and see
-              the kind of structure Wandrly gives you after one well-written brief.
-            </p>
-            <div className="mt-7 flex flex-col gap-4 sm:flex-row">
-              <Link href="/explore">
-                <Button className="min-w-[220px] rounded-full px-6 py-5">
-                  Explore Sample Trips
-                  <ArrowRight className="size-4" />
-                </Button>
-              </Link>
-              <Link href="/assistant">
-                <Button variant="outline" className="min-w-[220px] rounded-full border-white/55 bg-white/66 px-6 py-5">
-                  Preview the Assistant
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          <div className="glass-shell rounded-[32px] p-6 sm:p-8">
-            <div className="rounded-[28px] border border-white/55 bg-white/58 p-5 backdrop-blur-xl">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="section-label text-[#14518b]">Demo trip</p>
-                  <h3 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
-                    {demoTripPreview.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-[#61738C]">{demoTripPreview.summary}</p>
-                </div>
-                <div className="rounded-full border border-white/55 bg-white/72 px-4 py-2 text-sm text-[#14518b]">
-                  {demoTripPreview.duration}
                 </div>
               </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {demoTripPreview.days.map((day) => (
-                  <div key={day.label} className="rounded-[22px] bg-[#FAF9F7] p-4 shadow-[0_12px_24px_rgba(20,81,139,0.04)]">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14518b]">
-                        {day.label}
-                      </p>
-                      <span className="rounded-full bg-white px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#7A8EA8]">
-                        Demo view
-                      </span>
-                    </div>
-                    <h4 className="mt-2 text-lg font-semibold text-[#0f3460]">{day.title}</h4>
-                    <p className="mt-2 text-sm leading-7 text-[#61738C]">{day.morning[0]}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="section-label text-[#14518b]">Why Wandrly works</p>
-            <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.7rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.8rem]">
-              Built for travelers who want elegance, not planning friction.
-            </h2>
-          </div>
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
-            {featureCards.map((item, index) => {
-              const Icon = item.icon;
-
-              return (
-                <motion.div
-                  key={item.title}
-                  whileHover={{ y: -8 }}
-                  transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                  className={`glass-shell rounded-[30px] p-7 ${index === 1 ? "lg:translate-y-8" : ""}`}
-                >
-                  <div className="inline-flex rounded-[18px] border border-white/45 bg-white/58 p-3 text-[#14518b] backdrop-blur-xl">
-                    <Icon className="size-5" />
-                  </div>
-                  <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7A8EA8]">
-                    {item.eyebrow}
-                  </p>
-                  <h3 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
-                    {item.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-8 text-[#61738C]">{item.text}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              <p className="section-label text-[#14518b]">Featured escapes</p>
-              <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.8rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.9rem]">
-                Beautiful routes that deserve more than a notes app.
-              </h2>
-            </div>
-            <Link href="/explore" className="inline-flex">
-              <Button variant="outline" className="rounded-full border-white/55 bg-white/68">
-                Explore sample trips
-              </Button>
-            </Link>
-          </div>
-
-          <div className="mt-14 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-1">
-              <DestinationCard {...featuredDestinations[0]} />
-              <DestinationCard {...featuredDestinations[3]} />
-            </div>
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-1">
-              <DestinationCard {...featuredDestinations[1]} />
-              <DestinationCard {...featuredDestinations[2]} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div className="glass-shell rounded-[34px] p-7 sm:p-8">
-              <p className="section-label text-[#14518b]">How it works</p>
-              <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.6rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.4rem]">
-                From travel idea to organized trip workspace.
-              </h2>
-              <p className="mt-4 text-base leading-8 text-[#61738C]">
-                Wandrly is designed to stay clear at every step: brief the trip, let AI build the
-                structure, refine the plan, and keep the journey operational in one place.
+      <section className="px-4 py-16 sm:px-5 lg:px-6">
+        <div className="landing-shell grid gap-5 lg:grid-cols-3">
+          {proofMetrics.map((metric, index) => (
+            <div
+              key={metric.value}
+              className={cn(
+                "rounded-[28px] border border-white/60 p-6 shadow-[0_18px_40px_rgba(18,23,34,0.06)] backdrop-blur-xl",
+                index === 0 && "bg-[linear-gradient(180deg,rgba(255,249,243,0.92),rgba(255,255,255,0.82))]",
+                index === 1 && "bg-[linear-gradient(180deg,rgba(246,240,235,0.92),rgba(255,255,255,0.82))]",
+                index === 2 && "bg-[linear-gradient(180deg,rgba(241,246,252,0.92),rgba(255,255,255,0.82))]"
+              )}
+            >
+              <p className="font-[family-name:var(--font-noto-serif)] text-[2rem] tracking-[-0.05em] text-[#22324b]">
+                {metric.value}
               </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {workflowSteps.map((step) => (
-                <motion.div
-                  key={step.step}
-                  whileHover={{ y: -6 }}
-                  transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                  className="glass-shell rounded-[28px] p-6"
-                >
-                  <div className="inline-flex rounded-full border border-white/55 bg-white/58 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#14518b]">
-                    {step.step}
-                  </div>
-                  <h3 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[1.8rem] font-bold tracking-[-0.04em] text-[#0f3460]">
-                    {step.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-8 text-[#61738C]">{step.text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="glass-shell rounded-[34px] p-7 sm:p-8">
-              <p className="section-label text-[#14518b]">Trip workspace preview</p>
-              <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.6rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[3.2rem]">
-                The itinerary is only the beginning.
-              </h2>
-              <div className="mt-7 grid gap-4">
-                {[
-                  ["Route + map sync", "Destinations become route stops and map context automatically."],
-                  ["Travel prep", "Budgets, documents, packing, and weather stay attached to the same trip."],
-                  ["Refinement history", "Iterate on the itinerary without losing previous strong versions."],
-                ].map(([title, text]) => (
-                  <div
-                    key={title}
-                    className="rounded-[24px] border border-white/55 bg-white/48 p-5 backdrop-blur-xl"
-                  >
-                    <h3 className="text-lg font-semibold text-[#0f3460]">{title}</h3>
-                    <p className="mt-2 text-sm leading-7 text-[#61738C]">{text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="glass-shell rounded-[34px] p-6 sm:p-8">
-              <div className="rounded-[28px] border border-white/55 bg-white/48 p-5 backdrop-blur-xl">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7A8EA8]">
-                      Sample itinerary
-                    </p>
-                    <h3 className="mt-2 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
-                      Amalfi Coast, 7 days
-                    </h3>
-                  </div>
-                  <div className="rounded-full border border-white/55 bg-white/58 px-4 py-2 text-sm text-[#14518b]">
-                    AI generated
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-4">
-                  {[
-                    ["Day 1", "Arrival in Positano", "Hotel check-in, terrace dinner, soft coastal start."],
-                    ["Day 2", "Private waters", "Boat route, hidden coves, and a longer afternoon lunch."],
-                    ["Day 3", "Garden and village rhythm", "Lemon groves, ceramics, and an easy scenic evening."],
-                  ].map(([day, title, text]) => (
-                    <div
-                      key={day}
-                      className="rounded-[22px] border border-white/55 bg-white/62 p-4 shadow-[0_12px_24px_rgba(20,81,139,0.04)]"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#14518b]">
-                          {day}
-                        </p>
-                        <div className="inline-flex items-center gap-2 text-sm text-[#61738C]">
-                          <Clock3 className="size-4 text-[#14518b]" />
-                          Balanced pace
-                        </div>
-                      </div>
-                      <h4 className="mt-2 text-lg font-semibold text-[#0f3460]">{title}</h4>
-                      <p className="mt-2 text-sm leading-7 text-[#61738C]">{text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell grid gap-6 lg:grid-cols-2">
-          {testimonials.map((item) => (
-            <div key={item.name} className="glass-shell rounded-[30px] p-7">
-              <div className="inline-flex items-center gap-1 text-[#ff8b5e]">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="size-4 fill-current" />
-                ))}
-              </div>
-              <p className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2rem] font-bold tracking-[-0.04em] text-[#0f3460]">
-                “{item.quote}”
-              </p>
-              <div className="mt-5">
-                <p className="text-base font-semibold text-[#0f3460]">{item.name}</p>
-                <p className="text-sm text-[#61738C]">{item.role}</p>
-              </div>
+              <p className="mt-3 text-sm leading-7 text-[#65758c]">{metric.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="app-shell overflow-hidden rounded-[38px] border border-white/45 bg-[#0f3460] shadow-[0_30px_90px_rgba(15,52,96,0.22)]">
+      <section className="px-4 py-16 sm:px-5 lg:px-6">
+        <div className="landing-shell grid gap-8 lg:grid-cols-[0.98fr_1.02fr]">
+          <div className="relative overflow-hidden rounded-[38px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,247,240,0.9),rgba(255,255,255,0.88))] p-7 shadow-[0_20px_50px_rgba(18,23,34,0.08)] sm:p-8">
+            <div className="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(223,171,129,0.18),transparent_68%)] blur-2xl" />
+            <p className="section-label text-[#8d5c45]">Why Wandrly works</p>
+            <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.5rem] tracking-[-0.05em] text-[#2f2b34] sm:text-[3.4rem]">
+              Scenic, warm, and refined without losing product clarity.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-[#6b6a73]">
+              Wandrly is built to turn inspiration into an actual trip plan. The interface stays
+              calm and visual, but every decision points back to something useful: itinerary shape,
+              route order, travel timing, and the details you need before departure.
+            </p>
+
+            <div className="mt-8 grid gap-4">
+              {featureGrid.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-[24px] border border-white/70 bg-white/74 p-5 shadow-[0_14px_30px_rgba(18,23,34,0.05)]"
+                  >
+                    <div className="inline-flex rounded-2xl bg-[#f6ece4] p-3 text-[#8d5c45]">
+                      <Icon className="size-5" />
+                    </div>
+                    <h3 className="mt-4 text-[1.3rem] font-semibold tracking-[-0.03em] text-[#2f2b34]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[#6b6a73]">{item.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div
+              className="mt-5 min-h-[220px] overflow-hidden rounded-[28px] border border-white/70 bg-cover bg-center shadow-[0_16px_36px_rgba(18,23,34,0.07)]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(180deg,rgba(255,249,243,0.1),rgba(34,28,33,0.42)),url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80')",
+              }}
+            >
+              <div className="flex h-full flex-col justify-end p-5 text-white sm:p-6">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-white/70">
+                  One workspace
+                </p>
+                <p className="mt-3 max-w-md font-[family-name:var(--font-noto-serif)] text-[1.9rem] tracking-[-0.04em]">
+                  From dreamy shortlist to trip-ready plan.
+                </p>
+                <p className="mt-3 max-w-lg text-sm leading-7 text-white/78">
+                  Keep the route, budget, packing list, documents, and collaboration attached to
+                  the same trip instead of rebuilding context every time.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="md:col-span-2 overflow-hidden rounded-[34px] border border-white/60 bg-[linear-gradient(135deg,rgba(69,58,68,0.96),rgba(133,100,80,0.82))] p-6 text-white shadow-[0_20px_50px_rgba(18,23,34,0.12)] sm:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-2xl">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/58">
+                    Editorial routes
+                  </p>
+                  <h3 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.6rem] tracking-[-0.05em] sm:text-[3.5rem]">
+                    Trips that feel composed before they feel busy.
+                  </h3>
+                  <p className="mt-4 max-w-xl text-sm leading-8 text-white/72 sm:text-base">
+                    The visual language should suggest premium travel design, not dashboard
+                    clutter. We want curation, pacing, and mood before the product details start
+                    stacking up.
+                  </p>
+                </div>
+
+                <div className="grid gap-2 text-[11px] uppercase tracking-[0.22em] text-white/62">
+                  {["Scenic hierarchy", "Quiet glass chrome", "Editorial pacing"].map((note) => (
+                    <span
+                      key={note}
+                      className="rounded-full border border-white/18 bg-white/8 px-4 py-2 text-center backdrop-blur-xl"
+                    >
+                      {note}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {routeEditions.map((route, index) => (
+              <motion.article
+                key={route.title}
+                whileHover={{ y: -6 }}
+                transition={{ type: "spring", stiffness: 220, damping: 20 }}
+                className={cn(
+                  "overflow-hidden rounded-[30px] border border-white/60 bg-white/82 shadow-[0_18px_40px_rgba(18,23,34,0.08)]",
+                  index === 2 && "md:col-span-2 md:grid md:grid-cols-[0.92fr_1.08fr]"
+                )}
+              >
+                <div
+                  className={cn(
+                    "h-[220px] bg-cover bg-center",
+                    index === 2 && "md:h-full md:min-h-[100%]"
+                  )}
+                  style={{ backgroundImage: `url(${route.image})` }}
+                />
+                <div className="p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[#9f6848]">
+                      {route.eyebrow}
+                    </p>
+                    <span className="rounded-full border border-[#eadacd] bg-[#fff6ee] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#8d5c45]">
+                      {route.meta}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2rem] tracking-[-0.045em] text-[#243453]">
+                    {route.title}
+                  </h3>
+                  <p className="mt-4 text-sm leading-8 text-[#667285]">{route.text}</p>
+
+                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#efe4da] pt-4">
+                    <span className="text-sm text-[#8d5c45]">{route.tone}</span>
+                    <span className="inline-flex items-center gap-2 text-sm font-medium text-[#243453]">
+                      Route study
+                      <ArrowRight className="size-4" />
+                    </span>
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-5 lg:px-6">
+        <div className="landing-shell rounded-[34px] border border-white/60 bg-white/74 p-7 shadow-[0_20px_50px_rgba(18,23,34,0.08)] sm:p-9">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="section-label text-[#8d5c45]">Product flow</p>
+              <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.4rem] tracking-[-0.05em] text-[#2f2b34] sm:text-[3.2rem]">
+                The landing page should lead into one clean journey.
+              </h2>
+            </div>
+            <div className="rounded-full border border-[#e5d5c8] bg-[#fff7f0] px-4 py-2 text-sm text-[#8d5c45]">
+              Brief to itinerary to route to prep
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-4">
+            {workflow.map((step) => (
+              <div
+                key={step.step}
+                className="rounded-[24px] border border-white/70 bg-[#fffdfa] p-5 shadow-[0_10px_24px_rgba(18,23,34,0.04)]"
+              >
+                <div className="inline-flex rounded-full border border-[#eadacd] bg-[#fff3ea] px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-[#8d5c45]">
+                  {step.step}
+                </div>
+                <h3 className="mt-4 text-[1.25rem] font-semibold tracking-[-0.03em] text-[#2f2b34]">
+                  {step.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-[#6b6a73]">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-5 lg:px-6">
+        <div className="landing-shell overflow-hidden rounded-[38px] border border-white/30 bg-[#2d2a31] shadow-[0_32px_120px_rgba(16,18,28,0.2)]">
           <div
-            className="relative overflow-hidden px-8 py-16 sm:px-12 lg:px-16 lg:py-20"
+            className="relative px-7 py-14 sm:px-10 lg:px-14 lg:py-18"
             style={{
               backgroundImage:
-                "linear-gradient(120deg,rgba(15,52,96,0.9),rgba(15,52,96,0.62)),url('https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=1800&q=80')",
-              backgroundSize: "cover",
+                "linear-gradient(120deg,rgba(31,28,36,0.88),rgba(89,62,50,0.52)),url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80')",
               backgroundPosition: "center",
+              backgroundSize: "cover",
             }}
           >
-            <div className="hero-orb right-[-4%] top-[6%] h-[260px] w-[260px] bg-[rgba(0,194,255,0.22)]" />
-            <div className="relative z-10 max-w-3xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/66">
-                Start beautifully
-              </p>
-              <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.9rem] font-bold tracking-[-0.05em] text-white sm:text-[4.2rem]">
-                Build the trip, then keep the whole journey under control.
-              </h2>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-white/82 sm:text-lg">
-                Generate your first itinerary in minutes and move straight into the trip workspace
-                where routes, stays, budgets, weather, and prep all stay connected.
-              </p>
-              <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,221,188,0.18),transparent_28%)]" />
+
+            <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="max-w-3xl">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/54">
+                  From first draft to departure
+                </p>
+                <h2 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.8rem] tracking-[-0.05em] text-white sm:text-[4rem]">
+                  A beautiful trip idea is only useful when the plan holds together.
+                </h2>
+                <p className="mt-5 max-w-2xl text-base leading-8 text-white/74">
+                  Wander from inspiration into action with one connected flow: create the first
+                  draft, shape the route, then manage the real trip details without leaving the
+                  workspace.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Link href={primaryHref}>
-                  <Button className="min-w-[210px] rounded-full bg-white px-7 py-6 text-base text-[#0f3460] shadow-[0_18px_40px_rgba(255,255,255,0.14)] hover:bg-white">
-                    Start Planning
+                  <Button className="w-full rounded-full bg-white px-7 py-6 text-base text-[#2d2a31] hover:bg-white">
+                    Continue to planner
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
                 <Link href="/explore">
                   <Button
                     variant="outline"
-                    className="min-w-[210px] rounded-full border-white/32 bg-white/10 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/16"
+                    className="w-full rounded-full border-white/28 bg-white/10 px-7 py-6 text-base text-white backdrop-blur-xl hover:bg-white/16"
                   >
-                    See sample trips
+                    Review sample routes
                   </Button>
                 </Link>
               </div>
+            </div>
+
+            <div className="relative z-10 mt-10 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  icon: Stars,
+                  title: "Editorial hero direction",
+                  text: "Large scenic imagery with restrained interface chrome.",
+                },
+                {
+                  icon: UsersRound,
+                  title: "Product-led beneath the mood",
+                  text: "The hero sells the feeling, but the sections explain the workflow clearly.",
+                },
+                {
+                  icon: Compass,
+                  title: "Responsive by design",
+                  text: "Hero cards collapse cleanly, text scales intentionally, and CTAs stay obvious.",
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-[24px] border border-white/18 bg-white/10 p-5 backdrop-blur-[18px]"
+                  >
+                    <div className="inline-flex rounded-2xl bg-white/12 p-3 text-[#ffd39d]">
+                      <Icon className="size-5" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-white">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-7 text-white/68">{item.text}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

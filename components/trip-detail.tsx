@@ -410,8 +410,8 @@ export default function TripDetailClient({
   }
 
   return (
-    <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="relative overflow-hidden rounded-[38px] border border-[rgba(2,71,133,0.08)] bg-white shadow-[0_28px_80px_rgba(26,28,27,0.08)]">
+    <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
+      <section className="relative overflow-hidden rounded-[40px] border border-white/45 bg-white shadow-[0_28px_80px_rgba(26,28,27,0.08)]">
         <div className="relative min-h-[420px]">
           {trip.imageUrl ? (
             <Image src={trip.imageUrl} alt={trip.title} fill className="object-cover" priority />
@@ -446,12 +446,12 @@ export default function TripDetailClient({
               </div>
 
               <div className="rounded-[30px] border border-white/18 bg-white/14 p-5 text-white backdrop-blur-xl">
-                <p className="text-xs uppercase tracking-[0.22em] text-white/68">Continue planning</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-white/68">Next best move</p>
                 <p className="mt-3 font-[family-name:var(--font-noto-serif)] text-[30px] leading-[1.02] tracking-[-0.04em]">
-                  Keep this trip moving in the right order.
+                  Keep the trip beautiful and operationally clear.
                 </p>
                 <p className="mt-3 text-sm leading-7 text-white/78">
-                  Use the AI plan, confirm your route, then move into prep once the trip shape feels right.
+                  Refine the itinerary, keep the route in sync, and move into prep only after the trip shape feels settled.
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <Link href={nextAction.href}>
@@ -472,7 +472,7 @@ export default function TripDetailClient({
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-[rgba(2,71,133,0.08)] bg-white/88 p-5 shadow-[0_24px_60px_rgba(26,28,27,0.05)] sm:p-6">
+      <section className="rounded-[34px] border border-white/55 bg-[linear-gradient(180deg,rgba(255,250,245,0.9),rgba(255,255,255,0.84))] p-5 shadow-[0_24px_60px_rgba(26,28,27,0.05)] sm:p-6">
         <div className="scroll-row items-start md:overflow-visible md:pb-0">
           {progressSteps.map((step, index) => {
             const Icon = step.icon;
@@ -508,11 +508,11 @@ export default function TripDetailClient({
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(240,247,255,0.9))] p-6 shadow-[0_24px_60px_rgba(26,28,27,0.05)]">
+      <section className="rounded-[34px] border border-white/55 bg-[linear-gradient(145deg,rgba(255,250,245,0.96),rgba(240,247,255,0.9))] p-6 shadow-[0_24px_60px_rgba(26,28,27,0.05)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <p className="section-label">What should you do next?</p>
-            <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#024785] sm:text-[42px]">
+            <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#243453] sm:text-[42px]">
               {nextAction.title}
             </h2>
             <p className="mt-4 text-sm leading-8 text-[#61738C]">{nextAction.description}</p>
@@ -561,7 +561,7 @@ export default function TripDetailClient({
       <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
           {routeNeedsConfirmation || routeNeedsRefresh ? (
-            <Card className="border-[rgba(2,71,133,0.08)] bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(240,247,255,0.92))]">
+            <Card className="border-white/55 bg-[linear-gradient(145deg,rgba(255,250,245,0.96),rgba(240,247,255,0.92))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
               <CardContent className="space-y-5 p-6">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="max-w-2xl">
@@ -627,7 +627,7 @@ export default function TripDetailClient({
             </Card>
           ) : null}
 
-          <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+            <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
             <CardContent className="space-y-6 p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -669,7 +669,7 @@ export default function TripDetailClient({
             </CardContent>
           </Card>
 
-          <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+            <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
             <CardContent className="space-y-5 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -724,7 +724,7 @@ export default function TripDetailClient({
             </CardContent>
           </Card>
 
-          <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+            <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
             <CardContent className="space-y-5 p-6">
               <div>
                 <p className="section-label">Travel Prep</p>
@@ -760,7 +760,7 @@ export default function TripDetailClient({
             </CardContent>
           </Card>
 
-          <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+            <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
             <CardContent className="space-y-5 p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -1034,13 +1034,13 @@ export default function TripDetailClient({
       </section>
 
       <section className="space-y-6">
-        <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+        <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
           <CardContent className="space-y-5 p-6">
             <div>
               <p className="section-label">Destination Forecast</p>
-              <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#024785]">
-                Weather and season signals
-              </h2>
+                <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#243453]">
+                  Weather and season signals
+                </h2>
             </div>
 
             {isWeatherLoading ? (
@@ -1101,13 +1101,13 @@ export default function TripDetailClient({
           </CardContent>
         </Card>
 
-        <Card className="border-[rgba(2,71,133,0.08)] bg-white/96">
+        <Card className="border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,244,238,0.88))] shadow-[0_18px_36px_rgba(18,23,34,0.05)]">
           <CardContent className="space-y-5 p-6">
             <div>
               <p className="section-label">Share</p>
-              <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#024785]">
-                Share only after the trip feels ready
-              </h2>
+                <h2 className="mt-3 font-[family-name:var(--font-noto-serif)] text-[34px] leading-[0.98] tracking-[-0.04em] text-[#243453]">
+                  Share only after the trip feels ready
+                </h2>
               <p className="mt-3 text-sm leading-7 text-[#61738C]">
                 Keep this secondary until the route and prep feel solid. Then publish a polished version or invite collaborators.
               </p>

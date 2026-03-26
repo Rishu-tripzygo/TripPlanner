@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Copy, ImagePlus, Settings2, Trash2 } from "lucide-react";
 
+const surfaceCard =
+  "border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]";
+
 export default function TripSettingsPanel({
   trip,
 }: {
@@ -122,42 +125,42 @@ export default function TripSettingsPanel({
   }
 
   return (
-    <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <p className="section-label">Trip Settings</p>
-            <CardTitle className="text-[40px] text-white">{trip.title}</CardTitle>
-            <p className="text-sm leading-7 text-[#8B9BB4]">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[40px] text-[#024785]">
+              {trip.title}
+            </CardTitle>
+            <p className="text-sm leading-7 text-[#61738C]">
               Update the trip shell without touching your saved itinerary versions. If the dates
               change significantly, it is still smart to review the itinerary and route afterward.
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Settings2 className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Active itinerary</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Active itinerary</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {trip.activeItineraryDays > 0 ? `${trip.activeItineraryDays} days saved` : "No itinerary yet"}
               </p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Copy className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Confirmed route stops</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
-                {trip.confirmedStopsCount}
-              </p>
+              <p className="text-sm text-[#61738C]">Confirmed route stops</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">{trip.confirmedStopsCount}</p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#FFF1E3] p-3 text-[#B76A20]">
                 <AlertTriangle className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Planning note</p>
-              <p className="mt-2 text-sm leading-7 text-white">
+              <p className="text-sm text-[#61738C]">Planning note</p>
+              <p className="mt-2 text-sm leading-7 text-[#415873]">
                 Date edits do not rewrite the itinerary automatically. Refine the trip after major
                 changes.
               </p>
@@ -165,16 +168,16 @@ export default function TripSettingsPanel({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Edit trip shell</CardTitle>
+            <CardTitle className="text-2xl text-[#024785]">Edit trip shell</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <input
               value={form.title}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
               placeholder="Trip title"
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             />
             <textarea
               value={form.description}
@@ -182,7 +185,7 @@ export default function TripSettingsPanel({
                 setForm((current) => ({ ...current, description: event.target.value }))
               }
               placeholder="Trip description"
-              className="min-h-28 w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="min-h-28 w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             />
             <div className="grid gap-4 md:grid-cols-2">
               <input
@@ -191,7 +194,7 @@ export default function TripSettingsPanel({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, startDate: event.target.value }))
                 }
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
               <input
                 type="date"
@@ -199,13 +202,13 @@ export default function TripSettingsPanel({
                 onChange={(event) =>
                   setForm((current) => ({ ...current, endDate: event.target.value }))
                 }
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
             </div>
 
-            <div className="rounded-[20px] border border-white/8 bg-white/[0.03] p-5">
-              <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#D8E2F1]">
-                <ImagePlus className="size-4 text-[#00C2FF]" />
+            <div className="rounded-[20px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <label className="mb-3 flex items-center gap-2 text-sm font-medium text-[#415873]">
+                <ImagePlus className="size-4 text-[#14518b]" />
                 Cover image
               </label>
               {form.imageUrl ? (
@@ -231,11 +234,11 @@ export default function TripSettingsPanel({
             </div>
 
             {error ? (
-              <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FFB4B4]">
+              <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#FDECEC] px-4 py-3 text-sm text-[#B84A43]">
                 {error}
               </div>
             ) : successMessage ? (
-              <div className="rounded-[14px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-4 py-3 text-sm text-[#D8F5FF]">
+              <div className="rounded-[14px] border border-[#14518b]/15 bg-[#EEF4FB] px-4 py-3 text-sm text-[#14518b]">
                 {successMessage}
               </div>
             ) : null}
@@ -247,14 +250,14 @@ export default function TripSettingsPanel({
         </Card>
       </section>
 
-      <Card>
+      <Card className={surfaceCard}>
         <CardHeader>
-          <CardTitle className="text-2xl text-white">Trip controls</CardTitle>
+          <CardTitle className="text-2xl text-[#024785]">Trip controls</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-            <h2 className="text-lg font-semibold text-white">Duplicate for a future version</h2>
-            <p className="mt-3 text-sm leading-7 text-[#8B9BB4]">
+          <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+            <h2 className="text-lg font-semibold text-[#024785]">Duplicate for a future version</h2>
+            <p className="mt-3 text-sm leading-7 text-[#61738C]">
               Create a copy with the current route, active itinerary, budget shell, and packing
               list so you can adapt it for another trip without starting from zero.
             </p>
@@ -266,16 +269,16 @@ export default function TripSettingsPanel({
             </Button>
           </div>
 
-          <div className="rounded-[18px] border border-[#EF4444]/25 bg-[#2a1316]/70 p-5">
-            <h2 className="text-lg font-semibold text-white">Danger zone</h2>
-            <p className="mt-3 text-sm leading-7 text-[#E7B4B4]">
+          <div className="rounded-[18px] border border-[#EF4444]/18 bg-[#FFF1F1] p-5">
+            <h2 className="text-lg font-semibold text-[#7A1F1F]">Danger zone</h2>
+            <p className="mt-3 text-sm leading-7 text-[#9B4D4D]">
               Deleting this trip removes its route, itinerary versions, packing list, journal,
               documents, and saved planning history permanently.
             </p>
             <Button
               onClick={deleteTrip}
               variant="outline"
-              className="mt-5 border-[#EF4444]/25 text-[#FFD0D0] hover:bg-[#EF4444]/10"
+              className="mt-5 border-[#EF4444]/20 bg-white text-[#B84A43] hover:bg-[#FDECEC]"
               disabled={isDeleting}
             >
               <span className="inline-flex items-center gap-2">

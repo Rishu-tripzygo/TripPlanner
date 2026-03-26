@@ -25,6 +25,9 @@ const categories = [
   { key: "misc", label: "Misc" },
 ] as const;
 
+const surfaceCard =
+  "border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]";
+
 function DonutChart({
   values,
   total,
@@ -38,14 +41,7 @@ function DonutChart({
 
   return (
     <svg viewBox="0 0 180 180" className="h-[180px] w-[180px]">
-      <circle
-        cx="90"
-        cy="90"
-        r={radius}
-        fill="none"
-        stroke="rgba(255,255,255,0.06)"
-        strokeWidth="18"
-      />
+      <circle cx="90" cy="90" r={radius} fill="none" stroke="#E7ECF3" strokeWidth="18" />
       {values.map((item) => {
         const dash = total > 0 ? (item.value / total) * circumference : 0;
         const circle = (
@@ -66,10 +62,15 @@ function DonutChart({
         offset += dash;
         return circle;
       })}
-      <text x="90" y="84" textAnchor="middle" className="fill-[#8B9BB4] text-[11px] uppercase">
+      <text x="90" y="84" textAnchor="middle" className="fill-[#8A96A8] text-[11px] uppercase">
         Planned
       </text>
-      <text x="90" y="104" textAnchor="middle" className="fill-white text-[18px] font-semibold">
+      <text
+        x="90"
+        y="104"
+        textAnchor="middle"
+        className="fill-[#024785] text-[18px] font-semibold"
+      >
         {total.toLocaleString()}
       </text>
     </svg>
@@ -196,20 +197,22 @@ export default function BudgetTracker({
   }
 
   return (
-    <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <p className="section-label">Budget Tracker</p>
-            <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
-            <p className="text-sm leading-7 text-[#8B9BB4]">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[40px] text-[#024785]">
+              {tripTitle}
+            </CardTitle>
+            <p className="text-sm leading-7 text-[#61738C]">
               Plan your target budget, compare it against real expenses, and use the active AI
               itinerary as a baseline for daily cost expectations.
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
-              <span className="text-sm text-[#D8E2F1]">Total budget</span>
+              <span className="text-sm text-[#415873]">Total budget</span>
               <input
                 value={budget.totalBudget}
                 onChange={(event) =>
@@ -219,11 +222,11 @@ export default function BudgetTracker({
                   }))
                 }
                 type="number"
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm text-[#D8E2F1]">Currency</span>
+              <span className="text-sm text-[#415873]">Currency</span>
               <select
                 value={budget.currency}
                 onChange={(event) =>
@@ -232,10 +235,10 @@ export default function BudgetTracker({
                     currency: event.target.value as BudgetBreakdown["currency"],
                   }))
                 }
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               >
                 {SUPPORTED_CURRENCIES.map((currency) => (
-                  <option key={currency} value={currency} className="bg-[#0F1117]">
+                  <option key={currency} value={currency} className="bg-white text-[#1A1C1B]">
                     {currency}
                   </option>
                 ))}
@@ -243,7 +246,7 @@ export default function BudgetTracker({
             </label>
             {categories.map((category) => (
               <label key={category.key} className="space-y-2">
-                <span className="text-sm text-[#D8E2F1]">{category.label}</span>
+                <span className="text-sm text-[#415873]">{category.label}</span>
                 <input
                   value={budget[category.key]}
                   onChange={(event) =>
@@ -253,18 +256,18 @@ export default function BudgetTracker({
                     }))
                   }
                   type="number"
-                  className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                  className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
                 />
               </label>
             ))}
 
-            <div className="md:col-span-2 flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 md:col-span-2">
               {error ? (
-                <p className="text-sm text-[#FFB4B4]">{error}</p>
+                <p className="text-sm text-[#B84A43]">{error}</p>
               ) : successMessage ? (
-                <p className="text-sm text-[#9FE7FF]">{successMessage}</p>
+                <p className="text-sm text-[#14518b]">{successMessage}</p>
               ) : (
-                <p className="text-sm text-[#8B9BB4]">
+                <p className="text-sm text-[#61738C]">
                   {activeItinerary?.total_estimated_cost
                     ? `AI estimate: ${activeItinerary.total_estimated_cost.currency} ${activeItinerary.total_estimated_cost.total.toLocaleString()}`
                     : "Set your budget targets for this trip."}
@@ -277,15 +280,15 @@ export default function BudgetTracker({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+              <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Wallet className="size-5" />
               </div>
               <div>
                 <p className="section-label">Health</p>
-                <CardTitle className="text-2xl text-white">Running total vs budget</CardTitle>
+                <CardTitle className="text-2xl text-[#024785]">Running total vs budget</CardTitle>
               </div>
             </div>
           </CardHeader>
@@ -296,13 +299,16 @@ export default function BudgetTracker({
                 ["Spent", `${budget.currency} ${spentTotal.toLocaleString()}`],
                 ["Remaining", `${budget.currency} ${remainingBudget.toLocaleString()}`],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#4A5568]">{label}</p>
+                <div
+                  key={label}
+                  className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/74 p-4"
+                >
+                  <p className="text-xs uppercase tracking-[0.22em] text-[#8A96A8]">{label}</p>
                   <p
                     className={`mt-3 text-lg font-semibold ${
                       label === "Remaining" && remainingBudget < 0
-                        ? "text-[#FFB4B4]"
-                        : "text-white"
+                        ? "text-[#B84A43]"
+                        : "text-[#024785]"
                     }`}
                   >
                     {value}
@@ -316,13 +322,13 @@ export default function BudgetTracker({
               <div className="w-full space-y-3">
                 {donutValues.map((item) => (
                   <div key={item.label}>
-                    <div className="mb-2 flex items-center justify-between text-sm text-[#D8E2F1]">
+                    <div className="mb-2 flex items-center justify-between text-sm text-[#61738C]">
                       <span>{item.label}</span>
                       <span>
                         {budget.currency} {item.value.toLocaleString()}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/[0.04]">
+                    <div className="h-2 rounded-full bg-[#E6EBF2]">
                       <div
                         className="h-2 rounded-full"
                         style={{
@@ -348,15 +354,15 @@ export default function BudgetTracker({
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+              <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Landmark className="size-5" />
               </div>
               <div>
                 <p className="section-label">Expense Logger</p>
-                <CardTitle className="text-2xl text-white">Add actual trip spend</CardTitle>
+                <CardTitle className="text-2xl text-[#024785]">Add actual trip spend</CardTitle>
               </div>
             </div>
           </CardHeader>
@@ -368,7 +374,7 @@ export default function BudgetTracker({
                   setExpenseDraft((current) => ({ ...current, name: event.target.value }))
                 }
                 placeholder="Airport taxi"
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <input
@@ -378,7 +384,7 @@ export default function BudgetTracker({
                   }
                   type="number"
                   placeholder="1200"
-                  className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                  className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
                 />
                 <select
                   value={expenseDraft.category}
@@ -388,15 +394,13 @@ export default function BudgetTracker({
                       category: event.target.value,
                     }))
                   }
-                  className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                  className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
                 >
-                  {["ACCOMMODATION", "FOOD", "TRANSPORT", "ACTIVITIES", "MISC"].map(
-                    (category) => (
-                      <option key={category} value={category} className="bg-[#0F1117]">
-                        {category}
-                      </option>
-                    )
-                  )}
+                  {["ACCOMMODATION", "FOOD", "TRANSPORT", "ACTIVITIES", "MISC"].map((category) => (
+                    <option key={category} value={category} className="bg-white text-[#1A1C1B]">
+                      {category}
+                    </option>
+                  ))}
                 </select>
               </div>
               <input
@@ -408,7 +412,7 @@ export default function BudgetTracker({
                   }))
                 }
                 type="date"
-                className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
               <textarea
                 value={expenseDraft.notes}
@@ -416,7 +420,7 @@ export default function BudgetTracker({
                   setExpenseDraft((current) => ({ ...current, notes: event.target.value }))
                 }
                 placeholder="Optional notes"
-                className="min-h-[110px] w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+                className="min-h-[110px] w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
               />
               <Button type="submit" className="w-full" disabled={isSavingExpense}>
                 {isSavingExpense ? "Saving expense..." : "Log Expense"}
@@ -425,15 +429,15 @@ export default function BudgetTracker({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+              <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Receipt className="size-5" />
               </div>
               <div>
                 <p className="section-label">Ledger</p>
-                <CardTitle className="text-2xl text-white">Expense timeline</CardTitle>
+                <CardTitle className="text-2xl text-[#024785]">Expense timeline</CardTitle>
               </div>
             </div>
           </CardHeader>
@@ -442,24 +446,24 @@ export default function BudgetTracker({
               expenses.map((expense) => (
                 <div
                   key={expense.id}
-                  className="flex flex-col gap-2 rounded-[16px] border border-white/8 bg-white/[0.03] p-4 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-2 rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/74 p-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">{expense.name}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#4A5568]">
+                    <p className="text-sm font-medium text-[#024785]">{expense.name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#8A96A8]">
                       {expense.category} · {new Date(expense.expenseDate).toLocaleDateString()}
                     </p>
                     {expense.notes ? (
-                      <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">{expense.notes}</p>
+                      <p className="mt-2 text-sm leading-7 text-[#61738C]">{expense.notes}</p>
                     ) : null}
                   </div>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-lg font-semibold text-[#024785]">
                     {budget.currency} {expense.amount.toLocaleString()}
                   </p>
                 </div>
               ))
             ) : (
-              <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+              <div className="rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/68 p-5 text-sm leading-7 text-[#61738C]">
                 No real expenses logged yet. Start with flights, transfers, meals, or stays once
                 spending begins so Wandrly can compare your plan against actual trip cost.
               </div>

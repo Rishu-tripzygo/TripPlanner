@@ -12,13 +12,25 @@ export default async function TripSettingsPage({
   const { tripId } = await params;
 
   if (!session?.user?.id) {
-    return <div className="app-shell px-4 py-20 text-white">Please sign in.</div>;
+    return (
+      <div className="landing-shell px-4 py-20 sm:px-5 lg:px-6">
+        <div className="rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] px-6 py-10 text-[#61738C] shadow-[0_20px_44px_rgba(26,28,27,0.07)]">
+          Please sign in.
+        </div>
+      </div>
+    );
   }
 
   const access = await getTripAccess(tripId, session.user.id);
 
   if (!canManageTrip(access)) {
-    return <div className="app-shell px-4 py-20 text-white">Trip not found.</div>;
+    return (
+      <div className="landing-shell px-4 py-20 sm:px-5 lg:px-6">
+        <div className="rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] px-6 py-10 text-[#61738C] shadow-[0_20px_44px_rgba(26,28,27,0.07)]">
+          Trip not found.
+        </div>
+      </div>
+    );
   }
 
   const trip = await prisma.trip.findFirst({
@@ -48,7 +60,13 @@ export default async function TripSettingsPage({
   });
 
   if (!trip) {
-    return <div className="app-shell px-4 py-20 text-white">Trip not found.</div>;
+    return (
+      <div className="landing-shell px-4 py-20 sm:px-5 lg:px-6">
+        <div className="rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] px-6 py-10 text-[#61738C] shadow-[0_20px_44px_rgba(26,28,27,0.07)]">
+          Trip not found.
+        </div>
+      </div>
+    );
   }
 
   const activeItinerary = trip.itineraryVersions[0]?.itineraryData as

@@ -13,7 +13,7 @@ export default async function AssistantPage() {
   if (!session?.user?.id) {
     return (
       <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="app-shell grid gap-8 rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] px-6 py-10 shadow-[0_20px_40px_rgba(26,28,27,0.06)] lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:py-12">
+        <section className="landing-shell grid gap-8 rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] px-6 py-10 shadow-[0_20px_40px_rgba(26,28,27,0.06)] lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:py-12">
           <div>
             <p className="section-label">Assistant</p>
             <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[48px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785] sm:text-[64px]">
@@ -71,7 +71,7 @@ export default async function AssistantPage() {
                 <div className="mr-auto max-w-[88%] rounded-[20px] bg-white p-4 text-sm leading-7 text-[#415873] shadow-[0_10px_24px_rgba(20,81,139,0.05)]">
                   I can rebalance the stay area, replace one premium dinner with a strong mid-range
                   option, tighten local transfers, and keep the best cultural highlights. Once you
-                  attach a trip, I’ll answer against your saved itinerary directly.
+                  attach a trip, I&apos;ll answer against your saved itinerary directly.
                 </div>
                 <div className="ml-auto max-w-[78%] rounded-[20px] bg-[#EEF2F8] p-4 text-sm leading-7 text-[#024785]">
                   What should I ask next?

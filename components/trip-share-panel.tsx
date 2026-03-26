@@ -252,16 +252,16 @@ export default function TripSharePanel({
   }
 
   return (
-    <Card>
+    <Card className="border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="section-label">Trip Sharing</p>
-            <CardTitle className="mt-2 text-2xl text-white">
+            <CardTitle className="mt-2 text-2xl text-[#024785]">
               Public link and collaborators
             </CardTitle>
           </div>
-          <div className="inline-flex rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#8B9BB4]">
+          <div className="inline-flex rounded-full border border-[rgba(20,81,139,0.08)] bg-white px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#61738C]">
             {share?.canManage
               ? share?.isPublic
                 ? "Owner / Public"
@@ -271,19 +271,19 @@ export default function TripSharePanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <p className="text-sm leading-7 text-[#8B9BB4]">
+        <p className="text-sm leading-7 text-[#61738C]">
           Share a polished public trip page when the plan is ready, or invite
           collaborators to help shape the route and prep work inside Wandrly.
         </p>
 
         {isLoading ? (
-          <div className="h-[112px] animate-pulse rounded-[18px] border border-white/8 bg-white/[0.03]" />
+          <div className="h-[112px] animate-pulse rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72" />
         ) : (
-          <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#4A5568]">
+          <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#8A96A8]">
               Share URL
             </p>
-            <p className="mt-3 break-all text-sm leading-7 text-[#D8E2F1]">
+            <p className="mt-3 break-all text-sm leading-7 text-[#415873]">
               {shareUrl || "Link unavailable"}
             </p>
           </div>
@@ -296,12 +296,12 @@ export default function TripSharePanel({
         ) : null}
 
         {successMessage ? (
-          <div className="rounded-[14px] border border-[#14518b]/20 bg-[#14518b]/10 px-4 py-3 text-sm text-[#D8E2F1]">
+          <div className="rounded-[14px] border border-[#14518b]/15 bg-[#EEF4FB] px-4 py-3 text-sm text-[#14518b]">
             {successMessage}
           </div>
         ) : null}
 
-        <div className="space-y-4 rounded-[18px] border border-white/8 bg-white/[0.03] p-4">
+        <div className="space-y-4 rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-4">
           <div className="flex flex-wrap gap-3">
             <Button
               type="button"
@@ -371,13 +371,13 @@ export default function TripSharePanel({
           </div>
 
           {!share?.canManage ? (
-            <p className="text-sm leading-7 text-[#8B9BB4]">
+            <p className="text-sm leading-7 text-[#61738C]">
               Only the trip owner can change public visibility or invite
               collaborators. Your current access is{" "}
               {share?.viewerRole?.toLowerCase() || "viewer"}.
             </p>
           ) : (
-            <div className="grid gap-3 rounded-[16px] border border-white/8 bg-black/10 p-4 lg:grid-cols-[1.2fr_0.7fr_auto]">
+            <div className="grid gap-3 rounded-[16px] border border-[rgba(20,81,139,0.08)] bg-white p-4 lg:grid-cols-[1.2fr_0.7fr_auto]">
               <input
                 value={inviteDraft.email}
                 onChange={(event) =>
@@ -387,7 +387,7 @@ export default function TripSharePanel({
                   }))
                 }
                 placeholder="Invite by email"
-                className="w-full rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-[#8B9BB4] focus:border-white/20 focus:outline-none"
+                className="w-full rounded-[14px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] placeholder:text-[#8A96A8] focus:border-[#14518b]/20 focus:outline-none"
               />
               <select
                 value={inviteDraft.role}
@@ -397,7 +397,7 @@ export default function TripSharePanel({
                     role: event.target.value as "EDITOR" | "VIEWER",
                   }))
                 }
-                className="rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white focus:border-white/20 focus:outline-none"
+                className="rounded-[14px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] focus:border-[#14518b]/20 focus:outline-none"
               >
                 <option value="EDITOR">Editor</option>
                 <option value="VIEWER">Viewer</option>
@@ -419,7 +419,7 @@ export default function TripSharePanel({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#8B9BB4]">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#8A96A8]">
               Collaborators
             </p>
             <p className="text-sm text-[#61738C]">
@@ -432,19 +432,19 @@ export default function TripSharePanel({
               collaborators.map((collaborator) => (
                 <div
                   key={collaborator.id}
-                  className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] p-4 lg:grid-cols-[1fr_auto_auto]"
+                  className="grid gap-3 rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-4 lg:grid-cols-[1fr_auto_auto]"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-[#D8E2F1]">
+                    <p className="text-sm font-semibold text-[#024785]">
                       {collaborator.name || collaborator.email}
                     </p>
-                    <p className="mt-1 text-sm text-[#8B9BB4]">
+                    <p className="mt-1 text-sm text-[#61738C]">
                       {collaborator.email}
                     </p>
                   </div>
 
                   {collaborator.isOwner ? (
-                    <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-[#D8E2F1]">
+                    <div className="inline-flex items-center rounded-full border border-[rgba(20,81,139,0.08)] bg-white px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-[#61738C]">
                       Owner
                     </div>
                   ) : share?.canManage ? (
@@ -457,13 +457,13 @@ export default function TripSharePanel({
                         )
                       }
                       disabled={isCollaboratorSaving}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-white/20 focus:outline-none"
+                      className="rounded-full border border-[rgba(20,81,139,0.08)] bg-white px-3 py-2 text-sm text-[#1A1C1B] focus:border-[#14518b]/20 focus:outline-none"
                     >
                       <option value="EDITOR">Editor</option>
                       <option value="VIEWER">Viewer</option>
                     </select>
                   ) : (
-                    <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-[#D8E2F1]">
+                    <div className="inline-flex items-center rounded-full border border-[rgba(20,81,139,0.08)] bg-white px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-[#61738C]">
                       {collaborator.role}
                     </div>
                   )}
@@ -487,7 +487,7 @@ export default function TripSharePanel({
                 </div>
               ))
             ) : (
-              <div className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-5 text-sm leading-7 text-[#8B9BB4]">
+              <div className="rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/68 px-4 py-5 text-sm leading-7 text-[#61738C]">
                 No collaborators yet.{" "}
                 {share?.canManage
                   ? "Invite someone when you want help reviewing or editing the trip."

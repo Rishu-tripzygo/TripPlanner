@@ -44,21 +44,30 @@ export default async function AITripPlannerPage({
 
   if (!session?.user?.id) {
     return (
-      <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="app-shell overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
-          <div className="grid gap-8 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 lg:py-12">
+      <div className="space-y-8 px-4 py-8 sm:px-5 lg:px-6">
+        <section className="landing-shell overflow-hidden rounded-[38px] border border-white/40 bg-[#d8c8ba] shadow-[0_32px_90px_rgba(16,23,37,0.14)]">
+          <div
+            className="relative grid gap-8 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 lg:py-12"
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg,rgba(255,250,246,0.82),rgba(248,244,239,0.88)),url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80')",
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          >
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,214,186,0.22),transparent_26%)]" />
             <div>
-              <p className="section-label">Plan with AI</p>
-              <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[48px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785] sm:text-[64px]">
+              <p className="section-label relative z-10">Plan with AI</p>
+              <h1 className="relative z-10 mt-5 font-[family-name:var(--font-noto-serif)] text-[44px] font-bold leading-[0.92] tracking-[-0.05em] text-[#243453] sm:text-[64px]">
                 Start with a real brief. Try one preview before you sign in.
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-[#61738C]">
+              <p className="relative z-10 mt-5 max-w-2xl text-base leading-8 text-[#61738C]">
                 You do not need to know every stop up front. Wandrly turns a destination, dates,
                 and travel style into a structured itinerary, then keeps the trip ready for route,
                 budget, and prep once you save it.
               </p>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="relative z-10 mt-8 grid gap-4 sm:grid-cols-2">
                 {[
                   { label: "Destination", value: demoTripPreview.destination, Icon: MapPinned },
                   { label: "Dates", value: "12 Apr - 17 Apr", Icon: CalendarDays },
@@ -80,7 +89,7 @@ export default async function AITripPlannerPage({
                 ))}
               </div>
 
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <div className="relative z-10 mt-8 flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/auth/signin?callbackUrl=%2Fonboarding%3FclaimPreview%3D1"
                   className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#024785,#2B5F9E)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(2,71,133,0.16)]"
@@ -96,8 +105,8 @@ export default async function AITripPlannerPage({
               </div>
             </div>
 
-            <div className="space-y-5">
-              <div className="rounded-[30px] border border-white/55 bg-white/58 p-6 shadow-[0_18px_38px_rgba(26,28,27,0.06)] backdrop-blur-[24px]">
+            <div className="relative z-10 space-y-5">
+              <div className="rounded-[30px] border border-white/55 bg-white/66 p-6 shadow-[0_18px_38px_rgba(26,28,27,0.06)] backdrop-blur-[24px]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="section-label text-[#14518b]">Preview itinerary</p>
@@ -147,7 +156,7 @@ export default async function AITripPlannerPage({
                 </div>
               </div>
 
-              <Card className="border-white/55 bg-white/62 backdrop-blur-[22px]">
+              <Card className="border-white/55 bg-white/68 backdrop-blur-[22px]">
                 <CardHeader>
                   <p className="section-label text-[#14518b]">What sign-in unlocks</p>
                   <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[2rem] text-[#024785]">
@@ -214,12 +223,12 @@ export default async function AITripPlannerPage({
   });
 
   return (
-    <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="app-shell overflow-hidden rounded-[36px] border border-[rgba(2,71,133,0.08)] bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+    <div className="space-y-8 px-4 py-8 sm:px-5 lg:px-6">
+      <section className="landing-shell overflow-hidden rounded-[38px] border border-white/45 bg-[linear-gradient(180deg,#fffaf5,#f6f4ef)] shadow-[0_24px_60px_rgba(26,28,27,0.08)]">
         <div className="grid gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-12">
           <div>
             <p className="section-label">Plan with AI</p>
-            <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[52px] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785] sm:text-[68px]">
+            <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[46px] font-bold leading-[0.92] tracking-[-0.05em] text-[#243453] sm:text-[68px]">
               Turn a trip brief into a working itinerary.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#61738C]">
@@ -229,7 +238,7 @@ export default async function AITripPlannerPage({
             </p>
           </div>
 
-          <div className="rounded-[30px] bg-[#F4F3F1] p-6">
+          <div className="rounded-[30px] border border-white/55 bg-white/72 p-6 shadow-[0_16px_36px_rgba(26,28,27,0.05)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#024785]">
               Best workflow
             </p>

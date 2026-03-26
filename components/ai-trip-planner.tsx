@@ -764,7 +764,7 @@ export default function AITripPlanner({
     : "Active itinerary loaded";
 
   return (
-    <div className="app-shell space-y-8">
+    <div className="landing-shell space-y-8 px-4 sm:px-5 lg:px-6">
       {/* step 1 */}
       {!result && !isLoading ? (
         <section className="space-y-8">
@@ -777,7 +777,7 @@ export default function AITripPlanner({
             />
           </div>
 
-          <Card className="glass-shell mx-auto max-w-4xl overflow-hidden rounded-[34px] border-white/45 bg-[rgba(255,255,255,0.6)]">
+          <Card className="glass-shell mx-auto max-w-5xl overflow-hidden rounded-[36px] border-white/55 bg-[linear-gradient(180deg,rgba(255,250,245,0.78),rgba(255,255,255,0.68))] shadow-[0_28px_70px_rgba(18,23,34,0.08)]">
             <CardContent className="space-y-8 p-6 sm:p-8 lg:p-10">
               <div className="grid gap-4 md:grid-cols-2">
                 <button
@@ -786,8 +786,8 @@ export default function AITripPlanner({
                   className={cn(
                     "rounded-[24px] border p-5 text-left transition",
                     plannerMode === "autocreate"
-                      ? "border-[#14518b]/20 bg-[#eef4fb]"
-                      : "border-white/45 bg-white/44 hover:bg-white/58"
+                      ? "border-[#14518b]/20 bg-[linear-gradient(180deg,rgba(238,244,251,0.98),rgba(255,255,255,0.9))]"
+                      : "border-white/45 bg-white/52 hover:bg-white/64"
                   )}
                 >
                   <p className="text-sm font-semibold text-[#0f3460]">Create trip from this plan</p>
@@ -801,8 +801,8 @@ export default function AITripPlanner({
                   className={cn(
                     "rounded-[24px] border p-5 text-left transition",
                     plannerMode === "existing"
-                      ? "border-[#14518b]/20 bg-[#eef4fb]"
-                      : "border-white/45 bg-white/44 hover:bg-white/58"
+                      ? "border-[#14518b]/20 bg-[linear-gradient(180deg,rgba(238,244,251,0.98),rgba(255,255,255,0.9))]"
+                      : "border-white/45 bg-white/52 hover:bg-white/64"
                   )}
                 >
                   <p className="text-sm font-semibold text-[#0f3460]">Use an existing trip</p>
@@ -1095,7 +1095,7 @@ export default function AITripPlanner({
             ) : null}
           </div>
 
-          <div className="glass-shell overflow-hidden rounded-[34px] p-6 sm:p-8">
+          <div className="glass-shell overflow-hidden rounded-[36px] border-white/55 bg-[linear-gradient(180deg,rgba(255,250,245,0.8),rgba(255,255,255,0.68))] p-6 shadow-[0_24px_60px_rgba(18,23,34,0.08)] sm:p-8">
             <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-5">
                 <div className="h-6 w-40 animate-pulse rounded-full bg-white/55" />
@@ -1127,7 +1127,7 @@ export default function AITripPlanner({
       {/* step 3 */}
       {result ? (
         <section className="space-y-8">
-          <div className="rounded-[36px] border border-white/45 bg-white/60 shadow-[0_30px_70px_rgba(20,81,139,0.1)] backdrop-blur-[24px]">
+          <div className="rounded-[38px] border border-white/50 bg-[linear-gradient(180deg,rgba(255,255,255,0.62),rgba(255,250,245,0.54))] shadow-[0_30px_70px_rgba(20,81,139,0.1)] backdrop-blur-[24px]">
             <div
               className="relative overflow-hidden rounded-t-[36px] px-6 py-8 sm:px-8 sm:py-10"
               style={{

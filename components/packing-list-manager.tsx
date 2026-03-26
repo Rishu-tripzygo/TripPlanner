@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackingItem, PackingListRecord } from "@/lib/phase-one-types";
 import {
   Briefcase,
+  Check,
   CheckCheck,
   ClipboardList,
   PackageOpen,
@@ -24,6 +25,9 @@ const categoryOrder: PackingItem["category"][] = [
   "Misc",
 ];
 
+const surfaceCard =
+  "border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]";
+
 export default function PackingListManager({
   tripId,
   tripTitle,
@@ -35,8 +39,7 @@ export default function PackingListManager({
 }) {
   const [list, setList] = useState<PackingListRecord>(initialList);
   const [newItemLabel, setNewItemLabel] = useState("");
-  const [newItemCategory, setNewItemCategory] =
-    useState<PackingItem["category"]>("Misc");
+  const [newItemCategory, setNewItemCategory] = useState<PackingItem["category"]>("Misc");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -157,36 +160,38 @@ export default function PackingListManager({
   }
 
   return (
-    <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <p className="section-label">Packing List</p>
-            <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
-            <p className="text-sm leading-7 text-[#8B9BB4]">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[40px] text-[#024785]">
+              {tripTitle}
+            </CardTitle>
+            <p className="text-sm leading-7 text-[#61738C]">
               A smart packing checklist generated from your trip duration, destinations, active
               itinerary, and weather signals. Update anything and it stays saved to this trip.
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <ClipboardList className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Template</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Template</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {list.template || "Custom list"}
               </p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <CheckCheck className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Progress</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Progress</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {packedCount} of {list.items.length} packed
               </p>
-              <div className="mt-4 h-2 rounded-full bg-white/[0.04]">
+              <div className="mt-4 h-2 rounded-full bg-[#E8EDF3]">
                 <div
                   className="h-2 rounded-full bg-[linear-gradient(135deg,#1B3A6B,#00C2FF)]"
                   style={{
@@ -195,40 +200,40 @@ export default function PackingListManager({
                 />
               </div>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <PackageOpen className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Essential items left</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{essentialRemaining}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+              <p className="text-sm text-[#61738C]">Essential items left</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">{essentialRemaining}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8A96A8]">
                 Pack these before departure
               </p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Users className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Estimated carry weight</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Estimated carry weight</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {(totalEstimatedWeight / 1000).toFixed(1)} kg
               </p>
-              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8A96A8]">
                 Based on checklist quantities
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+              <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <Plus className="size-5" />
               </div>
               <div>
                 <p className="section-label">Custom Item</p>
-                <CardTitle className="text-2xl text-white">Add something specific</CardTitle>
+                <CardTitle className="text-2xl text-[#024785]">Add something specific</CardTitle>
               </div>
             </div>
           </CardHeader>
@@ -237,22 +242,20 @@ export default function PackingListManager({
               value={newItemLabel}
               onChange={(event) => setNewItemLabel(event.target.value)}
               placeholder="Portable tripod"
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             />
             <select
               value={newItemCategory}
-              onChange={(event) =>
-                setNewItemCategory(event.target.value as PackingItem["category"])
-              }
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              onChange={(event) => setNewItemCategory(event.target.value as PackingItem["category"])}
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             >
               {categoryOrder.map((category) => (
-                <option key={category} value={category} className="bg-[#0F1117]">
+                <option key={category} value={category} className="bg-white text-[#1A1C1B]">
                   {category}
                 </option>
               ))}
             </select>
-            {error ? <p className="text-sm text-[#FFB4B4]">{error}</p> : null}
+            {error ? <p className="text-sm text-[#B84A43]">{error}</p> : null}
             <Button onClick={addItem} className="w-full">
               <span className="inline-flex items-center gap-2">
                 <Plus className="size-4" />
@@ -266,7 +269,7 @@ export default function PackingListManager({
                   Print checklist
                 </span>
               </Button>
-              <div className="flex w-full items-center rounded-[16px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-[#8B9BB4]">
+              <div className="flex w-full items-center rounded-[16px] border border-[rgba(20,81,139,0.08)] bg-white/72 px-4 py-3 text-sm leading-7 text-[#61738C]">
                 Changes save automatically. {isSaving ? "Saving..." : "Everything is up to date."}
               </div>
             </div>
@@ -276,10 +279,10 @@ export default function PackingListManager({
 
       <section className="space-y-6">
         {groupedItems.map((group) => (
-          <Card key={group.category}>
+          <Card key={group.category} className={surfaceCard}>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                   {group.category === "Clothing" ? (
                     <Shirt className="size-5" />
                   ) : (
@@ -288,7 +291,7 @@ export default function PackingListManager({
                 </div>
                 <div>
                   <p className="section-label">{group.category}</p>
-                  <CardTitle className="text-2xl text-white">
+                  <CardTitle className="text-2xl text-[#024785]">
                     {group.items.length} item{group.items.length === 1 ? "" : "s"}
                   </CardTitle>
                 </div>
@@ -300,7 +303,7 @@ export default function PackingListManager({
                   {group.items.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
+                      className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/74 p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <button
@@ -311,33 +314,33 @@ export default function PackingListManager({
                           <span
                             className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                               item.packed
-                                ? "border-[#00C2FF]/30 bg-[#00C2FF]/20 text-[#00C2FF]"
-                                : "border-white/15 bg-transparent text-transparent"
+                                ? "border-[#14518b]/20 bg-[#EAF1FB] text-[#14518b]"
+                                : "border-[rgba(20,81,139,0.16)] bg-transparent text-transparent"
                             }`}
                           >
-                            ?
+                            <Check className="size-3.5" />
                           </span>
                           <span>
                             <span
                               className={`block text-sm font-medium ${
-                                item.packed ? "text-[#8B9BB4] line-through" : "text-white"
+                                item.packed ? "text-[#8A96A8] line-through" : "text-[#024785]"
                               }`}
                             >
                               {item.label}
                             </span>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {item.aiSuggested ? (
-                                <span className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#9DEBFF]">
+                                <span className="rounded-full border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#14518b]">
                                   AI suggested
                                 </span>
                               ) : null}
                               {item.essential ? (
-                                <span className="rounded-full border border-[#F59E0B]/20 bg-[#F59E0B]/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#F8D7A1]">
+                                <span className="rounded-full border border-[#F59E0B]/20 bg-[#F59E0B]/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#8A4B16]">
                                   Essential
                                 </span>
                               ) : null}
                               {item.sharedItem ? (
-                                <span className="rounded-full border border-white/12 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#8B9BB4]">
+                                <span className="rounded-full border border-[rgba(20,81,139,0.08)] bg-white px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-[#61738C]">
                                   Shared
                                 </span>
                               ) : null}
@@ -347,13 +350,13 @@ export default function PackingListManager({
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          className="text-xs uppercase tracking-[0.18em] text-[#8B9BB4] transition hover:text-white"
+                          className="text-xs uppercase tracking-[0.18em] text-[#8A96A8] transition hover:text-[#14518b]"
                         >
                           Remove
                         </button>
                       </div>
                       <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04]">
+                        <div className="inline-flex items-center rounded-full border border-[rgba(20,81,139,0.08)] bg-white">
                           <button
                             type="button"
                             onClick={() =>
@@ -361,11 +364,11 @@ export default function PackingListManager({
                                 quantity: Math.max(1, (item.quantity || 1) - 1),
                               })
                             }
-                            className="px-3 py-2 text-sm text-[#D8E2F1]"
+                            className="px-3 py-2 text-sm text-[#415873]"
                           >
                             -
                           </button>
-                          <span className="px-2 text-xs uppercase tracking-[0.16em] text-[#8B9BB4]">
+                          <span className="px-2 text-xs uppercase tracking-[0.16em] text-[#8A96A8]">
                             Qty {item.quantity || 1}
                           </span>
                           <button
@@ -375,7 +378,7 @@ export default function PackingListManager({
                                 quantity: Math.min(12, (item.quantity || 1) + 1),
                               })
                             }
-                            className="px-3 py-2 text-sm text-[#D8E2F1]"
+                            className="px-3 py-2 text-sm text-[#415873]"
                           >
                             +
                           </button>
@@ -385,14 +388,14 @@ export default function PackingListManager({
                           onClick={() => updateItem(item.id, { sharedItem: !item.sharedItem })}
                           className={`rounded-full px-3 py-2 text-xs uppercase tracking-[0.16em] ${
                             item.sharedItem
-                              ? "bg-[#eef4fb] text-[#14518b]"
-                              : "border border-white/10 bg-white/[0.04] text-[#8B9BB4]"
+                              ? "bg-[#EEF4FB] text-[#14518b]"
+                              : "border border-[rgba(20,81,139,0.08)] bg-white text-[#61738C]"
                           }`}
                         >
                           {item.sharedItem ? "Shared item" : "Mark shared"}
                         </button>
                         {item.estimatedWeightGrams ? (
-                          <span className="text-xs uppercase tracking-[0.16em] text-[#4A5568]">
+                          <span className="text-xs uppercase tracking-[0.16em] text-[#8A96A8]">
                             {(item.estimatedWeightGrams * (item.quantity || 1) / 1000).toFixed(1)} kg
                           </span>
                         ) : null}
@@ -401,7 +404,7 @@ export default function PackingListManager({
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+                <div className="rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/68 p-5 text-sm leading-7 text-[#61738C]">
                   Nothing is in this section yet. Add a custom item if you want to tailor the list
                   beyond Wandrly&apos;s automatic packing suggestions.
                 </div>
@@ -413,4 +416,3 @@ export default function PackingListManager({
     </div>
   );
 }
-

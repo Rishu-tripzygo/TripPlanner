@@ -177,6 +177,10 @@
     @apply mx-auto w-full max-w-[1280px];
   }
 
+  .landing-shell {
+    @apply mx-auto w-full max-w-[1460px];
+  }
+
   .scroll-row {
     @apply flex gap-3 overflow-x-auto pb-2;
     scrollbar-width: none;

@@ -23,11 +23,11 @@ export default async function TripsPage() {
 
   if (!session?.user?.id) {
     return (
-      <div className="app-shell px-4 py-20 sm:px-6 lg:px-8">
-        <Card className="mx-auto max-w-2xl text-center">
+      <div className="landing-shell px-4 py-20 sm:px-5 lg:px-6">
+        <Card className="mx-auto max-w-2xl rounded-[30px] border-white/55 bg-white/76 text-center shadow-[0_18px_42px_rgba(18,23,34,0.08)]">
           <CardHeader>
             <p className="section-label">Travel dashboard</p>
-            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#024785]">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-4xl text-[#243453]">
               Sign in to open your trip workspace
             </CardTitle>
           </CardHeader>
@@ -85,14 +85,14 @@ export default async function TripsPage() {
     : null;
 
   return (
-    <div className="app-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="landing-shell space-y-10 px-4 py-8 sm:px-5 lg:px-6">
       <section className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="overflow-hidden rounded-[36px] bg-white shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+        <div className="overflow-hidden rounded-[38px] border border-white/45 bg-[linear-gradient(180deg,#fffaf5,#f7f4ee)] shadow-[0_24px_60px_rgba(26,28,27,0.08)]">
           <div className="flex flex-col gap-8 px-6 pt-6 sm:px-8 sm:pt-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="max-w-xl">
                 <p className="section-label">Control center</p>
-                <p className="mt-4 font-[family-name:var(--font-noto-serif)] text-[44px] font-bold leading-[0.95] tracking-[-0.05em] text-[#024785] sm:text-[54px]">
+                <p className="mt-4 font-[family-name:var(--font-noto-serif)] text-[42px] font-bold leading-[0.95] tracking-[-0.05em] text-[#243453] sm:text-[54px]">
                   Good morning,
                   <br />
                   <span className="break-words">
@@ -116,7 +116,7 @@ export default async function TripsPage() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] bg-[#F4F3F1] p-1">
+              <div className="rounded-[24px] bg-white/76 p-1 shadow-[0_10px_24px_rgba(26,28,27,0.04)]">
                 <div className="grid grid-cols-3 gap-1">
                   {[
                     ["Trips", trips.length],
@@ -158,7 +158,7 @@ export default async function TripsPage() {
               className="relative overflow-hidden rounded-[34px] bg-cover bg-center p-8 shadow-[0_20px_40px_rgba(26,28,27,0.08)]"
               style={{
                 backgroundImage:
-                  "linear-gradient(180deg,rgba(2,71,133,0.18),rgba(2,71,133,0.72)),url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80')",
+                  "linear-gradient(180deg,rgba(36,52,83,0.22),rgba(36,52,83,0.74)),url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80')",
               }}
             >
               <div className="max-w-xl text-white">
@@ -199,8 +199,8 @@ export default async function TripsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[32px] bg-white p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
-            <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#024785]">
+          <div className="rounded-[32px] border border-white/45 bg-white/78 p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+            <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#243453]">
               Explore destinations
             </h3>
             <div className="mt-6 space-y-4">
@@ -227,10 +227,10 @@ export default async function TripsPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] bg-white p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
+          <div className="rounded-[32px] border border-white/45 bg-white/78 p-7 shadow-[0_20px_40px_rgba(26,28,27,0.06)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#024785]">
+                <h3 className="font-[family-name:var(--font-noto-serif)] text-[32px] font-bold tracking-[-0.04em] text-[#243453]">
                   Attention
                 </h3>
                 <p className="mt-2 text-sm text-[#61738C]">{unreadCount} unread reminders</p>

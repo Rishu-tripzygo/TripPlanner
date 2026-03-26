@@ -94,15 +94,15 @@ export default function DestinationNotesPanel({
   }
 
   return (
-    <Card>
+    <Card className="border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+          <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
             <NotebookPen className="size-5" />
           </div>
           <div>
             <p className="section-label">Destination Notes</p>
-            <CardTitle className="text-2xl text-white">Ideas, reminders, and local tips</CardTitle>
+            <CardTitle className="text-2xl text-[#024785]">Ideas, reminders, and local tips</CardTitle>
           </div>
         </div>
       </CardHeader>
@@ -110,10 +110,10 @@ export default function DestinationNotesPanel({
         <select
           value={selectedLocationId}
           onChange={(event) => setSelectedLocationId(event.target.value)}
-          className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+          className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B]"
         >
           {locations.map((location) => (
-            <option key={location.id} value={location.id} className="bg-[#0F1117]">
+            <option key={location.id} value={location.id} className="bg-white text-[#1A1C1B]">
               {location.locationTitle}
             </option>
           ))}
@@ -123,10 +123,10 @@ export default function DestinationNotesPanel({
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Add a note like restaurant shortlist, taxi tip, or a photo spot reminder."
-          className="min-h-[120px] w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white"
+          className="min-h-[120px] w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white/84 px-4 py-3 text-sm leading-7 text-[#1A1C1B]"
         />
 
-        {error ? <p className="text-sm text-[#FFB4B4]">{error}</p> : null}
+        {error ? <p className="text-sm text-[#B84A43]">{error}</p> : null}
 
         <Button onClick={addNote} disabled={isSaving} className="w-full">
           <span className="inline-flex items-center gap-2">
@@ -137,21 +137,21 @@ export default function DestinationNotesPanel({
 
         <div className="space-y-3">
           {isLoading ? (
-            <div className="h-[120px] animate-pulse rounded-[16px] border border-white/8 bg-white/[0.03]" />
+            <div className="h-[120px] animate-pulse rounded-[16px] border border-[rgba(20,81,139,0.08)] bg-white/70" />
           ) : notes.length > 0 ? (
             notes.map((note) => (
               <div
                 key={note.id}
-                className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4"
+                className="rounded-[16px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-4"
               >
-                <p className="text-sm leading-7 text-[#D8E2F1]">{note.content}</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#4A5568]">
+                <p className="text-sm leading-7 text-[#415873]">{note.content}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#8A96A8]">
                   Updated {new Date(note.updatedAt).toLocaleString()}
                 </p>
               </div>
             ))
           ) : (
-            <div className="rounded-[16px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+            <div className="rounded-[16px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/68 p-5 text-sm leading-7 text-[#61738C]">
               No notes saved for this destination yet.
             </div>
           )}

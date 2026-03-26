@@ -20,8 +20,8 @@ const sections = [
 export default function PrivacyPage() {
   return (
     <div className="px-4 py-10 sm:px-6 lg:px-8">
-      <div className="app-shell">
-        <div className="glass-shell overflow-hidden rounded-[34px] p-7 sm:p-10">
+      <div className="landing-shell">
+        <div className="overflow-hidden rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(247,243,237,0.9))] p-7 shadow-[0_20px_44px_rgba(26,28,27,0.06)] sm:p-10">
           <p className="section-label text-[#14518b]">Privacy</p>
           <h1 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.8rem] font-bold tracking-[-0.05em] text-[#0f3460] sm:text-[4rem]">
             Privacy Policy
@@ -34,14 +34,14 @@ export default function PrivacyPage() {
 
           <div className="mt-10 grid gap-5 lg:grid-cols-2">
             {sections.map((section) => (
-              <div key={section.title} className="rounded-[26px] border border-white/55 bg-white/48 p-6 backdrop-blur-xl">
+              <div key={section.title} className="rounded-[26px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-6">
                 <h2 className="text-xl font-semibold text-[#0f3460]">{section.title}</h2>
                 <p className="mt-3 text-sm leading-8 text-[#61738C]">{section.text}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 rounded-[26px] border border-white/55 bg-white/48 p-6 backdrop-blur-xl">
+          <div className="mt-8 rounded-[26px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-6">
             <h2 className="text-xl font-semibold text-[#0f3460]">Contact and updates</h2>
             <p className="mt-3 text-sm leading-8 text-[#61738C]">
               If Wandrly updates the way personal data is handled, this page should be revised to

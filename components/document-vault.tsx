@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { UploadButton } from "@/lib/upload-thing";
@@ -25,6 +25,9 @@ const documentTypes = [
 ] as const;
 
 type DocumentType = (typeof documentTypes)[number];
+
+const surfaceCard =
+  "border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(247,243,237,0.88))] text-[#1A1C1B] backdrop-blur-[18px]";
 
 export default function DocumentVault({
   tripId,
@@ -151,49 +154,51 @@ export default function DocumentVault({
   }
 
   return (
-    <div className="app-shell space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
             <p className="section-label">Document Vault</p>
-            <CardTitle className="text-[40px] text-white">{tripTitle}</CardTitle>
-            <p className="text-sm leading-7 text-[#8B9BB4]">
+            <CardTitle className="font-[family-name:var(--font-noto-serif)] text-[40px] text-[#024785]">
+              {tripTitle}
+            </CardTitle>
+            <p className="text-sm leading-7 text-[#61738C]">
               Keep trip-critical files in one secure place so passports, tickets, insurance, and
               hotel confirmations stay easy to access before departure.
             </p>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <ShieldCheck className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Stored documents</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{documents.length}</p>
+              <p className="text-sm text-[#61738C]">Stored documents</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">{documents.length}</p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <FileBadge2 className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Trip start</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Trip start</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {new Date(tripStartDate).toLocaleDateString()}
               </p>
             </div>
-            <div className="rounded-[18px] border border-white/8 bg-white/[0.03] p-5">
-              <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+            <div className="rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-5">
+              <div className="mb-4 inline-flex rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                 <FileText className="size-5" />
               </div>
-              <p className="text-sm text-[#8B9BB4]">Vault status</p>
-              <p className="mt-2 text-2xl font-semibold text-white">
+              <p className="text-sm text-[#61738C]">Vault status</p>
+              <p className="mt-2 text-2xl font-semibold text-[#024785]">
                 {documents.length > 0 ? "Ready" : "Start uploading"}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Upload a document</CardTitle>
+            <CardTitle className="text-2xl text-[#024785]">Upload a document</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <UploadButton
@@ -219,11 +224,9 @@ export default function DocumentVault({
 
             <input
               value={draft.name}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, name: event.target.value }))
-              }
+              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
               placeholder="Passport front page"
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             />
             <select
               value={draft.type}
@@ -233,10 +236,10 @@ export default function DocumentVault({
                   type: event.target.value as DocumentType,
                 }))
               }
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             >
               {documentTypes.map((type) => (
-                <option key={type} value={type} className="bg-[#0F1117]">
+                <option key={type} value={type} className="bg-white text-[#1A1C1B]">
                   {type}
                 </option>
               ))}
@@ -250,15 +253,15 @@ export default function DocumentVault({
                 }))
               }
               type="date"
-              className="w-full rounded-[12px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white"
+              className="w-full rounded-[16px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             />
 
             {error ? (
-              <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FFB4B4]">
+              <div className="rounded-[14px] border border-[#EF4444]/30 bg-[#FDECEC] px-4 py-3 text-sm text-[#B84A43]">
                 {error}
               </div>
             ) : successMessage ? (
-              <div className="rounded-[14px] border border-[#00C2FF]/20 bg-[#00C2FF]/8 px-4 py-3 text-sm text-[#D8F5FF]">
+              <div className="rounded-[14px] border border-[#14518b]/15 bg-[#EEF4FB] px-4 py-3 text-sm text-[#14518b]">
                 {successMessage}
               </div>
             ) : null}
@@ -266,7 +269,7 @@ export default function DocumentVault({
             <Button onClick={saveDocument} className="w-full" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Document"}
             </Button>
-            <div className="rounded-[14px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-[#8B9BB4]">
+            <div className="rounded-[16px] border border-[rgba(20,81,139,0.08)] bg-white/72 px-4 py-3 text-sm leading-7 text-[#61738C]">
               Keep only practical travel files here. Avoid uploading payment details or anything
               you would not want exposed if a shared device is lost.
             </div>
@@ -275,8 +278,8 @@ export default function DocumentVault({
       </section>
 
       {passportWarning ? (
-        <Card>
-          <CardContent className="flex gap-3 pt-6 text-[#F8D7A1]">
+        <Card className="border-[#F59E0B]/18 bg-[#FFF7ED] text-[#8A4B16]">
+          <CardContent className="flex gap-3 pt-6 text-[#8A4B16]">
             <AlertTriangle className="mt-1 size-5 shrink-0 text-[#F59E0B]" />
             <p className="text-sm leading-7">{passportWarning}</p>
           </CardContent>
@@ -284,23 +287,25 @@ export default function DocumentVault({
       ) : null}
 
       {missingDocumentPrompts.length > 0 ? (
-        <Card>
+        <Card className={surfaceCard}>
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Still worth adding before departure</CardTitle>
+            <CardTitle className="text-2xl text-[#024785]">
+              Still worth adding before departure
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {missingDocumentPrompts.map((item) => (
               <div
                 key={item.label}
-                className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-4"
+                className="rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/70 p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-[#00C2FF]">
+                  <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#14518b]">
                     <Upload className="size-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{item.label}</p>
-                    <p className="mt-2 text-sm leading-7 text-[#8B9BB4]">
+                    <p className="text-sm font-medium text-[#024785]">{item.label}</p>
+                    <p className="mt-2 text-sm leading-7 text-[#61738C]">
                       Add this so the trip vault is complete before travel day.
                     </p>
                   </div>
@@ -311,20 +316,20 @@ export default function DocumentVault({
         </Card>
       ) : null}
 
-      <Card>
+      <Card className={surfaceCard}>
         <CardHeader>
-          <CardTitle className="text-2xl text-white">Stored trip documents</CardTitle>
+          <CardTitle className="text-2xl text-[#024785]">Stored trip documents</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {documents.length > 0 ? (
             documents.map((document) => (
               <div
                 key={document.id}
-                className="flex flex-col gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] p-4 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-3 rounded-[18px] border border-[rgba(20,81,139,0.08)] bg-white/72 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div>
-                  <p className="text-sm font-medium text-white">{document.name}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#4A5568]">
+                  <p className="text-sm font-medium text-[#024785]">{document.name}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#8A96A8]">
                     {document.type}
                     {document.expiryDate
                       ? ` · expires ${new Date(document.expiryDate).toLocaleDateString()}`
@@ -349,7 +354,7 @@ export default function DocumentVault({
               </div>
             ))
           ) : (
-            <div className="rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-[#8B9BB4]">
+            <div className="rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/68 p-5 text-sm leading-7 text-[#61738C]">
               No travel documents are stored yet. Upload passports, tickets, hotel vouchers,
               insurance, or emergency contacts so everything stays easy to access before departure.
             </div>
