@@ -1,8 +1,11 @@
--- Add invite-based trip collaborators for owner, editor, and viewer access.
+DO $$
+BEGIN
+  CREATE TYPE "CollaboratorRole" AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "CollaboratorRole" AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
-
-CREATE TABLE "TripCollaborator" (
+CREATE TABLE IF NOT EXISTS "TripCollaborator" (
   "id" TEXT NOT NULL,
   "tripId" TEXT NOT NULL,
   "userId" TEXT NOT NULL,
@@ -14,16 +17,26 @@ CREATE TABLE "TripCollaborator" (
   CONSTRAINT "TripCollaborator_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "TripCollaborator_tripId_userId_key"
+CREATE UNIQUE INDEX IF NOT EXISTS "TripCollaborator_tripId_userId_key"
 ON "TripCollaborator"("tripId", "userId");
 
-CREATE INDEX "TripCollaborator_userId_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "TripCollaborator_userId_createdAt_idx"
 ON "TripCollaborator"("userId", "createdAt");
 
-ALTER TABLE "TripCollaborator"
-ADD CONSTRAINT "TripCollaborator_tripId_fkey"
-FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "TripCollaborator"
+  ADD CONSTRAINT "TripCollaborator_tripId_fkey"
+  FOREIGN KEY ("tripId") REFERENCES "Trip"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-ALTER TABLE "TripCollaborator"
-ADD CONSTRAINT "TripCollaborator_userId_fkey"
-FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "TripCollaborator"
+  ADD CONSTRAINT "TripCollaborator_userId_fkey"
+  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
