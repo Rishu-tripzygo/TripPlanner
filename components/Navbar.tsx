@@ -144,8 +144,8 @@ export default function Navbar({ session }: { session: Session | null }) {
 
           <div className="hidden items-center gap-3 lg:flex">
             {!isHome ? (
-              <div className="w-[230px] xl:w-[280px]">
-                <GlobalSearch />
+              <div className="w-[118px] xl:w-[128px]">
+                <GlobalSearch compact />
               </div>
             ) : null}
 

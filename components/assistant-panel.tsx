@@ -3,7 +3,7 @@
 import { AssistantMessageRecord } from "@/lib/phase-one-types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, MessageSquareText, Send, Sparkles } from "lucide-react";
+import { Compass, MessageSquareText, Send } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -11,6 +11,13 @@ interface AssistantTripOption {
   id: string;
   title: string;
 }
+
+const suggestedPrompts = [
+  "What documents do I need for Bali in March?",
+  "Make my next trip more budget friendly.",
+  "Suggest a restaurant near my hotel area.",
+  "Slow down day 3 and reduce travel time.",
+];
 
 export default function AssistantPanel({
   trips,
@@ -68,14 +75,12 @@ export default function AssistantPanel({
         throw new Error(data.details || data.error || "Assistant request failed.");
       }
 
-      const assistantContent = data.content;
-
       setMessages((current) => [
         ...current,
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: assistantContent,
+          content: data.content!,
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -88,27 +93,26 @@ export default function AssistantPanel({
 
   return (
     <div className="landing-shell space-y-8 px-4 py-8 sm:px-5 lg:px-6">
-      <section className="grid gap-8 xl:grid-cols-[0.88fr_1.12fr]">
-        <div className="overflow-hidden rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,243,237,0.88))] p-8 shadow-[0_20px_44px_rgba(26,28,27,0.07)] backdrop-blur-[18px]">
+      <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="overflow-hidden rounded-[32px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,243,237,0.88))] p-6 shadow-[0_20px_44px_rgba(26,28,27,0.07)] backdrop-blur-[18px]">
           <p className="section-label">Assistant</p>
-          <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[42px] font-bold leading-[0.94] tracking-[-0.05em] text-[#024785] sm:text-[48px]">
-            A travel copilot that understands your current trip.
+          <h1 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.3rem] font-bold leading-[0.98] tracking-[-0.05em] text-[#024785]">
+            Chat with your trip.
           </h1>
-          <p className="mt-5 text-sm leading-8 text-[#61738C]">
-            Ask about planning, safety, route decisions, restaurant ideas, visa questions,
-            weather timing, or logistics. Attach a trip to make the answer context-aware.
+          <p className="mt-3 text-sm leading-7 text-[#61738C]">
+            Keep this focused. Ask one question, attach a trip when needed, and refine from there.
           </p>
 
-          <div className="mt-8 rounded-[26px] border border-white/55 bg-[linear-gradient(180deg,rgba(248,244,239,0.88),rgba(242,238,232,0.82))] p-5 shadow-[0_12px_24px_rgba(20,81,139,0.04)]">
+          <div className="mt-6 rounded-[24px] border border-white/55 bg-white/78 p-4">
             <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#024785]">
-              Attach trip context
+              Trip context
             </label>
             <select
               value={tripId}
               onChange={(event) => setTripId(event.target.value)}
-              className="mt-3 w-full rounded-[18px] border border-[rgba(20,81,139,0.1)] bg-white/92 px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
+              className="mt-3 w-full rounded-[18px] border border-[rgba(20,81,139,0.1)] bg-white px-4 py-3 text-sm text-[#1A1C1B] outline-none transition focus:border-[#14518b]/20"
             >
-              <option value="">Ask generally first</option>
+              <option value="">General travel help</option>
               {trips.map((trip) => (
                 <option key={trip.id} value={trip.id}>
                   {trip.title}
@@ -117,92 +121,71 @@ export default function AssistantPanel({
             </select>
 
             {attachedTrip ? (
-              <div className="mt-4 rounded-[20px] border border-[rgba(20,81,139,0.1)] bg-white/92 px-4 py-4 shadow-[0_10px_22px_rgba(20,81,139,0.04)]">
+              <div className="mt-4 rounded-[18px] bg-[#F6F4EF] p-4">
                 <p className="text-sm font-semibold text-[#024785]">{attachedTrip.title}</p>
-                <p className="mt-1 text-sm leading-7 text-[#61738C]">
-                  Use the assistant to refine the itinerary, improve the route, or decide what to
-                  prepare next for this trip.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Link href={`/trips/${attachedTrip.id}`}>
-                    <Button variant="outline" className="rounded-full">
-                      Open workspace
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      Open trip
                     </Button>
                   </Link>
                   <Link href={`/ai-trip-planner?tripId=${attachedTrip.id}`}>
-                    <Button variant="outline" className="rounded-full">
-                      Refine itinerary
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      Refine
                     </Button>
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-[20px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/72 px-4 py-4 text-sm leading-7 text-[#61738C]">
-                You can ask broad travel questions without attaching a trip. Attach one when you
-                want Wandrly to answer against your saved itinerary and route.
+              <div className="mt-4 rounded-[18px] border border-dashed border-[rgba(20,81,139,0.12)] bg-white/72 px-4 py-4 text-sm leading-7 text-[#61738C]">
+                Attach a saved trip when you want answers against your actual itinerary and route.
               </div>
             )}
           </div>
 
-          <div className="mt-8 space-y-4">
-            <div>
-              <p className="section-label">Try asking</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {[
-                  "What documents do I need for Bali in March?",
-                  "Make my next trip more budget friendly.",
-                  "Suggest a restaurant near my hotel area.",
-                  "Slow down day 3 and reduce travel time.",
-                ].map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => setQuestion(prompt)}
-                    className="rounded-full border border-[rgba(20,81,139,0.1)] bg-white/88 px-4 py-2.5 text-sm text-[#3E536F] shadow-[0_8px_18px_rgba(20,81,139,0.03)] transition hover:border-[#14518b]/18 hover:text-[#14518b]"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-white/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(247,243,237,0.72))] p-5">
-              <p className="text-sm font-semibold text-[#024785]">Best ways to use Wandrly Assistant</p>
-              <div className="mt-4 space-y-3">
-                {[
-                  "Improve pacing before you save a trip",
-                  "Refine a saved itinerary after route confirmation",
-                  "Ask prep questions once the trip is in the workspace",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 text-sm leading-7 text-[#61738C]">
-                    <ArrowRight className="mt-1 size-4 shrink-0 text-[#14518b]" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="mt-6">
+            <p className="section-label">Quick prompts</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {suggestedPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => setQuestion(prompt)}
+                  className="rounded-full border border-[rgba(20,81,139,0.1)] bg-white/88 px-4 py-2.5 text-left text-sm text-[#3E536F] shadow-[0_8px_18px_rgba(20,81,139,0.03)] transition hover:border-[#14518b]/18 hover:text-[#14518b]"
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        </aside>
 
         <div className="overflow-hidden rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.93),rgba(247,243,237,0.88))] shadow-[0_20px_44px_rgba(26,28,27,0.07)] backdrop-blur-[18px]">
-          <div className="border-b border-[rgba(20,81,139,0.08)] px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#024785]">
-                <MessageSquareText className="size-5" />
+          <div className="border-b border-[rgba(20,81,139,0.08)] px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-[#EEF2F8] p-3 text-[#024785]">
+                  <MessageSquareText className="size-5" />
+                </div>
+                <div>
+                  <p className="section-label">Conversation</p>
+                  <p className="mt-1 text-sm text-[#61738C]">Wandrly Assistant</p>
+                </div>
               </div>
-              <div>
-                <p className="section-label">Conversation</p>
-                <p className="mt-1 text-sm text-[#61738C]">Wandrly Assistant</p>
-              </div>
+              {attachedTrip ? (
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/55 bg-white/74 px-4 py-2 text-sm text-[#526980]">
+                  <Compass className="size-4 text-[#14518b]" />
+                  <span className="truncate">{attachedTrip.title}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div className="max-h-[520px] space-y-4 overflow-y-auto px-6 py-6">
+          <div className="min-h-[54vh] max-h-[62vh] space-y-4 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
             {messages.length === 1 ? (
               <div className="rounded-[22px] border border-dashed border-[rgba(20,81,139,0.12)] bg-[rgba(250,249,247,0.86)] p-5 text-sm leading-7 text-[#61738C]">
-                Start with one question and Wandrly will respond like a travel copilot. Ask for a
-                route improvement, a better stay area, a cheaper version of the plan, or what to
-                prepare next.
+                Start with one question. Ask for route improvements, cheaper pacing, better stay
+                areas, document checks, or what to prepare next.
               </div>
             ) : null}
 
@@ -214,8 +197,8 @@ export default function AssistantPanel({
                   className={cn(
                     "rounded-[20px] p-4 text-sm leading-8",
                     isUser
-                      ? "ml-auto max-w-[86%] bg-[linear-gradient(135deg,#EAF1FB,#E2ECF9)] text-[#024785] shadow-[0_10px_20px_rgba(20,81,139,0.05)]"
-                      : "mr-auto max-w-[90%] bg-[rgba(250,249,247,0.92)] text-[#3E536F] shadow-[0_10px_20px_rgba(26,28,27,0.04)]"
+                      ? "ml-auto max-w-[88%] bg-[linear-gradient(135deg,#EAF1FB,#E2ECF9)] text-[#024785] shadow-[0_10px_20px_rgba(20,81,139,0.05)]"
+                      : "mr-auto max-w-[92%] bg-[rgba(250,249,247,0.92)] text-[#3E536F] shadow-[0_10px_20px_rgba(26,28,27,0.04)]"
                   )}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7A879B]">
@@ -233,18 +216,17 @@ export default function AssistantPanel({
             ) : null}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-[rgba(20,81,139,0.08)] p-6">
+          <form onSubmit={handleSubmit} className="border-t border-[rgba(20,81,139,0.08)] p-5 sm:p-6">
             <div className="rounded-[24px] border border-white/55 bg-[linear-gradient(180deg,rgba(248,244,239,0.9),rgba(242,238,232,0.82))] p-4">
               <textarea
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder="Ask about visa steps, safe timing, food, route improvements, or local recommendations..."
-                className="min-h-[120px] w-full resize-none bg-transparent text-sm leading-8 text-[#1A1C1B] outline-none placeholder:text-[#8A96A8]"
+                className="min-h-[110px] w-full resize-none bg-transparent text-sm leading-8 text-[#1A1C1B] outline-none placeholder:text-[#8A96A8]"
               />
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-[#7A879B]">
-                  <Sparkles className="size-3.5 text-[#024785]" />
-                  Context-aware when a trip is attached
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#7A879B]">
+                  {attachedTrip ? "Using selected trip context" : "General travel context"}
                 </p>
                 <Button type="submit" disabled={isLoading}>
                   <Send className="size-4" />

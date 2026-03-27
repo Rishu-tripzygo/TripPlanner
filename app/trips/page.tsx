@@ -18,6 +18,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+type ActiveItineraryData = {
+  trip_summary?: {
+    destination?: string;
+    budget_range?: string;
+  };
+  trip_overview?: string;
+};
+
 export default async function TripsPage() {
   const session = await auth();
 
@@ -61,6 +69,12 @@ export default async function TripsPage() {
   const upcomingTrips = trips.filter((trip) => new Date(trip.startDate) >= today);
   const completedTrips = trips.filter((trip) => new Date(trip.endDate) < today);
   const totalStops = trips.reduce((sum, trip) => sum + trip.locations.length, 0);
+  const distinctCountryCount = getDistinctCountryCount(
+    trips.map((trip) => ({
+      itinerary: trip.itineraryVersions[0]?.itineraryData as ActiveItineraryData | undefined,
+      stops: trip.locations.map((location) => location.locationTitle),
+    }))
+  );
   const draftTrips = trips.filter(
     (trip) => trip.itineraryVersions.length === 0
   );
@@ -120,7 +134,7 @@ export default async function TripsPage() {
                 <div className="grid grid-cols-3 gap-1">
                   {[
                     ["Trips", trips.length],
-                    ["Nations", Math.max(1, totalStops)],
+                    ["Nations", distinctCountryCount],
                     ["Days", upcomingTrips.length + completedTrips.length],
                   ].map(([label, value], index) => (
                     <div
@@ -286,8 +300,8 @@ export default async function TripsPage() {
         <StatCard
           icon={<Trees className="size-5" />}
           label="Countries"
-          value={Math.max(1, totalStops)}
-          trend="Estimated footprint"
+          value={distinctCountryCount}
+          trend="Distinct countries"
         />
       </section>
 
@@ -398,13 +412,7 @@ export default async function TripsPage() {
               <div className="grid gap-6 md:grid-cols-2">
                 {trips.slice(0, 4).map((trip) => {
                   const activeItinerary = trip.itineraryVersions[0]?.itineraryData as
-                    | {
-                        trip_summary?: {
-                          destination?: string;
-                          budget_range?: string;
-                        };
-                        trip_overview?: string;
-                      }
+                    | ActiveItineraryData
                     | undefined;
                   const status =
                     trip.locations.length === 0 && trip.itineraryVersions.length === 0
@@ -516,4 +524,63 @@ export default async function TripsPage() {
       ) : null}
     </div>
   );
+}
+
+function getDistinctCountryCount(
+  trips: Array<{
+    itinerary?: ActiveItineraryData;
+    stops: string[];
+  }>
+) {
+  const countries = new Set<string>();
+
+  for (const trip of trips) {
+    const destinationCountry = extractCountryCandidate(trip.itinerary?.trip_summary?.destination);
+    if (destinationCountry) {
+      countries.add(destinationCountry);
+    }
+
+    for (const stop of trip.stops) {
+      const stopCountry = extractCountryCandidate(stop);
+      if (stopCountry) {
+        countries.add(stopCountry);
+      }
+    }
+  }
+
+  return countries.size;
+}
+
+function extractCountryCandidate(value?: string | null) {
+  if (!value) return null;
+
+  const parts = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length < 2) return null;
+
+  const candidate = parts[parts.length - 1];
+  const normalized = candidate.toLowerCase();
+  const ignored = new Set([
+    "airport",
+    "station",
+    "downtown",
+    "old town",
+    "city center",
+    "city centre",
+    "beach",
+    "island",
+    "district",
+    "harbor",
+    "harbour",
+    "village",
+  ]);
+
+  if (!candidate || candidate.length < 3 || ignored.has(normalized)) {
+    return null;
+  }
+
+  return candidate;
 }

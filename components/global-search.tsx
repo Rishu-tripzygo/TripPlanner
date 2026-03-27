@@ -13,7 +13,11 @@ const categoryLabels: Record<SearchResultRecord["category"], string> = {
   "public-trip": "Explore",
 };
 
-export default function GlobalSearch() {
+interface GlobalSearchProps {
+  compact?: boolean;
+}
+
+export default function GlobalSearch({ compact = false }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResultRecord[]>([]);
@@ -78,13 +82,19 @@ export default function GlobalSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex w-full items-center gap-3 rounded-full bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C] transition hover:text-[#024785]"
+        className={`inline-flex w-full items-center rounded-full transition hover:text-[#024785] ${
+          compact
+            ? "gap-2.5 border border-white/55 bg-white/72 px-3.5 py-2.5 text-sm text-[#526980] shadow-[0_10px_22px_rgba(22,40,64,0.05)] backdrop-blur-xl"
+            : "gap-3 bg-[#F4F3F1] px-4 py-2 text-sm text-[#61738C]"
+        }`}
       >
         <Search className="size-4 text-[#024785]" />
-        <span className="truncate">Search anywhere</span>
-        <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[#7A879B]">
-          Cmd+K
-        </span>
+        <span className="truncate">{compact ? "Search" : "Search anywhere"}</span>
+        {!compact ? (
+          <span className="rounded-full border border-[rgba(2,71,133,0.08)] bg-white px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[#7A879B]">
+            Cmd+K
+          </span>
+        ) : null}
       </button>
 
       {open ? (

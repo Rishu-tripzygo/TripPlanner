@@ -61,28 +61,27 @@ export default function SignInPanel({
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-8rem)] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_0.95fr] lg:px-8">
-      <section className="app-shell overflow-hidden rounded-[36px] border border-white/55 bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] p-8 shadow-[0_24px_56px_rgba(22,40,64,0.08)] sm:p-10 lg:p-12">
+    <div className="grid min-h-[calc(100vh-6rem)] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-8">
+      <section className="order-2 app-shell overflow-hidden rounded-[36px] border border-white/55 bg-[linear-gradient(180deg,#ffffff,#f6f4ef)] p-8 shadow-[0_24px_56px_rgba(22,40,64,0.08)] sm:p-10 lg:order-1 lg:p-12">
         <div className="max-w-xl">
           <p className="section-label">Welcome to Wandrly</p>
-          <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[3rem] font-bold leading-[0.92] tracking-[-0.05em] text-[#024785] sm:text-[4.2rem]">
-            Sign in when you want the trip to stay with you.
+          <h1 className="mt-5 font-[family-name:var(--font-noto-serif)] text-[2.8rem] font-bold leading-[0.94] tracking-[-0.05em] text-[#024785] sm:text-[3.8rem]">
+            Sign in and keep the trip moving.
           </h1>
           <p className="mt-5 text-base leading-8 text-[#61738C] sm:text-lg">
-            Generate itineraries, keep route and budget connected, and move every trip into one
-            calm workspace you can return to.
+            Save itineraries, review routes, and keep the prep details attached to the same trip
+            instead of scattered across tools.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="mt-8 grid gap-4">
             {[
-              "Start with AI and save the active itinerary automatically.",
-              "Keep route, budget, documents, packing, and notes in sync.",
-              "Come back anytime without rebuilding your plan from scratch.",
-              "Preview Wandrly first if you are not ready to create an account yet.",
+              "Use email for the fastest sign-in.",
+              "Come back to the same workspace any time.",
+              "Guest preview is available if you want to try first.",
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-[22px] border border-white/55 bg-white/62 px-5 py-5 text-sm leading-7 text-[#4a617b] shadow-[0_12px_28px_rgba(20,81,139,0.05)] backdrop-blur-xl"
+                className="rounded-[22px] border border-white/55 bg-white/62 px-5 py-4 text-sm leading-7 text-[#4a617b] shadow-[0_12px_28px_rgba(20,81,139,0.05)] backdrop-blur-xl"
               >
                 {item}
               </div>
@@ -91,15 +90,15 @@ export default function SignInPanel({
         </div>
       </section>
 
-      <section className="app-shell rounded-[36px] border border-white/55 bg-white/64 p-8 shadow-[0_24px_56px_rgba(22,40,64,0.08)] backdrop-blur-[24px] sm:p-10">
+      <section className="order-1 app-shell rounded-[36px] border border-white/55 bg-white/64 p-8 shadow-[0_24px_56px_rgba(22,40,64,0.08)] backdrop-blur-[24px] sm:p-10 lg:order-2">
         <div className="mx-auto max-w-md">
           <p className="section-label">Access your trips</p>
-          <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.4rem] font-bold leading-[0.95] tracking-[-0.04em] text-[#0f3460]">
-            Pick the easiest way to continue.
+          <h2 className="mt-4 font-[family-name:var(--font-noto-serif)] text-[2.2rem] font-bold leading-[0.95] tracking-[-0.04em] text-[#0f3460]">
+            Continue in seconds.
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[#61738C]">
-            Use email for the smoothest sign-in, or continue with Google or GitHub if those are
-            already connected to your account.
+          <p className="mt-3 text-sm leading-7 text-[#61738C]">
+            Email is the smoothest option. Google and GitHub stay available if they are already
+            connected to your account.
           </p>
 
           {errorMessage ? (

@@ -22,9 +22,21 @@ const notoSerif = Noto_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Wandrly | AI Travel Planner",
+  title: {
+    default: "Wandrly",
+    template: "%s | Wandrly",
+  },
+  applicationName: "Wandrly",
   description:
     "Premium AI-powered travel planning, maps, itineraries, and travel memories.",
+  icons: {
+    icon: [
+      { url: "/icon?size=192", sizes: "192x192", type: "image/png" },
+      { url: "/icon?size=512", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: [{ url: "/icon?size=192", type: "image/png" }],
+    apple: [{ url: "/icon?size=192", sizes: "192x192", type: "image/png" }],
+  },
 };
 
 export const dynamic = "force-dynamic";
